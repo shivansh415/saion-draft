@@ -6,15 +6,16 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [
     react(),
-    compression({ algorithm: 'gzip', threshold: 1024 }),
-    compression({ algorithm: 'brotliCompress', threshold: 1024 }),
+    compression({ include: /\.(js|css|html|svg|json)(\?.*)?$/i }),
   ],
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-gsap': ['gsap', 'gsap/ScrollTrigger'],
-          'vendor-lenis': ['lenis'],
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        manualChunks(id: string): string | undefined {
+          if (id.includes('gsap')) return 'vendor-gsap'
+          if (id.includes('lenis')) return 'vendor-lenis'
+          return undefined
         },
       },
     },
