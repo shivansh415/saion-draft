@@ -42,6 +42,56 @@ export const relitUrl = (relative: string): string =>
   RELIT_BASE + relative.replace(/^floorplates-web\//, 'floorplates/').replace(/^units-web\//, 'units/')
 
 /* ------------------------------------------------------------------ *
+ * Asset presentation
+ * ------------------------------------------------------------------ */
+
+/**
+ * Every drawing exists in two copies, and this is the only place that knows
+ * both: the exact supplied file on white paper (`original`, from
+ * `floorplates-web/` and `units-web/`, never altered) and the relit copy
+ * (`transparent`, paper keyed out, for the dark ground).
+ */
+export interface PlanImages {
+  /** The exact supplied WebP — white background, untouched. */
+  readonly original: string
+  /** The relit copy over transparency. */
+  readonly transparent: string
+}
+
+export type PlanPresentation = keyof PlanImages
+
+/**
+ * Which copy each kind of drawing is shown as. Floorplates float over the
+ * scene, so they take the transparent copy; a residence's plan is read as a
+ * sheet, so it is shown exactly as supplied, on its own white paper. Change
+ * it here, nowhere else — no component names a copy directly.
+ */
+export const PLAN_PRESENTATION = {
+  floorplate: 'transparent',
+  unitPlan: 'original',
+} as const satisfies Record<'floorplate' | 'unitPlan', PlanPresentation>
+
+/** Both copies of one package file. */
+export const planImages = (relative: string): PlanImages => ({
+  original: assetUrl(relative),
+  transparent: relitUrl(relative),
+})
+
+/** The copy a floorplate is shown as. */
+export const floorplateImage = (plate: Floorplate): string => plate.images[PLAN_PRESENTATION.floorplate]
+
+/** The copy a residence's plan is shown as, or null while the link is unverified. */
+export const unitPlanImage = (hotspot: UnitHotspot): string | null =>
+  hotspot.plan ? hotspot.plan[PLAN_PRESENTATION.unitPlan] : null
+
+/**
+ * What to show if the presented copy fails to load: the other copy, which
+ * is always the supplied file or derived from it.
+ */
+export const planFallback = (images: PlanImages, presentation: PlanPresentation): string =>
+  images[presentation === 'transparent' ? 'original' : 'transparent']
+
+/* ------------------------------------------------------------------ *
  * Shapes of the supplied files (only what the explorer reads)
  * ------------------------------------------------------------------ */
 
@@ -138,10 +188,8 @@ export interface UnitHotspot {
   readonly polygon: readonly Point[]
   /** Where the tag sits, % of the image. */
   readonly labelAt: Point
-  /** URL of the exact supplied unit plan, or null while unverified. */
-  readonly plan: string | null
-  /** The relit copy of that plan, or null. */
-  readonly planRelit: string | null
+  /** Both copies of the exact supplied unit plan, or null while unverified. */
+  readonly plan: PlanImages | null
   /** "Type A" / "Type B′", or null while the letter is in dispute. */
   readonly typeLabel: string | null
   /** "Left wing", "Centre", "Inner right" … from the package's own position. */
@@ -152,10 +200,8 @@ export interface UnitHotspot {
 
 export interface Floorplate {
   readonly id: string
-  /** URL of the exact supplied WebP. Never altered. */
-  readonly src: string
-  /** The relit copy the explorer shows over the dark scene. */
-  readonly relitSrc: string
+  /** Both copies of the plate's web drawing. */
+  readonly images: PlanImages
   readonly masterSrc: string
   readonly brochurePage: number
   /** Every level that uses this plate. */
@@ -276,8 +322,7 @@ function build(selector: SelectorFile, residences: ResidencesFile): FloorExplore
         residence,
         polygon: config.polygon,
         labelAt: config.labelAt ?? centroid(config.polygon),
-        plan: planFile ? assetUrl(planFile) : null,
-        planRelit: planFile ? relitUrl(planFile) : null,
+        plan: planFile ? planImages(planFile) : null,
         typeLabel: disputed ? null : residenceVariant(residence),
         positionLabel: positionLabel(residence.floorplatePosition),
         tag: residence.variant,
@@ -285,8 +330,7 @@ function build(selector: SelectorFile, residences: ResidencesFile): FloorExplore
     }
     plateById.set(id, {
       id,
-      src: assetUrl(plate.webFile),
-      relitSrc: relitUrl(plate.webFile),
+      images: planImages(plate.webFile),
       masterSrc: assetUrl(plate.masterFile),
       brochurePage: plate.brochurePage,
       levels: plate.levels.filter(isLevelId),
@@ -302,7 +346,7 @@ function build(selector: SelectorFile, residences: ResidencesFile): FloorExplore
 
     const floorplate = plateById.get(detail.floorplateId)
     if (!floorplate) throw new Error(`Floor explorer: floorplate ${detail.floorplateId} not registered`)
-    if (assetUrl(entry.floorplate) !== floorplate.src) {
+    if (assetUrl(entry.floorplate) !== floorplate.images.original) {
       throw new Error(`Floor explorer: level ${entry.level} points at two different floorplates`)
     }
 

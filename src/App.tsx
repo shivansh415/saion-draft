@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 import { OpeningExperience } from './components/opening/OpeningExperience'
-import { ReposeLifestyle } from './components/repose/ReposeLifestyle'
+import { getLifestyle, loadLifestyle } from './components/repose/lazy'
 import type { ReturnReason } from './components/repose/ReposeLifestyle'
 import { useSmoothScroll } from './hooks/useSmoothScroll'
 import { getSmoothScroll, unlockScroll } from './lib/scrollLock'
@@ -43,7 +43,29 @@ function App() {
   /** True when the chapter has left the page held still for the hand-back. */
   const heldRef = useRef(false)
 
-  const explore = useCallback(() => setStage('lifestyle'), [])
+  /**
+   * The chapter's own bundle, once it has arrived. It is prefetched the moment
+   * the building completes — long before either cue can be pressed — so in
+   * practice this is already filled in and the press mounts at once.
+   */
+  const [Chapter, setChapter] = useState(getLifestyle)
+
+  // Both cues on the building open the chapter the same way: at its beginning.
+  const explore = useCallback(() => {
+    const ready = getLifestyle()
+    if (ready) {
+      setChapter(() => ready)
+      setStage('lifestyle')
+      return
+    }
+    // Only reachable if the press beats the prefetch. The building simply
+    // stays as it is until the chunk lands — which is what was on screen a
+    // moment before, so nothing flashes.
+    void loadLifestyle().then((chapter) => {
+      setChapter(() => chapter)
+      setStage('lifestyle')
+    })
+  }, [])
 
   const returnToBuilding = useCallback((reason: ReturnReason) => {
     heldRef.current = reason === 'arch'
@@ -66,7 +88,8 @@ function App() {
   return (
     <main>
       <OpeningExperience lifestyleActive={stage === 'lifestyle'} onExplore={explore} />
-      {stage === 'lifestyle' && <ReposeLifestyle onReturn={returnToBuilding} />}
+      {/* The chapter is its own bundle (see components/repose/lazy). */}
+      {stage === 'lifestyle' && Chapter && <Chapter onReturn={returnToBuilding} />}
     </main>
   )
 }

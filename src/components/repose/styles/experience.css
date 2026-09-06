@@ -311,3 +311,22 @@
 .rp-portal-content img{position:absolute;left:0;top:0;max-width:none;width:100%;height:100%;object-fit:fill;user-select:none;-webkit-user-drag:none}
 /* The capture carries a letterbox band across its top; it is never shown. */
 .rp-portal-capture{clip-path:inset(3.456% 0 0 0)}
+
+/* =====================================================================
+   First paint — the chapter's pre-animation state
+   =====================================================================
+
+   The chapter is mounted behind the loader and is already on screen while the
+   loader's last beat fades it in, so whatever the opening animation is about
+   to move must be in its starting position from the very first paint. Without
+   this the hero rendered finished, held for the length of the hand-over, and
+   was then yanked back to the start of its own reveal — a 109px snap on the
+   title and a 1 → 1.06 jump on the image.
+
+   Declared only where motion is wanted: under reduced motion the hero is not
+   animated at all and must simply be readable.
+   ===================================================================== */
+@media(prefers-reduced-motion:no-preference){
+ .rp-life-title .rp-clip>span{transform:translateY(112%)}
+ .rp-life-image img{transform:scale(1.06)}
+}

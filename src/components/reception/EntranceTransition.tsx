@@ -6,6 +6,17 @@ import { RECEPTION_ASSETS, RECEPTION_COPY } from './receptionCopy'
 
 interface Props {
   layout: EntranceLayout
+  /**
+   * Whether the journey's two large stills may be fetched yet.
+   *
+   * They are 6.6MB between them and the whole camera is `visibility: hidden`
+   * until the journey begins, so at rest they paint nothing — but a `src` in
+   * the DOM is fetched regardless of that, and at first paint they would be
+   * pulling against the film's own critical frames on the same connection.
+   * The sources are therefore withheld until the opening has been revealed,
+   * which is minutes before the earliest possible click.
+   */
+  sources: boolean
 }
 
 const boxStyle = (box: Box) => ({ left: box.x, top: box.y, width: box.width, height: box.height })
@@ -36,7 +47,7 @@ const boxStyle = (box: Box) => ({ left: box.x, top: box.y, width: box.width, hei
  * ancestor) which takes over from `through` at the moment the two coincide,
  * and the copy that follows once the lobby has settled.
  */
-export function EntranceTransition({ layout }: Props) {
+export function EntranceTransition({ layout, sources }: Props) {
   const { film, still, opening, leftLeaf, rightLeaf, portal, through, throughInset, reception } = layout
 
   const leaf = (box: Box, edge: 'left' | 'right') => ({
@@ -45,7 +56,7 @@ export function EntranceTransition({ layout }: Props) {
     width: box.width,
     height: box.height,
     transformOrigin: edge === 'left' ? '0% 50%' : '100% 50%',
-    backgroundImage: `url(${RECEPTION_ASSETS.building})`,
+    backgroundImage: sources ? `url(${RECEPTION_ASSETS.building})` : 'none',
     backgroundSize: `${still.width}px ${still.height}px`,
     backgroundPosition: `${still.x - box.x}px ${still.y - box.y}px`,
   })
@@ -66,7 +77,7 @@ export function EntranceTransition({ layout }: Props) {
           className="rc__still"
           data-rc-still
           data-rc-exterior
-          src={RECEPTION_ASSETS.building}
+          src={sources ? RECEPTION_ASSETS.building : undefined}
           alt={RECEPTION_COPY.buildingAlt}
           decoding="async"
           draggable={false}
@@ -75,7 +86,7 @@ export function EntranceTransition({ layout }: Props) {
 
         <div className="rc__through" data-rc-through style={{ ...boxStyle(through), clipPath: insetOf(throughInset) }}>
           <img
-            src={RECEPTION_ASSETS.reception}
+            src={sources ? RECEPTION_ASSETS.reception : undefined}
             alt=""
             decoding="async"
             draggable={false}
@@ -104,7 +115,7 @@ export function EntranceTransition({ layout }: Props) {
 
       <div className="rc__inside" data-rc-inside>
         <img
-          src={RECEPTION_ASSETS.reception}
+          src={sources ? RECEPTION_ASSETS.reception : undefined}
           alt={RECEPTION_COPY.receptionAlt}
           decoding="async"
           draggable={false}

@@ -84,6 +84,12 @@ export function ReposeLifestyle({ onReturn }: Props) {
   useLayoutEffect(() => {
     const element = root.current
     if (!element) return
+
+    // The chapter opens at its own beginning — the hero — every time. This is
+    // the only scroll this component performs, and it is not a shortcut past
+    // anything: the chapter is appended to a document that is already scrolled
+    // to the end of the opening, so without it the visitor would arrive
+    // mid-chapter. It runs under the loader, before it lifts.
     jumpTo(pageTop(element))
     lockScroll()
     heldRef.current = true

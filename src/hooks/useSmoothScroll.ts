@@ -8,6 +8,16 @@ import { registerSmoothScroll } from '../lib/scrollLock'
 gsap.registerPlugin(ScrollTrigger)
 
 /**
+ * On a phone, the address bar collapsing and expanding fires a resize — and a
+ * resize makes ScrollTrigger re-measure every trigger on the page, mid-scroll,
+ * which is felt as a hitch and can jump a scrubbed timeline. The viewport's
+ * *width* has not changed, so nothing needs re-measuring; this tells
+ * ScrollTrigger to ignore the height-only case. Set once, at module scope,
+ * alongside the plugin it configures.
+ */
+ScrollTrigger.config({ ignoreMobileResize: true })
+
+/**
  * Application-level smooth scrolling.
  *
  * Lenis is driven from GSAP's own ticker rather than its own rAF loop, so

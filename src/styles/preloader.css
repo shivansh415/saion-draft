@@ -1,0 +1,196 @@
+/* =====================================================================
+   Site Preloader
+   =====================================================================
+   Full-screen loading overlay with SVG animation. Covers the page while
+   critical assets (opening sequence frames, reception images, fonts) are
+   prepared in the background. Dismisses with a cinematic reveal once
+   everything is ready.
+   ===================================================================== */
+
+.site-preloader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #090c10;
+  color: #f6f4f1;
+  overflow: hidden;
+  /* Hardware-accelerated for smooth exit */
+  will-change: opacity, clip-path;
+}
+
+/* ---- SVG Monogram ---- */
+.site-preloader__monogram {
+  width: clamp(80px, 12vw, 140px);
+  height: auto;
+  margin-bottom: 2rem;
+}
+
+.site-preloader__monogram .stroke-path {
+  fill: none;
+  stroke: #f6f4f1;
+  stroke-width: 1.5;
+  stroke-dasharray: 400;
+  stroke-dashoffset: 400;
+  animation: preloader-draw 2.4s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+.site-preloader__monogram .fill-path {
+  fill: #f6f4f1;
+  opacity: 0;
+  animation: preloader-fill 1s ease forwards 1.8s;
+}
+
+/* ---- Title block ---- */
+.site-preloader__title {
+  text-align: center;
+  margin-bottom: 0.75rem;
+}
+
+.site-preloader__name {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: clamp(22px, 3.5vw, 40px);
+  font-weight: 300;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: preloader-text 1s ease forwards 0.8s;
+}
+
+.site-preloader__developer {
+  font-family: Inter, system-ui, sans-serif;
+  font-size: clamp(9px, 1.2vw, 12px);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #f6f4f180;
+  opacity: 0;
+  transform: translateY(8px);
+  animation: preloader-text 1s ease forwards 1.2s;
+  margin-top: 0.6rem;
+}
+
+/* ---- Decorative rules ---- */
+.site-preloader__rule {
+  width: clamp(40px, 8vw, 80px);
+  height: 1px;
+  background: #f6f4f130;
+  margin: 1.5rem auto;
+  transform: scaleX(0);
+  animation: preloader-rule 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards 1s;
+}
+
+/* ---- Progress ---- */
+.site-preloader__progress {
+  position: relative;
+  width: clamp(120px, 18vw, 220px);
+  height: 1px;
+  background: #f6f4f112;
+  border-radius: 1px;
+  overflow: hidden;
+  margin-top: 1.5rem;
+  opacity: 0;
+  animation: preloader-text 0.8s ease forwards 1.4s;
+}
+
+.site-preloader__bar {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, #d4af7a, #f6f4f1);
+  transform-origin: left;
+  transform: scaleX(var(--progress, 0));
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 1px;
+}
+
+.site-preloader__percent {
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: #f6f4f160;
+  margin-top: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  animation: preloader-text 0.8s ease forwards 1.6s;
+}
+
+/* ---- Location tag ---- */
+.site-preloader__location {
+  position: absolute;
+  bottom: clamp(24px, 4vh, 48px);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: #f6f4f140;
+  opacity: 0;
+  animation: preloader-text 1s ease forwards 1.8s;
+}
+
+/* ---- Corner accents ---- */
+.site-preloader__corner {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-color: #f6f4f115;
+  border-style: solid;
+}
+.site-preloader__corner--tl { top: 24px; left: 24px; border-width: 1px 0 0 1px; }
+.site-preloader__corner--tr { top: 24px; right: 24px; border-width: 1px 1px 0 0; }
+.site-preloader__corner--bl { bottom: 24px; left: 24px; border-width: 0 0 1px 1px; }
+.site-preloader__corner--br { bottom: 24px; right: 24px; border-width: 0 1px 1px 0; }
+
+/* ---- Exit ---- */
+.site-preloader[data-exiting] {
+  animation: preloader-exit 1.1s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+  pointer-events: none;
+}
+
+/* ---- Keyframes ---- */
+@keyframes preloader-draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes preloader-fill {
+  to { opacity: 1; }
+}
+@keyframes preloader-text {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes preloader-rule {
+  to { transform: scaleX(1); }
+}
+@keyframes preloader-exit {
+  0% { opacity: 1; clip-path: inset(0 0 0 0); }
+  100% { opacity: 0; clip-path: inset(4% 4% 4% 4% round 12px); }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .site-preloader__monogram .stroke-path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+  .site-preloader__monogram .fill-path {
+    animation: none;
+    opacity: 1;
+  }
+  .site-preloader__name,
+  .site-preloader__developer,
+  .site-preloader__percent,
+  .site-preloader__progress,
+  .site-preloader__location {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .site-preloader__rule {
+    animation: none;
+    transform: scaleX(1);
+  }
+  .site-preloader[data-exiting] {
+    animation-duration: 0.3s;
+  }
+}

@@ -241,7 +241,10 @@
   --rc-cue: 1;
 }
 
-.rc-cue {
+/* Both cues on the clean building — the way in, above the door, and the way
+   on, in the open ground — share these states. */
+.rc-cue,
+.rc-explore-cue {
   position: absolute;
   opacity: 0;
 }
@@ -249,26 +252,35 @@
 /* Fades up once the clean building is there; from then on the journey's
    variable and the explorer's state decide, and only in the idle phase does
    a change of state ease. */
-.rc[data-active] .rc-cue {
+.rc[data-active] .rc-cue,
+.rc[data-active] .rc-explore-cue {
   opacity: calc(var(--rc-cue) * 1);
 }
 
-.rc[data-phase='idle'] .rc-cue {
+.rc[data-phase='idle'] .rc-cue,
+.rc[data-phase='idle'] .rc-explore-cue {
   transition: opacity 900ms ease 500ms;
 }
 
 /* Yields a little while the explorer has the frame; gone while a plan is open. */
-.fx[data-revealed] ~ .rc[data-active] .rc-cue {
+.fx[data-revealed] ~ .rc[data-active] .rc-cue,
+.fx[data-revealed] ~ .rc[data-active] .rc-explore-cue {
   opacity: calc(var(--rc-cue) * 0.55);
 }
 
 .fx:not([data-mode='selector']) ~ .rc[data-active] .rc-cue,
-.fx[data-suspended] ~ .rc[data-active] .rc-cue {
+.fx[data-suspended] ~ .rc[data-active] .rc-cue,
+.fx:not([data-mode='selector']) ~ .rc[data-active] .rc-explore-cue,
+.fx[data-suspended] ~ .rc[data-active] .rc-explore-cue {
   opacity: 0;
   pointer-events: none;
 }
 
-.rc-cue__button {
+/* The words: one small line of tracked capitals, no pill, no border — a
+   dark halo behind the letters keeps them legible on the lit glass of the
+   transom as on the sky. */
+.rc-cue__button,
+.rc-explore-cue {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -286,11 +298,30 @@
   white-space: nowrap;
   cursor: pointer;
   opacity: 0.74;
-  transform: translate(-50%, -50%);
-  text-shadow: 0 1px 12px rgb(9 12 16 / 60%);
+  text-shadow:
+    0 0 3px rgb(9 12 16 / 85%),
+    0 1px 6px rgb(9 12 16 / 70%),
+    0 0 16px rgb(9 12 16 / 55%);
   pointer-events: auto;
   transition: opacity 500ms ease;
   -webkit-tap-highlight-color: transparent;
+}
+
+.rc-cue__button {
+  opacity: 0.84; /* on the lit glass a little more presence than in the open */
+  transform: translate(-50%, -50%);
+}
+
+/* A faint breath of shade behind the label in the transom, so the letters
+   read on the glass without a box being drawn around them. */
+.rc-cue__button::before {
+  content: '';
+  position: absolute;
+  inset: -0.2rem -0.4rem;
+  border-radius: 999px;
+  background: radial-gradient(ellipse 70% 100% at 50% 50%, rgb(9 12 16 / 34%), rgb(9 12 16 / 0%));
+  pointer-events: none;
+  z-index: -1;
 }
 
 .rc-cue__label {
@@ -306,21 +337,34 @@
 }
 
 .rc-cue:hover .rc-cue__button,
-.rc-cue__button:focus-visible {
+.rc-cue__button:focus-visible,
+.rc-explore-cue:hover,
+.rc-explore-cue:focus-visible {
   opacity: 1;
 }
 
 .rc-cue:hover .rc-cue__arrow,
-.rc-cue__button:focus-visible .rc-cue__arrow {
+.rc-cue__button:focus-visible .rc-cue__arrow,
+.rc-explore-cue:hover .rc-cue__arrow,
+.rc-explore-cue:focus-visible .rc-cue__arrow {
   transform: translateX(5px);
 }
 
-.rc-cue__button:focus-visible {
+.rc-cue__button:focus-visible,
+.rc-explore-cue:focus-visible {
   outline: 1px solid rgb(255 255 255 / 60%);
   outline-offset: 2px;
 }
 
-/* The leader: a hairline from under the label down to the soffit. */
+/* The way on: low on the street at the left, clear of the tower, the level
+   rail at the right and the door. */
+.rc-explore-cue {
+  position: absolute;
+  left: calc(var(--gutter) - 0.7rem); /* the padding brings the letters to the gutter */
+  bottom: calc(var(--gutter-block) - 0.55rem);
+}
+
+/* The leader: a hairline from under the label down to the door's head rail. */
 .rc-cue__leader {
   position: absolute;
   left: 0;
@@ -370,9 +414,16 @@
    --------------------------------------------------------------------- */
 
 @media (max-width: 900px) {
-  .rc-cue__button {
+  .rc-cue__button,
+  .rc-explore-cue {
     font-size: 0.54rem;
-    padding: 0.7rem 0.8rem; /* a tap target */
+  }
+
+  /* Low on the street at the left, the far corner from the door; the
+     explorer's copy, when it comes, ends just above the words. */
+  .rc-explore-cue {
+    left: calc(var(--gutter) - 0.8rem);
+    bottom: 0.4rem;
   }
 
   .rc__welcome {
@@ -385,16 +436,29 @@
    Reduced motion — the arrow and the reflection stand still
    --------------------------------------------------------------------- */
 
+/* Touch: the words stay the same size; the target around them does not —
+   at least 44px each way, invisible. */
+@media (pointer: coarse) {
+  .rc-cue__button,
+  .rc-explore-cue {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.7rem 0.8rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rc-cue__arrow,
   .rc-cue__button,
+  .rc-explore-cue,
   .rc-cue__leader,
   .rc-cue__pin,
   .rc-cue__glow {
     transition: none;
   }
 
-  .rc-cue:hover .rc-cue__arrow {
+  .rc-cue:hover .rc-cue__arrow,
+  .rc-explore-cue:hover .rc-cue__arrow {
     transform: none;
   }
 }

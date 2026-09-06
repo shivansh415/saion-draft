@@ -347,7 +347,8 @@
 }
 
 .fx__open,
-.fx-plate__back {
+.fx-plate__back,
+.fx-viewport__reset {
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
@@ -371,7 +372,8 @@
 }
 
 .fx__open-rule,
-.fx-plate__back-rule {
+.fx-plate__back-rule,
+.fx-viewport__reset-rule {
   display: block;
   width: 26px;
   height: 1px;
@@ -382,8 +384,10 @@
 
 .fx__open:hover .fx__open-rule,
 .fx-plate__back:hover .fx-plate__back-rule,
+.fx-viewport__reset:hover .fx-viewport__reset-rule,
 .fx__open:focus-visible .fx__open-rule,
-.fx-plate__back:focus-visible .fx-plate__back-rule {
+.fx-plate__back:focus-visible .fx-plate__back-rule,
+.fx-viewport__reset:focus-visible .fx-viewport__reset-rule {
   width: 40px;
 }
 
@@ -623,8 +627,8 @@
 }
 
 /* The room the sheet may occupy; the sheet is fitted and centred inside it.
-   When the drawing is unreadably small relative to this room (a phone held
-   upright) the view fits it to the height instead and the room pans. */
+   The room is also the floorplate's viewport: the drawing is zoomed and
+   panned inside the sheet's box and clipped here, at the room's edge. */
 .fx-plate__area {
   position: absolute;
   left: calc(var(--gutter) + 1.5vw);
@@ -636,21 +640,10 @@
   overflow: hidden;
 }
 
-.fx-plate__area[data-pans],
-.fx-res__area[data-pans] {
-  overflow: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.fx-plate__area[data-pans]::-webkit-scrollbar,
-.fx-res__area[data-pans]::-webkit-scrollbar {
-  display: none;
-}
-
-/* The drawing's own box — nothing behind it but a soft lift of light, so it
-   reads as floating in the space rather than printed on anything. */
+/* The drawing's own box — for the floorplate nothing behind it but a soft
+   lift of light, so it reads as floating in the space rather than printed on
+   anything. The box is the fit (zoom 1) the viewer works from and the thing
+   the explorer animates; the drawing moves inside it, in `.fx-zoom`. */
 .fx-plate__figure,
 .fx-res__figure {
   position: absolute;
@@ -660,13 +653,82 @@
   will-change: transform, opacity;
 }
 
-.fx-plate__figure::before,
-.fx-res__figure::before {
+.fx-plate__figure::before {
   content: '';
   position: absolute;
   inset: -12% -8%;
   background: radial-gradient(ellipse 60% 60% at 50% 50%, rgb(255 255 255 / 5.5%), rgb(255 255 255 / 0%) 70%);
   pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------
+   The viewer — zoom and pan (see usePlanViewer.ts)
+   --------------------------------------------------------------------- */
+
+/* Everything drawn in percentages of the drawing lives in here and moves as
+   one: the image, the residence polygons, the tags. One transform, from the
+   top-left corner, written by the viewer once a frame. */
+.fx-zoom {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+/* Where the gestures land. The browser keeps its hands off touch here — the
+   viewer reads the fingers itself — and the page never scrolls from it. */
+.fx-viewport {
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+
+.fx-viewport[data-fx-pannable] {
+  cursor: grab;
+}
+
+.fx-viewport[data-fx-dragging] {
+  cursor: grabbing;
+}
+
+.fx-viewport[data-fx-dragging] .fx-unit {
+  cursor: grabbing;
+}
+
+/* The one control: back to the fit. Offered only once the view has left it. */
+.fx-viewport__reset {
+  position: absolute;
+  right: 0.25rem;
+  bottom: 0;
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  text-shadow:
+    0 0 8px rgb(9 12 16 / 90%),
+    0 0 18px rgb(9 12 16 / 70%);
+  transition:
+    opacity 320ms ease,
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateY(4px);
+}
+
+.fx-viewport[data-fx-zoomed] > .fx-viewport__reset,
+.fx-viewport[data-fx-zoomed] ~ .fx-viewport__reset {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+/* Each control belongs to its own view only: the floorplate's must not show
+   through the residence sheet laid over it, nor linger through a fold. */
+.fx:not([data-mode='floorplate']) .fx-plate .fx-viewport__reset,
+.fx:not([data-mode='residence']) .fx-res .fx-viewport__reset {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fx-viewport__reset:focus-visible {
+  outline: 1px solid rgb(255 255 255 / 60%);
+  outline-offset: 4px;
 }
 
 .fx-plate__image,
@@ -776,7 +838,9 @@
 /* The brochure's own variant letter, at the residence's centre. */
 .fx-unit-tag {
   position: absolute;
-  transform: translate(-50%, -50%);
+  /* Held at its own size whatever the drawing is zoomed to (`--fx-zoom` is
+     written on the figure by the viewer). */
+  transform: translate(-50%, -50%) scale(calc(1 / var(--fx-zoom, 1)));
   font-family: var(--font-display);
   font-weight: 400;
   font-size: clamp(0.9rem, 1.4vw, 1.5rem);
@@ -925,7 +989,9 @@
   transform: translateX(4px);
 }
 
-/* The plan's room: right of the copy, as large as the frame allows. */
+/* The plan's room: right of the copy, as large as the frame allows. It does
+   not clip — the sheet inside it does — so the reset control can sit just
+   below it, off the paper. */
 .fx-res__area {
   position: absolute;
   left: calc(var(--gutter) + min(29vw, 27rem));
@@ -933,7 +999,43 @@
   top: clamp(4rem, 9vh, 7rem);
   bottom: clamp(2.5rem, 7vh, 4.5rem);
   max-width: 1240px;
+}
+
+/* The sheet: the supplied plan on its own white paper, exactly as delivered,
+   set into the dark with a hairline and a deep, soft shadow so it reads as a
+   sheet lying in the space rather than a white hole in it. It is also the
+   viewport — the drawing zooms and pans within the paper's edge — and the
+   one box a 3D viewer takes over later. */
+.fx-res__figure {
   overflow: hidden;
+  border-radius: 2px;
+  background: #fff;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 9%),
+    0 2px 6px rgb(0 0 0 / 35%),
+    0 24px 60px -12px rgb(0 0 0 / 70%),
+    0 60px 120px -30px rgb(0 0 0 / 60%);
+}
+
+.fx-res__figure::after {
+  /* A whisper of the room's light across the paper, so it is not flat. */
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(160deg, rgb(255 255 255 / 0%) 55%, rgb(9 12 16 / 3%) 100%);
+  pointer-events: none;
+}
+
+.fx-res__image {
+  background: #fff;
+}
+
+.fx-res .fx-viewport__reset {
+  right: 0;
+  bottom: auto;
+  top: 100%;
+  margin-top: 0.9rem;
 }
 
 /* ---------------------------------------------------------------------
@@ -1046,6 +1148,14 @@
     top: clamp(17rem, 39vh, 21rem);
     bottom: 3vh;
     max-width: none;
+  }
+
+  /* The sheet is fitted to the width here and sits above spare room, so the
+     reset control takes the room's corner rather than the frame's edge. */
+  .fx-res .fx-viewport__reset {
+    top: auto;
+    bottom: 0;
+    margin-top: 0;
   }
 }
 

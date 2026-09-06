@@ -19,7 +19,20 @@ export function useStoryMotion(root:RefObject<HTMLDivElement|null>,active:boolea
     }});
    });
    mm.add('(prefers-reduced-motion: no-preference)',()=>{
-    gsap.from('.rp-life-title .rp-clip > span',{yPercent:112,duration:1.25,stagger:.12,ease:'power3.out'});
+    // Both ends stated, `y` zeroed on each. The masked start is declared in the
+    // stylesheet so the chapter's first paint — which happens while the loader
+    // is still fading over it — already shows the lines hidden. A plain `from`
+    // would read that CSS translate as the resting value and animate nothing;
+    // and a percentage translate comes back out of getComputedStyle already
+    // resolved to pixels, so without zeroing the pixel component GSAP adds the
+    // two and the line starts at twice the depth (the same trap the opening
+    // chapter's title masks document).
+    const intro=gsap.fromTo('.rp-life-title .rp-clip > span',{yPercent:112,y:0},{yPercent:0,y:0,duration:1.25,stagger:.12,ease:'power3.out',paused:true});
+    // Held for one frame. Everything below is built in a single synchronous
+    // burst as the loader lifts, which costs a long frame; lag smoothing is off
+    // (the film's scroll sync needs it off), so that frame would be charged
+    // straight to this tween and the lines would appear already part-way up.
+    const begin=requestAnimationFrame(()=>intro.play());
     gsap.fromTo('.rp-life-image img',{scale:1.06,yPercent:0},{scale:1.16,yPercent:9,ease:'none',scrollTrigger:{trigger:'.rp-life',start:'top top',end:'bottom top',scrub:.65}});
     gsap.to('.rp-life-title',{yPercent:-22,ease:'none',scrollTrigger:{trigger:'.rp-life',start:'top top',end:'bottom top',scrub:.7}});
     element.querySelectorAll<HTMLElement>('.rp-reveal').forEach(title=>{
@@ -39,6 +52,7 @@ export function useStoryMotion(root:RefObject<HTMLDivElement|null>,active:boolea
     gsap.from('.rp-connections article',{y:70,clipPath:'inset(0 0 100% 0)',stagger:.12,duration:1.1,ease:'power3.out',scrollTrigger:{trigger:'.rp-connections',start:'top 85%',once:true}});
     gsap.fromTo('.rp-final-image',{clipPath:'inset(15% 0% 15% 0% round 50% 50% 0% 0%)'},{clipPath:'inset(0% 0% 0% 0% round 50% 50% 0% 0%)',ease:'none',scrollTrigger:{trigger:'.rp-finale',start:'top 90%',end:'top 20%',scrub:.7}});
     gsap.fromTo('.rp-final-word',{yPercent:15},{yPercent:-10,ease:'none',scrollTrigger:{trigger:'.rp-finale',start:'top bottom',end:'bottom bottom',scrub:.7}});
+    return ()=>cancelAnimationFrame(begin);
    });
    mm.add('(min-width: 901px) and (prefers-reduced-motion: no-preference)',()=>{
     const panels=gsap.utils.toArray<HTMLElement>('.rp-panel',element);
@@ -88,8 +102,15 @@ export function useStoryMotion(root:RefObject<HTMLDivElement|null>,active:boolea
    });
   },element);
   let disposed=false;
-  const refresh=gsap.delayedCall(.15,()=>{ScrollTrigger.sort();ScrollTrigger.refresh();});
-  document.fonts.ready.then(()=>{if(!disposed)ScrollTrigger.refresh();});
-  return ()=>{disposed=true;refresh.kill();mm.revert();ctx.revert();horizontal.current=null;};
+  // Synchronously, while the loader still covers the frame: a refresh 150ms in
+  // landed in the middle of the hero's reveal and cost a ~68ms frame there.
+  // Every section has an explicit height, so there is nothing to wait for.
+  ScrollTrigger.sort();ScrollTrigger.refresh();
+  // Only if the faces are genuinely still coming. The loader waits on
+  // `document.fonts.ready` before it lifts, so in the normal flow this promise
+  // is already settled and re-measuring everything again would be wasted work
+  // at the worst possible moment.
+  if(document.fonts.status!=='loaded')document.fonts.ready.then(()=>{if(!disposed)ScrollTrigger.refresh();});
+  return ()=>{disposed=true;mm.revert();ctx.revert();horizontal.current=null;};
  },[active,root,horizontal]);
 }

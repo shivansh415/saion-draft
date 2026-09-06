@@ -51,16 +51,30 @@ export interface SequenceController {
 }
 
 interface Options {
+  /**
+   * How many frames from the head of the list must have settled before the
+   * chapter is fit to be shown. The preloader holds the frame until then, so
+   * the film has a real buffer in hand before anyone can scroll into it.
+   *
+   * "Settled" rather than "loaded" on purpose: a frame that 404s or fails must
+   * still count, or one missing file would hold the loader up for ever.
+   */
+  criticalCount?: number
   onFirstFrame?: () => void
   onPrimed?: () => void
   /** Called with 0 → 1 as frames arrive. Not React state — write to the DOM. */
   onProgress?: (fraction: number) => void
+  /** Called with 0 → 1 across the critical prefix. Also not React state. */
+  onCriticalProgress?: (fraction: number) => void
 }
 
 export function useImageSequence(sources: readonly string[], options: Options = {}) {
   const controllerRef = useRef<SequenceController | null>(null)
   const [firstFrameReady, setFirstFrameReady] = useState(false)
   const [primed, setPrimed] = useState(false)
+
+  const criticalCount = Math.min(options.criticalCount ?? 0, sources.length)
+  const [criticalReady, setCriticalReady] = useState(criticalCount === 0)
 
   // Keep callbacks current without re-running the loader effect.
   const optionsRef = useRef(options)
@@ -76,6 +90,7 @@ export function useImageSequence(sources: readonly string[], options: Options = 
 
     let inflight = 0
     let loadedCount = 0
+    let criticalSettled = 0
     let priority = 0
     let disposed = false
     const pending = new Set<HTMLImageElement>()
@@ -97,6 +112,15 @@ export function useImageSequence(sources: readonly string[], options: Options = 
         status[index] = FAILED
       }
 
+      // The gate the preloader waits on. Counted whether the frame arrived or
+      // failed: the visitor must never be held behind a file that is not
+      // coming.
+      if (criticalCount > 0 && index < criticalCount) {
+        criticalSettled++
+        optionsRef.current.onCriticalProgress?.(criticalSettled / criticalCount)
+        if (criticalSettled >= criticalCount) setCriticalReady(true)
+      }
+
       pump()
     }
 
@@ -106,6 +130,14 @@ export function useImageSequence(sources: readonly string[], options: Options = 
 
       const image = new Image()
       image.decoding = 'async'
+      // The prefix the preloader is waiting on is the most urgent thing the
+      // page will ever fetch; everything after it is a background stream the
+      // visitor is scrolling towards, and saying so lets the browser give way
+      // to what is actually needed sooner — the lifestyle bundle, the
+      // reception's stills — instead of queueing them behind four hundred
+      // frames. The queue's own six-at-a-time limit means 'low' cannot starve
+      // it either way.
+      image.fetchPriority = index < criticalCount ? 'high' : 'low'
       pending.add(image)
       image.onload = () => settle(index, image, true)
       image.onerror = () => settle(index, image, false)
@@ -193,7 +225,7 @@ export function useImageSequence(sources: readonly string[], options: Options = 
       })
       pending.clear()
     }
-  }, [sources])
+  }, [sources, criticalCount])
 
-  return { controllerRef, firstFrameReady, primed }
+  return { controllerRef, firstFrameReady, primed, criticalReady }
 }

@@ -20,6 +20,13 @@ export const PLATE_COPY = {
   pending: 'Detailed plan to follow',
 } as const
 
+/** The drawing viewer's one control, shared by the floorplate and the residence plan. */
+export const VIEWER_COPY = {
+  reset: 'Reset view',
+  /** Read to assistive technology on the viewport. */
+  hint: 'Scroll or pinch to zoom, drag to pan, double-click to step in and out',
+} as const
+
 export const RESIDENCE_COPY = {
   back: 'Back to floor',
   view3d: 'View in 3D',

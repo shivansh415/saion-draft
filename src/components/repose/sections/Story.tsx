@@ -125,7 +125,7 @@ export function ConnectednessExperience({assetBase}:{assetBase:string}){
 export function FinalRepose({assetBase,onEnquire,onRestart,portal}:{assetBase:string;onEnquire:()=>void;onRestart:()=>void;portal?:ReactNode}){
  return <section id="finale" data-chapter="09" className="rp-finale rp-dark">
   <span className="rp-final-intro">THIS IS YOUR NEXT CHAPTER.</span><h2 className="rp-final-word">REPOSÉ</h2>
-  <figure className="rp-final-image"><img src={`${assetBase}/tower-original.png`} alt="The supplied completed Reposé Residence tower image" loading="lazy" decoding="async"/></figure>
+  <figure className="rp-final-image"><img src={`${assetBase}/tower-original.webp`} alt="The supplied completed Reposé Residence tower image" loading="lazy" decoding="async"/></figure>
   {portal}
   <div className="rp-final-call"><p>Make room for<br/><em>a different rhythm.</em></p><ArrowLink onClick={onEnquire}>ENQUIRE ABOUT REPOSÉ</ArrowLink></div>
   <div className="rp-final-base"><img src={BRAND_LOGO} alt="SAION Properties — Engineered Excellence" loading="lazy"/><span>REPOSÉ RESIDENCE<br/>AL FURJAN · DUBAI</span><ArrowLink onClick={onRestart}>BACK TO RECEPTION</ArrowLink></div>

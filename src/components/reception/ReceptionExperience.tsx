@@ -21,6 +21,13 @@ interface Props {
   /** From inside the lobby: on into the lifestyle chapter. */
   onExplore: () => void
   /**
+   * The opening has been revealed, so the journey's two large stills may
+   * start arriving. Before this they must not: they are 6.6MB between them
+   * and would be competing with the film's own critical frames for the same
+   * bandwidth, on the one connection, at the one moment it matters.
+   */
+  preload: boolean
+  /**
    * True while the lifestyle chapter has the frame. The journey stands down
    * at once — timeline killed, every layer put back to rest, the page
    * released — under the chapter's own cover, so that when the frame comes
@@ -107,7 +114,7 @@ const useMediaQuery = (query: string): boolean => {
  * reversed: the visitor steps back out through the doors, which close, and
  * the camera pulls back to the clean building — not to the explorer.
  */
-export function ReceptionExperience({ active, onJourney, onExplore, dismissed }: Props) {
+export function ReceptionExperience({ active, onJourney, onExplore, dismissed, preload }: Props) {
   const rootRef = useRef<HTMLDivElement | null>(null)
   const rect = useCoverRect(rootRef, FINAL_FRAME_STILL.width, FINAL_FRAME_STILL.height, FOCAL_X, FOCAL_Y)
   const layout = useMemo(() => layoutEntrance(rect), [rect])
@@ -129,11 +136,31 @@ export function ReceptionExperience({ active, onJourney, onExplore, dismissed }:
   }, [])
 
   // Both pictures are fetched and decoded ahead of the first click, at low
-  // priority so the film's frames are never made to wait for them.
+  // priority so the film's frames are never made to wait for them — and not
+  // begun at all until the opening has been revealed and the critical frames
+  // are in hand. There are minutes of film between the reveal and the earliest
+  // possible click, which is ample; the click path warms them again anyway, so
+  // this is a head start rather than a dependency.
   useEffect(() => {
-    void warm(RECEPTION_ASSETS.building)
-    void warm(RECEPTION_ASSETS.reception)
-  }, [])
+    if (!preload) return
+    let cancelled = false
+    const start = () => {
+      if (cancelled) return
+      void warm(RECEPTION_ASSETS.building)
+      void warm(RECEPTION_ASSETS.reception)
+    }
+    // Off the reveal's own frames; the timeout is the floor, for a page that
+    // never goes idle because the visitor is already scrolling.
+    const idle =
+      typeof requestIdleCallback === 'function'
+        ? requestIdleCallback(start, { timeout: 1200 })
+        : window.setTimeout(start, 900)
+    return () => {
+      cancelled = true
+      if (typeof cancelIdleCallback === 'function') cancelIdleCallback(idle)
+      else window.clearTimeout(idle)
+    }
+  }, [preload])
 
   /* --------------------------------------------------------------- *
    * The camera
@@ -384,7 +411,7 @@ export function ReceptionExperience({ active, onJourney, onExplore, dismissed }:
       data-active={active || undefined}
       aria-hidden={!active}
     >
-      <EntranceTransition layout={layout} />
+      <EntranceTransition layout={layout} sources={preload} />
 
       <button
         type="button"

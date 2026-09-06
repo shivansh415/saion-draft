@@ -54,18 +54,6 @@
     linear-gradient(to bottom, rgb(9 12 16 / 14%) 0%, rgb(9 12 16 / 0%) 16%);
 }
 
-.opening__scrim--final {
-  opacity: 0;
-  background:
-    linear-gradient(
-      100deg,
-      rgb(9 12 16 / 60%) 0%,
-      rgb(9 12 16 / 34%) 28%,
-      rgb(9 12 16 / 0%) 56%
-    ),
-    linear-gradient(to bottom, rgb(9 12 16 / 22%) 0%, rgb(9 12 16 / 0%) 26%);
-}
-
 /* ---------------------------------------------------------------------
    Shared type mechanics
    --------------------------------------------------------------------- */
@@ -235,76 +223,6 @@
   100% {
     transform: translateY(266%);
   }
-}
-
-/* ---------------------------------------------------------------------
-   Closing title
-   --------------------------------------------------------------------- */
-
-.op-final {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding-inline: var(--gutter);
-  padding-block: var(--gutter-block);
-  color: var(--paper);
-  pointer-events: none;
-  opacity: 0;
-  will-change: transform, opacity, filter;
-}
-
-/* Lifted off centre: in the completed render the clean sky sits in the upper
-   left, while palms and villas crowd the lower corners. */
-.op-final__inner {
-  max-width: 100%;
-  margin-block-end: 11vh;
-}
-
-.op-final__title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-weight: 300;
-  font-size: clamp(2.4rem, 6.4vw, 7.6rem);
-  line-height: 0.9;
-  letter-spacing: 0.01em;
-  text-transform: uppercase;
-  width: max-content;
-  max-width: 100%;
-}
-
-/* The closing lines are revealed by the section's own fade, not by the
-   entrance masks, so they rest in place. */
-.op-final .op-line__inner {
-  transform: none;
-}
-
-.op-rule--final {
-  margin-block-start: clamp(1.3rem, 2.4vh, 2rem);
-  transform: scaleX(1);
-}
-
-.op-final__meta {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-  margin: clamp(1.1rem, 2vh, 1.7rem) 0 0;
-  font-family: var(--font-sans);
-  font-weight: 300;
-  text-transform: uppercase;
-}
-
-.op-final__project {
-  font-size: clamp(0.62rem, 0.8vw, 0.82rem);
-  letter-spacing: 0.34em;
-  color: rgb(255 255 255 / 94%);
-}
-
-.op-final__location {
-  font-size: clamp(0.55rem, 0.7vw, 0.72rem);
-  letter-spacing: 0.3em;
-  color: rgb(255 255 255 / 68%);
 }
 
 /* ---------------------------------------------------------------------
@@ -495,8 +413,7 @@
    --------------------------------------------------------------------- */
 
 @media (max-width: 900px) {
-  .op-hero__inner,
-  .op-final__inner {
+  .op-hero__inner {
     max-width: none;
   }
 
@@ -504,14 +421,6 @@
     font-size: clamp(2.4rem, 13vw, 5.4rem);
   }
 
-  .op-final {
-    justify-content: flex-end;
-    padding-block-end: calc(var(--gutter-block) + 2.5rem);
-  }
-
-  .op-final__title {
-    font-size: clamp(2.2rem, 12vw, 4.2rem);
-  }
 
   .cb__title {
     font-size: clamp(2.5rem, 13vw, 5.2rem);
@@ -556,5 +465,354 @@
   .op-brand {
     opacity: 1;
     transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   The amenities cue
+
+   A mark on the building, in the same language as the entrance cue: small
+   tracked capitals and an arrow, placed from the image's own coordinates
+   (see `towerZone`) so it holds its storey at every crop.
+
+   It stands on the lowest residential floor, inside the tower's hit zone, so
+   it must clear out the instant the explorer is asked for — otherwise it
+   would cover Level 01's band and take its clicks.
+   --------------------------------------------------------------------- */
+
+.am-cue {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 900ms ease 500ms;
+}
+
+.am-cue[data-active] {
+  opacity: 1;
+}
+
+.am-cue__button {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  border: 0;
+  background: transparent;
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.56rem;
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  opacity: 0.92;
+  transform: translate(-50%, -50%);
+  text-shadow: 0 1px 4px rgb(9 12 16 / 80%);
+  pointer-events: auto;
+  transition: opacity 500ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* What this cue stands on is lit glazing, not open sky — the entrance cue's
+   text-shadow alone disappears into it. A soft wash of the render's own dark,
+   with no edge of its own, gives the tracked capitals something to hold
+   against while still reading as shadow on the building rather than a panel
+   laid over it. */
+.am-cue__button::before {
+  content: '';
+  position: absolute;
+  inset: -0.35rem -0.9rem;
+  background: radial-gradient(
+    62% 130% at 50% 50%,
+    rgb(9 12 16 / 62%) 0%,
+    rgb(9 12 16 / 42%) 52%,
+    rgb(9 12 16 / 0%) 100%
+  );
+  pointer-events: none;
+}
+
+.am-cue__label,
+.am-cue__arrow {
+  position: relative;
+}
+
+.am-cue__label {
+  padding-inline-start: 0.36em; /* optical centring against the tracking */
+}
+
+.am-cue__arrow {
+  display: inline-block;
+  font-size: 0.7rem;
+  letter-spacing: 0;
+  opacity: 0.85;
+  transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.am-cue__button:hover,
+.am-cue__button:focus-visible {
+  opacity: 1;
+}
+
+.am-cue__button:hover .am-cue__arrow,
+.am-cue__button:focus-visible .am-cue__arrow {
+  transform: translateX(5px);
+}
+
+.am-cue__button:focus-visible {
+  outline: 1px solid rgb(255 255 255 / 60%);
+  outline-offset: 2px;
+}
+
+/* The cue stands on the podium, clear of every level band, so the explorer
+   coming up does not have to take it away — it only yields, exactly as the
+   entrance cue does. A plan being open, or another chapter having the frame,
+   does retire it. */
+.fx[data-revealed] ~ .am-cue[data-active] {
+  opacity: 0.55;
+}
+
+.fx:not([data-mode='selector']) ~ .am-cue,
+.fx[data-suspended] ~ .am-cue {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms ease;
+}
+
+/* The walk into the reception and the lifestyle chapter both stand the cue
+   down through its `active` prop — the reception layer sits after this one in
+   the DOM, so it cannot be reached from here by a sibling selector. */
+
+@media (max-width: 900px) {
+  .am-cue__button {
+    font-size: 0.5rem;
+    letter-spacing: 0.28em;
+    padding: 0.7rem 0.8rem; /* a tap target */
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .am-cue,
+  .am-cue__button,
+  .am-cue__arrow {
+    transition: none;
+  }
+
+  .am-cue__button:hover .am-cue__arrow {
+    transform: none;
+  }
+}
+
+/* =====================================================================
+   The preloader
+   =====================================================================
+
+   Holds the frame until the film can actually be travelled through. It is
+   portalled to <body> rather than mounted inside the chapter, so it is
+   anchored to the viewport and cannot inherit the sticky viewport's
+   containing block, a transform, or a scroll offset — the loader's centre
+   is the screen's centre at every size, with no compensating maths.
+
+   Centring is done by layout (grid + place-items), never by a transform:
+   GSAP owns `transform` on the plate for the exit, and the two must never
+   contend for the same property.
+
+   Its ground is `--ink`, the same colour as the page and the chapter's own
+   viewport, so the exit fade cannot flash: what it fades to is already
+   painted underneath it.
+   ===================================================================== */
+
+.ol {
+  position: fixed;
+  z-index: 300;
+  inset: 0;
+  height: 100svh;
+  display: grid;
+  grid-template: 1fr / 1fr;
+  place-items: center;
+  background: var(--ink);
+  color: var(--paper);
+  overflow: hidden;
+  /* Nothing behind it is interactive while it is up; the page is also held
+     by the shared scroll lock. */
+  touch-action: none;
+  /* Promoted for the exit: the fade is a full-viewport opacity change, and
+     without a layer of its own every step of it repaints the whole screen.
+     It costs one layer for the two seconds the loader exists, and it is
+     nothing like the portal's case — there is no pixel-exact image match to
+     be spoiled here, only a ground fading off what is already painted. */
+  will-change: opacity;
+  /* layout + paint, not `strict`: `size` containment would make the box size
+     itself as if empty, and the centring grid must not be asked that
+     question. */
+  contain: layout paint;
+}
+
+.ol__plate {
+  grid-area: 1 / 1;
+  width: auto;
+  height: min(42svh, 50vw);
+  overflow: visible;
+  will-change: transform, opacity;
+}
+
+/* ---- the line work ------------------------------------------------- */
+
+.ol__line {
+  fill: none;
+  stroke: var(--paper);
+  stroke-width: 1.15;
+  stroke-linecap: square;
+  /* No `vector-effect: non-scaling-stroke` on the drawn paths, deliberately:
+     it makes the browser measure the dash pattern in screen space while
+     `pathLength` normalises it in user space, and the two disagree — the
+     visible result is an arch that stops drawing two-thirds of the way round.
+     The stroke is scaled instead, which also means it thickens fractionally
+     as the arch opens on the way out, in keeping with a thing approaching. */
+  /* `pathLength="1"` normalises every path, so one dash length draws them
+     all regardless of their real geometry. Stated here so nothing untweened
+     is ever painted. */
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+}
+
+.ol__line--soft {
+  stroke-width: 0.75;
+  stroke-opacity: 0.5;
+}
+
+.ol__storeys line {
+  stroke: var(--paper);
+  stroke-width: 0.85;
+  stroke-opacity: 0.62;
+  vector-effect: non-scaling-stroke;
+}
+
+.ol__level {
+  stroke: var(--paper);
+  stroke-width: 0.75;
+  stroke-opacity: 0.34;
+  vector-effect: non-scaling-stroke;
+}
+
+/* ---- the type ------------------------------------------------------ */
+
+.ol__meta,
+.ol__foot {
+  position: absolute;
+  inset-inline: 6%;
+  opacity: 0;
+  /* A pixel translate, not a percentage: GSAP reads a computed transform as
+     pixels, so a percentage pre-state here would be added to the tween's own
+     value rather than replaced by it. */
+  transform: translateY(10px);
+  pointer-events: none;
+}
+
+.ol__meta {
+  top: 6svh;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: var(--font-sans);
+  font-size: clamp(0.56rem, 0.72vw, 0.68rem);
+  font-weight: 300;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgb(246 244 241 / 62%);
+}
+
+.ol__pct {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.15em;
+  color: rgb(246 244 241 / 88%);
+  /* Tabular figures, and a box held open to the widest reading it can show:
+     between them the counter cannot move anything as it passes 9 and 99. */
+  font-variant-numeric: tabular-nums;
+}
+
+.ol__pct > span {
+  min-width: 3ch;
+  text-align: right;
+}
+
+.ol__pct i {
+  font-style: normal;
+  opacity: 0.45;
+}
+
+.ol__foot {
+  bottom: 7svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.5rem, 1.2vh, 0.85rem);
+  text-align: center;
+}
+
+.ol__project {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(1.05rem, 1.9vw, 1.6rem);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(246 244 241 / 92%);
+}
+
+.ol__place {
+  font-family: var(--font-sans);
+  font-size: clamp(0.54rem, 0.7vw, 0.64rem);
+  font-weight: 300;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgb(246 244 241 / 46%);
+}
+
+/* ---- narrow viewports ---------------------------------------------- */
+
+@media (max-width: 900px) {
+  .ol__plate {
+    height: min(34svh, 54vw);
+  }
+
+  .ol__meta {
+    top: 5svh;
+    letter-spacing: 0.24em;
+  }
+
+  .ol__foot {
+    bottom: 6svh;
+  }
+
+  .ol__project {
+    letter-spacing: 0.1em;
+  }
+
+  .ol__place {
+    letter-spacing: 0.22em;
+  }
+}
+
+/* ---- reduced motion ------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .ol__line,
+  .ol__meta,
+  .ol__foot {
+    stroke-dashoffset: 0;
+    opacity: 1;
+    transform: none;
+  }
+
+  .ol__plate,
+  .ol__storeys,
+  .ol__level {
+    will-change: auto;
   }
 }

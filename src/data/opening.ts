@@ -174,10 +174,6 @@ export const HERO_EXIT_END = 0.105
 /** The scroll cue retires almost immediately. */
 export const HINT_EXIT_END = 0.028
 
-/** The closing title arrives once the facade has completed. */
-export const FINAL_IN_START = 0.878
-export const FINAL_IN_END = 0.942
-
 /* ------------------------------------------------------------------ *
  * Progress → frame resolution
  * ------------------------------------------------------------------ */
@@ -251,6 +247,46 @@ export function resolveFrame(progress: number): FrameState {
 /** Frames fetched before the chapter is considered ready to travel through. */
 export const PRIME_COUNT = 24
 
+/* ------------------------------------------------------------------ *
+ * The gate — what the preloader holds the frame for
+ *
+ * The rule is that the opening is never revealed until enough of the film
+ * is genuinely in hand to be scrolled through smoothly, and that nothing
+ * beyond the opening's own first seconds is ever waited for.
+ * ------------------------------------------------------------------ */
+
+/**
+ * Frames from the head of the film that must be in hand before the chapter
+ * is shown. 32 frames is ~1.2 MB and, at the film's 1.27vh per frame, close
+ * to half a second of continuous playback at a brisk scroll — by which point
+ * the queue, running six wide and always reaching forward of the playhead,
+ * is comfortably ahead of any human thumb.
+ *
+ * It is deliberately a prefix of sequence 01 and nothing else. The rest of
+ * the film, the reception, the lifestyle chapter and its imagery all load
+ * behind the visitor, after the reveal.
+ */
+export const CRITICAL_FRAMES = 32
+
+/**
+ * The shortest the preloader is on screen. Long enough for its own line
+ * work to draw and settle, so a warm cache reads as a considered opening
+ * rather than a flash of something.
+ */
+export const LOADER_MIN_MS = 1700
+
+/**
+ * The longest it will hold out for `CRITICAL_FRAMES`. Past this the chapter
+ * is revealed with whatever has arrived — never with nothing (the first
+ * frame and the fonts are still required), but a slow line should not trap
+ * anyone behind a loader indefinitely. The film degrades gracefully from
+ * here: `getNearest` holds the closest loaded frame rather than flashing.
+ */
+export const LOADER_MAX_MS = 12000
+
+/** Longest the fonts are waited on before the reveal goes ahead without them. */
+export const FONT_WAIT_MS = 4000
+
 /** Parallel image requests. */
 export const MAX_CONCURRENT_LOADS = 6
 
@@ -315,8 +351,30 @@ export const CHAPTER_COPY = {
   location: 'Al Furjan · Dubai',
 } as const
 
+/**
+ * The closing title card's copy.
+ *
+ * The card itself was removed: the film now completes on the building and
+ * hands straight over to the explorer. This and `components/opening/FinalReveal`
+ * are no longer rendered anywhere and can both be deleted; they are kept only
+ * so the orphaned component still type-checks until it is.
+ */
 export const FINAL_COPY = {
   titleLines: ['Stately', 'Serenity'],
   project: 'Reposé Residence',
   location: 'Al Furjan · Dubai',
+} as const
+
+/** The cue on the completed building that leads to the amenities. */
+export const AMENITIES_COPY = {
+  label: 'Explore amenities',
+} as const
+
+/** The preloader that holds the frame until the film is ready to travel. */
+export const LOADER_COPY = {
+  developer: 'SAION Properties',
+  project: 'Reposé Residence',
+  location: 'Al Furjan · Dubai',
+  /** Announced to assistive technology while the frame is held. */
+  status: 'Loading Reposé Residence',
 } as const

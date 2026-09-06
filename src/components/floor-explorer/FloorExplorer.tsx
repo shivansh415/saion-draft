@@ -8,12 +8,13 @@ import { BuildingLevelSelector } from './BuildingLevelSelector'
 import { FloorplateView } from './FloorplateView'
 import { ResidencePlanView } from './ResidencePlanView'
 import { EXPLORER_COPY } from './floorExplorerCopy'
-import { logUnverifiedResidences, useFloorExplorerData } from './floorExplorerData'
+import { floorplateImage, logUnverifiedResidences, unitPlanImage, useFloorExplorerData } from './floorExplorerData'
 import type { Level, UnitHotspot } from './floorExplorerData'
 import type { LevelId } from './levelCalibration'
 import { bandPx } from './levelGeometry'
 import { GROUND_Y, INVITE_X, INVITE_Y, TOWER_CLIP_PATH } from './towerZone'
 import { useCoverRect } from './useCoverRect'
+import { resetPlanViewer } from './usePlanViewer'
 import '../../styles/floor-explorer.css'
 
 /**
@@ -238,7 +239,7 @@ export function FloorExplorer({ active, suspended = false }: Props) {
   // the <img> that eventually shows them.
   useEffect(() => {
     if (!active || data.status !== 'ready') return
-    const plates = data.model.floorplates.map((plate) => plate.src)
+    const plates = data.model.floorplates.map(floorplateImage)
     let cancelled = false
     const run = async () => {
       for (const src of plates) {
@@ -340,7 +341,9 @@ export function FloorExplorer({ active, suspended = false }: Props) {
           .fromTo(
             figure,
             { clipPath: 'inset(50% 0% 50% 0%)', y: fromLine, scale: 0.94, opacity: 1 },
-            { clipPath: 'inset(0% 0% 0% 0%)', y: 0, scale: 1, duration: 1.3, ease: 'expo.out' },
+            // The clip is lifted once it has opened: the drawing may then be
+            // zoomed past the figure's box, clipped by the area instead.
+            { clipPath: 'inset(0% 0% 0% 0%)', y: 0, scale: 1, duration: 1.3, ease: 'expo.out', clearProps: 'clipPath' },
             at,
           )
           .to(line, { opacity: 0, duration: 0.5, ease: 'power2.out' }, at + 0.25)
@@ -348,7 +351,7 @@ export function FloorExplorer({ active, suspended = false }: Props) {
       }
 
       // The plate must be decoded before it can emerge cleanly; it usually is.
-      const ready = Promise.race([warmImage(level.floorplate.src), settle(900)])
+      const ready = Promise.race([warmImage(floorplateImage(level.floorplate)), settle(900)])
       timeline.addPause(0.55)
       void ready.then(() => {
         reveal()
@@ -396,6 +399,7 @@ export function FloorExplorer({ active, suspended = false }: Props) {
     timeline.timeScale(coarse ? 1.3 : 1)
 
     if (reducedMotion) {
+      resetPlanViewer(area)
       timeline
         .to([head, figure], { opacity: 0, duration: 0.3 }, 0)
         .to(stage, { opacity: 1, duration: 0.4 }, 0.1)
@@ -407,6 +411,11 @@ export function FloorExplorer({ active, suspended = false }: Props) {
     const rootBox = root.getBoundingClientRect()
     const figureCentre = areaBox.top - rootBox.top + areaBox.height / 2
     const toLine = band.lineY - figureCentre
+
+    // Whatever the visitor zoomed into settles back to the fit as the plan
+    // folds; the clip it folds under starts from the open state it was left in.
+    resetPlanViewer(area, true)
+    gsap.set(figure, { clipPath: 'inset(0% 0% 0% 0%)' })
 
     timeline
       // The plan folds back into the line it came from.
@@ -430,7 +439,8 @@ export function FloorExplorer({ active, suspended = false }: Props) {
   const openUnit = useCallback(
     (hotspot: UnitHotspot) => {
       const root = rootRef.current
-      if (!root || modeRef.current !== 'floorplate' || !hotspot.plan) return
+      const plan = unitPlanImage(hotspot)
+      if (!root || modeRef.current !== 'floorplate' || !plan) return
 
       lastTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
       changeMode('openingResidence')
@@ -469,15 +479,26 @@ export function FloorExplorer({ active, suspended = false }: Props) {
       // The plate closes in on the chosen residence: everything else has
       // already rested (the layer's focus state), the outline holds, and the
       // drawing grows around the residence's own centre until the unit plan
-      // takes over. A panning sheet on a phone cannot grow without disturbing
-      // its scroll, so there the move is a quieter lift.
+      // takes over. The residence's centre is a point of the drawing, which
+      // the viewer may have zoomed and panned inside the figure — so it is
+      // read back through the drawing's wrapper into the figure's own box.
       const [cx, cy] = hotspot.labelAt
-      plateFigure.style.transformOrigin = `${cx}% ${cy}%`
-      const pans = plateArea.hasAttribute('data-pans')
+      const drawing = plateFigure.querySelector<HTMLElement>('[data-fx-zoom]')?.getBoundingClientRect()
+      const figureBox = plateFigure.getBoundingClientRect()
+      const zoom = drawing && figureBox.width ? drawing.width / figureBox.width : 1
+      if (drawing && figureBox.width && figureBox.height) {
+        const ox = ((drawing.left + (drawing.width * cx) / 100 - figureBox.left) / figureBox.width) * 100
+        const oy = ((drawing.top + (drawing.height * cy) / 100 - figureBox.top) / figureBox.height) * 100
+        plateFigure.style.transformOrigin = `${ox}% ${oy}%`
+      } else {
+        plateFigure.style.transformOrigin = `${cx}% ${cy}%`
+      }
+      // Already close in? Then a quieter lift.
+      const grow = zoom > 1.6 ? 1.35 : 2.3
 
       timeline
         .to(plateHead, { opacity: 0, y: -8, duration: 0.4, ease: 'power2.in' }, 0)
-        .to(plateFigure, { scale: pans ? 1.12 : 2.3, opacity: 0, duration: 1.05, ease: 'power2.inOut' }, 0.12)
+        .to(plateFigure, { scale: grow, opacity: 0, duration: 1.05, ease: 'power2.inOut' }, 0.12)
 
       const reveal = () => {
         const at = Math.max(0.5, timeline.time())
@@ -491,7 +512,7 @@ export function FloorExplorer({ active, suspended = false }: Props) {
           .fromTo(resHead, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.85, ease: 'power3.out' }, at + 0.15)
       }
 
-      const ready = Promise.race([warmImage(hotspot.plan), settle(900)])
+      const ready = Promise.race([warmImage(plan), settle(900)])
       timeline.addPause(0.5)
       void ready.then(() => {
         reveal()
@@ -523,6 +544,8 @@ export function FloorExplorer({ active, suspended = false }: Props) {
       changeMode('floorplate')
       setOpenResidence(null)
       plateFigure.style.transformOrigin = ''
+      // The next residence opens at its fit, not where this one was left.
+      resetPlanViewer(resFigure)
       const trigger = lastTriggerRef.current
       if (trigger && root.contains(trigger)) trigger.focus({ preventScroll: true })
       else backRef.current?.focus({ preventScroll: true })
@@ -573,7 +596,8 @@ export function FloorExplorer({ active, suspended = false }: Props) {
   const chooseUnit = useCallback(
     (hotspot: UnitHotspot) => {
       if (modeRef.current !== 'floorplate') return
-      if (hotspot.plan) void warmImage(hotspot.plan)
+      const plan = unitPlanImage(hotspot)
+      if (plan) void warmImage(plan)
       if (coarse && unitSelected !== hotspot.residence.id) {
         // First tap indicates; the readout offers the plan, a second tap opens it.
         setUnitSelected(hotspot.residence.id)
@@ -593,7 +617,8 @@ export function FloorExplorer({ active, suspended = false }: Props) {
     (id: string | null) => {
       setUnitHovered(id)
       // Hover intent: have the plan decoded before it is asked for.
-      const plan = id ? openLevel?.floorplate.hotspots.find((hotspot) => hotspot.residence.id === id)?.plan : null
+      const hotspot = id ? openLevel?.floorplate.hotspots.find((candidate) => candidate.residence.id === id) : null
+      const plan = hotspot ? unitPlanImage(hotspot) : null
       if (plan) void warmImage(plan)
     },
     [openLevel],
@@ -608,7 +633,7 @@ export function FloorExplorer({ active, suspended = false }: Props) {
       if (coarse && selected !== level.id) {
         // First tap indicates; the readout offers the plan, a second tap opens it.
         setSelected(level.id)
-        void warmImage(level.floorplate.src)
+        void warmImage(floorplateImage(level.floorplate))
         return
       }
       open(level)
@@ -616,7 +641,7 @@ export function FloorExplorer({ active, suspended = false }: Props) {
     [active, coarse, selected, open],
   )
 
-  const prefetch = useCallback((level: Level) => void warmImage(level.floorplate.src), [])
+  const prefetch = useCallback((level: Level) => void warmImage(floorplateImage(level.floorplate)), [])
 
   return (
     <div
@@ -717,7 +742,13 @@ export function FloorExplorer({ active, suspended = false }: Props) {
         ref={backRef}
       />
 
-      <ResidencePlanView level={openLevel} hotspot={openResidence} onBack={closeUnit} ref={unitBackRef} />
+      <ResidencePlanView
+        level={openLevel}
+        hotspot={openResidence}
+        interactive={mode === 'residence'}
+        onBack={closeUnit}
+        ref={unitBackRef}
+      />
     </div>
   )
 }

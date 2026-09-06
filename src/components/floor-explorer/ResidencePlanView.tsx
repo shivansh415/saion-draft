@@ -1,14 +1,17 @@
-import { forwardRef } from 'react'
+import { forwardRef, useRef } from 'react'
 
-import { RESIDENCE_COPY } from './floorExplorerCopy'
-import { formatLevelList } from './floorExplorerData'
+import { RESIDENCE_COPY, VIEWER_COPY } from './floorExplorerCopy'
+import { PLAN_PRESENTATION, formatLevelList, planFallback, unitPlanImage } from './floorExplorerData'
 import type { Level, UnitHotspot } from './floorExplorerData'
+import { usePlanViewer } from './usePlanViewer'
 import { useImageRatio, useSheetFit } from './useSheetFit'
 
 interface Props {
   level: Level | null
   /** The residence on view — always one with a verified plan — or null while idle. */
   hotspot: UnitHotspot | null
+  /** True while the plan may take input (the residence is open, not opening or closing). */
+  interactive: boolean
   onBack: () => void
 }
 
@@ -20,21 +23,30 @@ const FALLBACK_RATIO = 2550 / 2200
  *
  * Left: where it is (the level), what it is (the brochure's own residence
  * name, and its letter where the brochure is consistent about it) and the
- * way back. Right: the supplied unit plan, relit for the dark ground and
- * floating over it — lazily loaded, only ever the file `residences-map.json`
- * links to or `unitPlanVerification.ts` confirms. The plan prints the
- * brochure's own area figures; nothing is transcribed from it, because the
- * package carries no such data to verify against.
+ * way back. Right: the supplied unit plan, shown as the copy
+ * `PLAN_PRESENTATION` names for it — the original, on its own white paper,
+ * exactly as delivered — held in a sheet that stays put in the dark frame
+ * while `usePlanViewer` zooms and pans the drawing inside it. Lazily loaded,
+ * only ever the file `residences-map.json` links to or
+ * `unitPlanVerification.ts` confirms. The plan prints the brochure's own
+ * area figures; nothing is transcribed from it, because the package carries
+ * no such data to verify against.
  *
- * "View in 3D" is a placeholder for the next chapter and does nothing yet.
+ * The sheet (`figure`) is the slot a 3D viewer takes over later: it is the
+ * one box the explorer animates in and out, and whatever renders inside it
+ * — today the 2D drawing in its zoom wrapper — is its own concern.
+ * "View in 3D" is a placeholder for that chapter and does nothing yet.
  */
 export const ResidencePlanView = forwardRef<HTMLButtonElement, Props>(function ResidencePlanView(
-  { level, hotspot, onBack },
+  { level, hotspot, interactive, onBack },
   backRef,
 ) {
-  const src = hotspot?.planRelit ?? null
+  const src = hotspot ? unitPlanImage(hotspot) : null
   const [ratio, learnRatio] = useImageRatio(src, FALLBACK_RATIO)
-  const { areaRef, sheetRef: figureRef } = useSheetFit({ ratio, fill: 0.98 })
+  const { areaRef, sheetRef: figureRef } = useSheetFit({ ratio, fill: 0.96 })
+  const contentRef = useRef<HTMLDivElement | null>(null)
+  // The sheet is its own viewport: the paper's edge is where the drawing clips.
+  const viewer = usePlanViewer({ viewportRef: figureRef, frameRef: figureRef, contentRef, enabled: interactive })
 
   const residence = hotspot?.residence ?? null
   const variant = hotspot?.typeLabel ?? null
@@ -94,23 +106,40 @@ export const ResidencePlanView = forwardRef<HTMLButtonElement, Props>(function R
 
       <div className="fx-res__area" data-fx-res-area ref={areaRef}>
         <div className="fx-res__guides" aria-hidden="true" />
-        <figure className="fx-res__figure" data-fx-res-figure ref={figureRef}>
-          {residence && src && (
-            <img
-              className="fx-res__image"
-              src={src}
-              alt={`${residence.name}${variant ? `, ${variant}` : ''} — official unit plan`}
-              decoding="async"
-              loading="lazy"
-              draggable={false}
-              onLoad={(event) => learnRatio(event.currentTarget)}
-              onError={(event) => {
-                const image = event.currentTarget
-                if (hotspot?.plan && image.getAttribute('src') !== hotspot.plan) image.src = hotspot.plan
-              }}
-            />
-          )}
+        {/* The sheet: the fixed white paper the drawing is zoomed within. */}
+        <figure className="fx-res__figure fx-viewport" data-fx-res-figure data-fx-viewport ref={figureRef}>
+          <div className="fx-zoom" data-fx-zoom ref={contentRef}>
+            {residence && src && (
+              <img
+                className="fx-res__image"
+                src={src}
+                alt={`${residence.name}${variant ? `, ${variant}` : ''} — official unit plan`}
+                decoding="async"
+                loading="lazy"
+                draggable={false}
+                onLoad={(event) => learnRatio(event.currentTarget)}
+                onError={(event) => {
+                  const image = event.currentTarget
+                  if (!hotspot?.plan) return
+                  const fallback = planFallback(hotspot.plan, PLAN_PRESENTATION.unitPlan)
+                  if (image.getAttribute('src') !== fallback) image.src = fallback
+                }}
+              />
+            )}
+          </div>
         </figure>
+
+        <button
+          type="button"
+          className="fx-viewport__reset"
+          data-fx-viewer-reset
+          onClick={() => viewer.reset()}
+          tabIndex={interactive ? 0 : -1}
+          title={VIEWER_COPY.hint}
+        >
+          <span className="fx-viewport__reset-rule" />
+          {VIEWER_COPY.reset}
+        </button>
       </div>
     </section>
   )

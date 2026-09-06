@@ -109,15 +109,17 @@ export const SWING_PERSPECTIVE = 420
 export const SWING_DEGREES = 64
 
 /**
- * The wayfinding cue. The label sits in clear sky above the podium — the
- * nearest quiet ground to the entrance; the fins and the rooftop palms sit
- * between — and a hairline leader drops from it to the top of the soffit, so
- * the cue is pinned to the entrance without sitting on it.
- * still px: label centred at (1910.5, 1252); leader 1272 → 1512; pin at 1515
+ * The wayfinding cue, directly above the door. The label sits in the transom
+ * — the band of lit glass between the soffit (1515) and the doors' head rail
+ * (1591), the one quiet, even ground inside the portal — centred on the
+ * door's own centre line, and a short hairline drops from it to the head
+ * rail, so the mark is attached to the door it names. Above the soffit are
+ * the fins; there it would be lost.
+ * still px: label centred at (1910.5, 1548); leader 1563 → 1586; pin at 1588
  */
 export const CUE = {
   x: px(1910.5),
-  labelY: py(1252),
-  leaderTop: py(1272),
-  pinY: py(1515),
+  labelY: py(1548),
+  leaderTop: py(1563),
+  pinY: py(1588),
 } as const

@@ -7,8 +7,8 @@ import {
   breakSpan,
   CHAPTER_HEIGHT_VH,
   CHAPTER_UNITS,
-  FINAL_IN_END,
-  FINAL_IN_START,
+  CRITICAL_FRAMES,
+  FONT_WAIT_MS,
   FRAME_SOURCES,
   HANDOFF,
   HERO_EXIT_END,
@@ -18,12 +18,15 @@ import {
 } from '../../data/opening'
 import { useImageSequence } from '../../hooks/useImageSequence'
 import { FloorExplorer } from '../floor-explorer/FloorExplorer'
+import { AmenitiesHotspot } from './AmenitiesHotspot'
 import { ReceptionExperience } from '../reception/ReceptionExperience'
+import { prefetchLifestyle } from '../repose/lazy'
 import { CanvasSequence } from './CanvasSequence'
 import type { CanvasSequenceHandle } from './CanvasSequence'
 import { ChapterBreak } from './ChapterBreak'
-import { FinalReveal } from './FinalReveal'
 import { OpeningCopy } from './OpeningCopy'
+import { OpeningLoader } from './OpeningLoader'
+import type { OpeningLoaderHandle } from './OpeningLoader'
 import { ScrollHint } from './ScrollHint'
 import '../../styles/opening.css'
 
@@ -51,7 +54,10 @@ interface Props {
    * rest, so the chapter returns to the clean building.
    */
   lifestyleActive: boolean
-  /** From inside the reception: on into the lifestyle chapter. */
+  /**
+   * On into the lifestyle chapter, from the reception inside or from the
+   * amenities cue on the podium. Both open it at its beginning.
+   */
   onExplore: () => void
 }
 
@@ -59,10 +65,22 @@ export function OpeningExperience({ lifestyleActive, onExplore }: Props) {
   const sectionRef = useRef<HTMLElement | null>(null)
   const canvasRef = useRef<CanvasSequenceHandle | null>(null)
   const meterRef = useRef<HTMLDivElement | null>(null)
+  const loaderRef = useRef<OpeningLoaderHandle | null>(null)
 
   /** True once the hand-off has settled and the explorer may take input. */
   const [explorerActive, setExplorerActive] = useState(false)
   const explorerActiveRef = useRef(false)
+
+  /**
+   * The preloader is up until the film can be travelled through, and the
+   * chapter is not live until it begins to leave. `loaderUp` takes it out of
+   * the tree once its exit has finished; `revealed` flips a beat earlier, when
+   * the exit starts, so the opening title plays into the fade rather than
+   * behind it.
+   */
+  const [loaderUp, setLoaderUp] = useState(true)
+  const [revealed, setRevealed] = useState(false)
+  const [fontsReady, setFontsReady] = useState(() => document.fonts?.status === 'loaded')
 
   /** True while the walk into the reception has the frame; the explorer stands down. */
   const [entering, setEntering] = useState(false)
@@ -83,15 +101,60 @@ export function OpeningExperience({ lifestyleActive, onExplore }: Props) {
   const lastKeyRef = useRef('')
   /** True when the previous paint used a stand-in rather than the exact frame. */
   const approximateRef = useRef(true)
+  /**
+   * True while the chapter's picture is nobody's business — the lifestyle
+   * chapter has the page and this section is scrolled out of the viewport
+   * behind it. The rAF loop keeps its cadence but stops resolving, warming and
+   * compositing frames, which is the whole of its cost.
+   */
+  const dormantRef = useRef(false)
+  /** Mirrors `revealed` for the rAF loop, which must not re-subscribe to read it. */
+  const revealedRef = useRef(false)
 
   const onProgress = useCallback((fraction: number) => {
     const meter = meterRef.current
     if (meter) meter.style.transform = `scaleX(${fraction})`
   }, [])
 
-  const { controllerRef, firstFrameReady, primed } = useImageSequence(FRAME_SOURCES, {
+  // Straight to the loader's drawing. Deliberately not React state: the film
+  // must not re-render the chapter thirty-two times on its way in.
+  const onCriticalProgress = useCallback((fraction: number) => {
+    loaderRef.current?.setProgress(fraction)
+  }, [])
+
+  const { controllerRef, firstFrameReady, primed, criticalReady } = useImageSequence(FRAME_SOURCES, {
+    criticalCount: CRITICAL_FRAMES,
     onProgress,
+    onCriticalProgress,
   })
+
+  /* --------------------------------------------------------------- *
+   * The reveal gate
+   *
+   * The chapter is never shown before the display face has loaded (the
+   * title is set in it, and a swap after the reveal is exactly the jump
+   * this is here to prevent) or before the first frame is on the canvas.
+   * Neither is waited on for ever.
+   * --------------------------------------------------------------- */
+  useEffect(() => {
+    if (fontsReady) return
+
+    let cancelled = false
+    const done = () => {
+      if (!cancelled) setFontsReady(true)
+    }
+    // Either answer releases the gate: a face that will not load must not hold
+    // the visitor, and the fallback stack is legible on its own.
+    document.fonts?.ready.then(done, done)
+    const timer = window.setTimeout(done, FONT_WAIT_MS)
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
+  }, [fontsReady])
+
+  const onReveal = useCallback(() => setRevealed(true), [])
+  const onLoaderDone = useCallback(() => setLoaderUp(false), [])
 
   /* --------------------------------------------------------------- *
    * Scroll → frame
@@ -128,6 +191,7 @@ export function OpeningExperience({ lifestyleActive, onExplore }: Props) {
 
     const tick = () => {
       frameId = requestAnimationFrame(tick)
+      if (dormantRef.current) return
 
       const controller = controllerRef.current
       const canvas = canvasRef.current
@@ -139,7 +203,14 @@ export function OpeningExperience({ lifestyleActive, onExplore }: Props) {
       const indexB = Math.round(b)
 
       controller.setPriority(indexA)
-      controller.warm(indexA)
+      // Pre-decoding a rolling window ahead of the playhead is what keeps fast
+      // scrubbing smooth. It is also two dozen 1600×900 decodes, and while the
+      // preloader has the frame they would all land in the same few frames as
+      // its line work — measurably, a 166ms stall a fifth of a second in. The
+      // page is held at zero until the reveal, so there is nothing to scrub
+      // towards yet: the window is warmed from the reveal onward, by which time
+      // it is well ahead of any thumb.
+      if (revealedRef.current) controller.warm(indexA)
 
       const key = `${indexA}:${indexB}:${mix.toFixed(3)}`
       if (key === lastKeyRef.current && !approximateRef.current) return
@@ -173,6 +244,29 @@ export function OpeningExperience({ lifestyleActive, onExplore }: Props) {
       trigger.kill()
     }
   }, [controllerRef])
+
+  // The lifestyle chapter covers this one completely and scrolls it out of the
+  // viewport, so while it holds the page there is nothing here worth painting.
+  // Coming back, the next tick is forced to repaint rather than trusting the
+  // key it left behind.
+  useEffect(() => {
+    dormantRef.current = lifestyleActive
+    if (!lifestyleActive) {
+      lastKeyRef.current = ''
+      approximateRef.current = true
+    }
+  }, [lifestyleActive])
+
+  useEffect(() => {
+    revealedRef.current = revealed
+  }, [revealed])
+
+  // The lifestyle chapter is a separate bundle, fetched only when the building
+  // is complete and one of its two cues could actually be pressed — off the
+  // critical path on the way in, and warm well before anyone reaches for it.
+  useEffect(() => {
+    if (explorerActive) prefetchLifestyle()
+  }, [explorerActive])
 
   /* --------------------------------------------------------------- *
    * Scroll → typography
@@ -354,42 +448,16 @@ export function OpeningExperience({ lifestyleActive, onExplore }: Props) {
         breakAt(0.62),
       )
 
-      timeline.fromTo(
-        '[data-opening-final-scrim]',
-        { opacity: 0 },
-        { opacity: 1, duration: FINAL_IN_END - FINAL_IN_START },
-        FINAL_IN_START - 0.012,
-      )
-
-      timeline.fromTo(
-        '[data-opening-final]',
-        { opacity: 0, yPercent: 5, filter: 'blur(6px)' },
-        {
-          opacity: 1,
-          yPercent: 0,
-          filter: 'blur(0px)',
-          duration: FINAL_IN_END - FINAL_IN_START,
-          ease: 'power2.out',
-        },
-        FINAL_IN_START,
-      )
-
       /* ----------------------------------------------------------- *
-       * Hand-off — the film holds its last frame; the closing title
-       * retires and the floor explorer settles over the same picture.
+       * Hand-off — the film holds its last frame and the floor
+       * explorer settles over the same picture.
+       *
+       * There is no closing title card here any more. The film used to
+       * arrive at the completed tower, dim behind a grade, and hold a
+       * "Stately Serenity" card before handing over; the building now
+       * simply completes and stays on screen, so the approach runs
+       * straight into the explorer and the two cues on the render.
        * ----------------------------------------------------------- */
-
-      timeline.to(
-        '[data-opening-final]',
-        {
-          opacity: 0,
-          yPercent: -4,
-          filter: 'blur(4px)',
-          duration: HANDOFF.copyOutEnd - HANDOFF.copyOutStart,
-          ease: 'power2.in',
-        },
-        HANDOFF.copyOutStart,
-      )
 
       const explorerIn = HANDOFF.explorerInEnd - HANDOFF.explorerInStart
 
@@ -400,11 +468,6 @@ export function OpeningExperience({ lifestyleActive, onExplore }: Props) {
       // level rail used to be scrubbed in here alongside it, which meant the
       // film ended on a building already covered in interface; they are now
       // the explorer's to reveal, when the visitor asks for them.
-      timeline.to(
-        '[data-opening-final-scrim]',
-        { opacity: 0, duration: explorerIn * 0.7 },
-        HANDOFF.explorerInStart,
-      )
       timeline.to('[data-fx-root]', { opacity: 1, duration: explorerIn * 0.7 }, HANDOFF.explorerInStart)
     }, section)
 
@@ -412,10 +475,15 @@ export function OpeningExperience({ lifestyleActive, onExplore }: Props) {
   }, [])
 
   /* --------------------------------------------------------------- *
-   * Entrance — plays once the first frame is actually on screen
+   * Entrance — plays once the chapter is actually being looked at
+   *
+   * Gated on the reveal, not merely on the first frame: the loader covers
+   * the frame for a second or two, and a title that had already animated
+   * in behind it would simply be *there* when the loader lifted. It now
+   * begins as the arch opens, so the two moves are one.
    * --------------------------------------------------------------- */
   useEffect(() => {
-    if (!firstFrameReady) return
+    if (!firstFrameReady || !revealed) return
     const section = sectionRef.current
     if (!section) return
 
@@ -425,7 +493,10 @@ export function OpeningExperience({ lifestyleActive, onExplore }: Props) {
       // matters: a percentage translate set in CSS comes back out of
       // getComputedStyle already resolved to pixels, so a plain `to({yPercent: 0})`
       // would read the current yPercent as 0 and animate nothing at all.
-      const intro = gsap.timeline({ defaults: { ease: 'power3.out' }, delay: 0.15 })
+      // Timed against the loader's exit: the title starts to rise just as the
+      // arch opens and the ground begins to clear, so it is caught mid-move
+      // rather than found already standing there.
+      const intro = gsap.timeline({ defaults: { ease: 'power3.out' }, delay: 0.4 })
 
       intro
         .fromTo(
@@ -455,7 +526,7 @@ export function OpeningExperience({ lifestyleActive, onExplore }: Props) {
     }, section)
 
     return () => context.revert()
-  }, [firstFrameReady])
+  }, [firstFrameReady, revealed])
 
   return (
     <section
@@ -469,10 +540,8 @@ export function OpeningExperience({ lifestyleActive, onExplore }: Props) {
         <CanvasSequence ref={canvasRef} className="opening__canvas" />
 
         <div className="opening__scrim" data-opening-scrim />
-        <div className="opening__scrim opening__scrim--final" data-opening-final-scrim />
 
         <OpeningCopy />
-        <FinalReveal />
         <ScrollHint />
 
         {/* The hand-over from the approach to the build. Last of the opening's
@@ -481,6 +550,11 @@ export function OpeningExperience({ lifestyleActive, onExplore }: Props) {
 
         {/* Chapter 02 rests over the held final frame; the hand-off above scrubs it in. */}
         <FloorExplorer active={explorerActive} suspended={entering || lifestyleActive} />
+
+        {/* The way to the amenities, marked on the storey it belongs to. It is a
+            sibling of the explorer so the stylesheet can retire it the moment the
+            explorer is revealed and the level bands claim those pixels. */}
+        <AmenitiesHotspot active={explorerActive && !entering && !lifestyleActive} onExplore={onExplore} />
 
         {/* Chapter 03 rests over the same frame, above the explorer: only the cue at
             the entrance until it is asked for; then the walk into the reception.
@@ -491,12 +565,26 @@ export function OpeningExperience({ lifestyleActive, onExplore }: Props) {
           onJourney={setEntering}
           onExplore={onExplore}
           dismissed={lifestyleActive}
+          preload={revealed}
         />
 
         <div className="opening__meter" data-primed={primed || undefined}>
           <div className="opening__meter-fill" ref={meterRef} />
         </div>
       </div>
+
+      {/* Holds the frame — and the page — until the film can be travelled
+          through. It portals to <body>, so its position in the tree is
+          bookkeeping rather than layout. */}
+      {loaderUp && (
+        <OpeningLoader
+          ref={loaderRef}
+          ready={firstFrameReady && fontsReady && criticalReady}
+          minimum={firstFrameReady && fontsReady}
+          onReveal={onReveal}
+          onDone={onLoaderDone}
+        />
+      )}
     </section>
   )
 }
