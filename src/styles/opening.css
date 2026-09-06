@@ -1,0 +1,560 @@
+/* =====================================================================
+   Reposé Residence — Chapter 01: "The Approach"
+   =====================================================================
+
+   Imagery leads; the interface stays out of its way. Type is anchored to
+   the left third of the frame in both title moments so the two reveals
+   rhyme, and every hidden state is expressed here rather than in JS so
+   nothing untweened is ever painted.
+   ===================================================================== */
+
+.opening {
+  position: relative;
+  width: 100%;
+  background: var(--ink);
+}
+
+/* The single persistent viewport. Sticky rather than GSAP-pinned: no
+   pin-spacer, no layout reflow, no chance of a jump at either boundary. */
+.opening__viewport {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  width: 100%;
+  overflow: hidden;
+  background: var(--ink);
+}
+
+.opening__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------------------------------------------------------------------
+   Scrims — a cinematic grade that also earns the type its legibility
+   against the very bright cloud and daylight frames.
+   --------------------------------------------------------------------- */
+
+.opening__scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      100deg,
+      rgb(9 12 16 / 72%) 0%,
+      rgb(9 12 16 / 46%) 24%,
+      rgb(9 12 16 / 10%) 46%,
+      rgb(9 12 16 / 0%) 60%
+    ),
+    linear-gradient(to top, rgb(9 12 16 / 30%) 0%, rgb(9 12 16 / 0%) 26%),
+    linear-gradient(to bottom, rgb(9 12 16 / 14%) 0%, rgb(9 12 16 / 0%) 16%);
+}
+
+.opening__scrim--final {
+  opacity: 0;
+  background:
+    linear-gradient(
+      100deg,
+      rgb(9 12 16 / 60%) 0%,
+      rgb(9 12 16 / 34%) 28%,
+      rgb(9 12 16 / 0%) 56%
+    ),
+    linear-gradient(to bottom, rgb(9 12 16 / 22%) 0%, rgb(9 12 16 / 0%) 26%);
+}
+
+/* ---------------------------------------------------------------------
+   Shared type mechanics
+   --------------------------------------------------------------------- */
+
+/* Overflow mask for the upward line reveal. The padding keeps descenders
+   and the serif's overshoot from being clipped by the mask itself. */
+.op-line {
+  display: block;
+  overflow: hidden;
+  padding-block: 0.02em 0.1em;
+  padding-inline: 0.06em 0.14em;
+  margin-block-end: -0.06em;
+  margin-inline: -0.06em -0.14em;
+}
+
+.op-line__inner {
+  display: block;
+  transform: translateY(116%);
+  will-change: transform;
+}
+
+.op-rule {
+  margin-block-start: clamp(1.5rem, 3.2vh, 2.6rem);
+  width: clamp(64px, 6vw, 108px);
+  height: 1px;
+  background: currentcolor;
+  opacity: 0.42;
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
+}
+
+/* ---------------------------------------------------------------------
+   Opening title
+   --------------------------------------------------------------------- */
+
+.op-hero {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-inline: var(--gutter);
+  padding-block: var(--gutter-block);
+  color: var(--paper);
+  pointer-events: none;
+  will-change: transform, opacity, filter;
+}
+
+.op-hero__inner {
+  max-width: 100%;
+}
+
+.op-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(3.1rem, 9vw, 11rem);
+  line-height: 0.86;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+  width: max-content;
+  max-width: 100%;
+}
+
+.op-tagline {
+  margin: clamp(1.4rem, 2.6vh, 2.4rem) 0 0;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: clamp(0.6rem, 0.78vw, 0.8rem);
+  letter-spacing: 0.42em;
+  line-height: 1.6;
+  text-transform: uppercase;
+  max-width: 34rem;
+  color: rgb(255 255 255 / 84%);
+  opacity: 0;
+  transform: translateY(16px);
+  will-change: transform, opacity;
+}
+
+/* Developer branding: present, deliberately quiet, and never in
+   competition with the project name. */
+.op-brand {
+  position: absolute;
+  right: var(--gutter);
+  bottom: var(--gutter-block);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.7rem;
+  opacity: 0;
+  transform: translateY(12px);
+  will-change: transform, opacity;
+}
+
+.op-brand__label {
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.55rem;
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 46%);
+}
+
+.op-brand__mark {
+  display: block;
+  width: clamp(84px, 7.4vw, 126px);
+  height: auto;
+  opacity: 0.78;
+}
+
+/* ---------------------------------------------------------------------
+   Scroll cue
+   --------------------------------------------------------------------- */
+
+.op-hint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--gutter-block) - 0.25rem);
+  transform: translateX(-50%);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.op-hint__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  opacity: 0;
+  will-change: opacity;
+}
+
+.op-hint__label {
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.55rem;
+  letter-spacing: 0.44em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 62%);
+  padding-inline-start: 0.44em; /* optical centring against the tracking */
+}
+
+.op-hint__track {
+  position: relative;
+  display: block;
+  width: 1px;
+  height: 46px;
+  overflow: hidden;
+  background: rgb(255 255 255 / 22%);
+}
+
+.op-hint__beam {
+  position: absolute;
+  inset-inline: 0;
+  top: -60%;
+  height: 60%;
+  background: linear-gradient(to bottom, rgb(255 255 255 / 0%), rgb(255 255 255 / 88%));
+  animation: op-beam 2.6s cubic-bezier(0.7, 0, 0.3, 1) infinite;
+}
+
+@keyframes op-beam {
+  0% {
+    transform: translateY(0);
+  }
+  60%,
+  100% {
+    transform: translateY(266%);
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Closing title
+   --------------------------------------------------------------------- */
+
+.op-final {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-inline: var(--gutter);
+  padding-block: var(--gutter-block);
+  color: var(--paper);
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform, opacity, filter;
+}
+
+/* Lifted off centre: in the completed render the clean sky sits in the upper
+   left, while palms and villas crowd the lower corners. */
+.op-final__inner {
+  max-width: 100%;
+  margin-block-end: 11vh;
+}
+
+.op-final__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(2.4rem, 6.4vw, 7.6rem);
+  line-height: 0.9;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  width: max-content;
+  max-width: 100%;
+}
+
+/* The closing lines are revealed by the section's own fade, not by the
+   entrance masks, so they rest in place. */
+.op-final .op-line__inner {
+  transform: none;
+}
+
+.op-rule--final {
+  margin-block-start: clamp(1.3rem, 2.4vh, 2rem);
+  transform: scaleX(1);
+}
+
+.op-final__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: clamp(1.1rem, 2vh, 1.7rem) 0 0;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  text-transform: uppercase;
+}
+
+.op-final__project {
+  font-size: clamp(0.62rem, 0.8vw, 0.82rem);
+  letter-spacing: 0.34em;
+  color: rgb(255 255 255 / 94%);
+}
+
+.op-final__location {
+  font-size: clamp(0.55rem, 0.7vw, 0.72rem);
+  letter-spacing: 0.3em;
+  color: rgb(255 255 255 / 68%);
+}
+
+/* ---------------------------------------------------------------------
+   Chapter break — the approach hands over to the build
+
+   Sits above the film and below nothing: it is the only thing on screen at
+   the height of the transition. Every value below is the RESTING state —
+   invisible and untransformed — so that at any scroll position outside the
+   break there is nothing here to see, and nothing untweened is ever painted.
+   --------------------------------------------------------------------- */
+
+.cb {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Peaks at 96%, not 100%: the exchange needs the darkness, but a frame that
+   goes fully black reads as a dropout rather than as a held moment. The
+   residual 4% of a 55/255 mismatch is 2.2 levels, under a 6px blur. */
+.cb__veil {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background:
+    radial-gradient(
+      124% 96% at 50% 46%,
+      rgb(9 12 16 / 94%) 0%,
+      rgb(9 12 16 / 96%) 54%,
+      rgb(6 8 11 / 100%) 100%
+    );
+}
+
+.cb__field {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+.cb__grid {
+  position: absolute;
+  inset: -8%;
+  background-image:
+    repeating-linear-gradient(to right, rgb(255 255 255 / 8%) 0 1px, transparent 1px 92px),
+    repeating-linear-gradient(to bottom, rgb(255 255 255 / 6%) 0 1px, transparent 1px 92px);
+  -webkit-mask-image: radial-gradient(66% 58% at 50% 50%, #000 0%, transparent 76%);
+  mask-image: radial-gradient(66% 58% at 50% 50%, #000 0%, transparent 76%);
+}
+
+.cb__rule {
+  position: absolute;
+  inset-block: 0;
+  width: 1px;
+  background: linear-gradient(
+    to bottom,
+    rgb(255 255 255 / 0%) 0%,
+    rgb(255 255 255 / 20%) 20%,
+    rgb(255 255 255 / 20%) 76%,
+    rgb(255 255 255 / 0%) 100%
+  );
+  transform: scaleY(0);
+  transform-origin: top center;
+  will-change: transform;
+}
+
+.cb__type {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding-inline: var(--gutter);
+  padding-block: var(--gutter-block);
+  text-align: center;
+  color: var(--paper);
+  opacity: 0;
+  will-change: transform, opacity, filter;
+}
+
+.cb__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(2.9rem, 8.6vw, 10.2rem);
+  line-height: 0.88;
+  letter-spacing: 0.015em;
+  text-transform: uppercase;
+  max-width: 100%;
+}
+
+/* The shared mask is tuned for left-aligned type; centred, its asymmetric
+   bleed would shift the line off the optical centre. */
+.cb__title .op-line {
+  padding-inline: 0.1em;
+  margin-inline: -0.1em;
+}
+
+.cb__hrule {
+  width: clamp(52px, 4.8vw, 88px);
+  height: 1px;
+  margin-block: clamp(1.3rem, 2.8vh, 2.3rem);
+  background: currentcolor;
+  opacity: 0.38;
+  transform: scaleX(0);
+  will-change: transform;
+}
+
+.cb__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  text-transform: uppercase;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* The trailing letter-space is padded back in so the tracked lines sit on the
+   same optical centre as the title. */
+.cb__project {
+  font-size: clamp(0.6rem, 0.78vw, 0.8rem);
+  letter-spacing: 0.4em;
+  color: rgb(255 255 255 / 90%);
+  padding-inline-start: 0.4em;
+}
+
+.cb__location {
+  font-size: clamp(0.54rem, 0.68vw, 0.72rem);
+  letter-spacing: 0.34em;
+  color: rgb(255 255 255 / 60%);
+  padding-inline-start: 0.34em;
+}
+
+/* One pass, parked off-frame at both ends. The gradient does the fading, so
+   the sweep has no hard edge to give itself away. */
+.cb__sweep {
+  position: absolute;
+  inset-block: -20%;
+  left: 0;
+  width: 46%;
+  opacity: 0;
+  transform: translateX(-135%);
+  background: linear-gradient(
+    100deg,
+    rgb(255 255 255 / 0%) 0%,
+    rgb(255 255 255 / 5%) 36%,
+    rgb(255 255 255 / 12%) 52%,
+    rgb(255 255 255 / 4%) 68%,
+    rgb(255 255 255 / 0%) 100%
+  );
+  will-change: transform, opacity;
+}
+
+/* ---------------------------------------------------------------------
+   Loading — a hairline, and nothing more.
+   --------------------------------------------------------------------- */
+
+.opening__meter {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 1px;
+  background: rgb(255 255 255 / 8%);
+  transition: opacity 900ms ease 400ms;
+  pointer-events: none;
+}
+
+.opening__meter[data-primed] {
+  opacity: 0;
+}
+
+.opening__meter-fill {
+  height: 100%;
+  width: 100%;
+  background: rgb(255 255 255 / 55%);
+  transform: scaleX(0);
+  transform-origin: left center;
+  will-change: transform;
+}
+
+/* ---------------------------------------------------------------------
+   Narrow viewports
+   Desktop is the priority; this only keeps the composition sane.
+   --------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .op-hero__inner,
+  .op-final__inner {
+    max-width: none;
+  }
+
+  .op-title {
+    font-size: clamp(2.4rem, 13vw, 5.4rem);
+  }
+
+  .op-final {
+    justify-content: flex-end;
+    padding-block-end: calc(var(--gutter-block) + 2.5rem);
+  }
+
+  .op-final__title {
+    font-size: clamp(2.2rem, 12vw, 4.2rem);
+  }
+
+  .cb__title {
+    font-size: clamp(2.5rem, 13vw, 5.2rem);
+  }
+
+  .cb__sweep {
+    width: 74%;
+  }
+
+  .op-brand {
+    left: var(--gutter);
+    right: auto;
+    align-items: flex-start;
+  }
+
+  .op-hint {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Reduced motion
+   The chapter is scroll-driven, so the film itself is untouched; only the
+   decorative loop and the entrance blur are stood down.
+   --------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .op-hint__beam {
+    animation: none;
+    top: 20%;
+  }
+
+  .op-line__inner {
+    transform: none;
+  }
+
+  .op-rule {
+    transform: scaleX(1);
+  }
+
+  .op-tagline,
+  .op-brand {
+    opacity: 1;
+    transform: none;
+  }
+}

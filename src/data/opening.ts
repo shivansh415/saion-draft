@@ -1,0 +1,322 @@
+/**
+ * Reposé Residence — Chapter 01: "The Approach"
+ *
+ * Every timing, path and piece of copy for the opening chapter lives here so the
+ * pacing can be tuned without touching the renderer, the loader or the layout.
+ *
+ * The two supplied cinematic sequences are modelled as ONE flat frame list.
+ * Nothing downstream knows there were ever two source clips.
+ */
+
+/* ------------------------------------------------------------------ *
+ * Source frames
+ * ------------------------------------------------------------------ */
+
+export interface SequenceSource {
+  /** Folder name under /assets/opening/ */
+  readonly id: string
+  /** Number of frames in the sequence. */
+  readonly count: number
+}
+
+export const SEQUENCES: readonly SequenceSource[] = [
+  { id: 'sequence-01', count: 200 }, // clouds → Dubai → Al Furjan
+  { id: 'sequence-02', count: 240 }, // Al Furjan → construction → completed tower (24 fps × 10 s, every frame)
+]
+
+/** Intrinsic size of the optimised WebP frames. */
+export const FRAME_WIDTH = 1600
+export const FRAME_HEIGHT = 900
+
+function frameUrl(sequence: string, frame: number): string {
+  return `/assets/opening/${sequence}/webp/frame-${String(frame).padStart(4, '0')}.webp`
+}
+
+/** Flat, ordered list of every frame across both sequences. */
+export const FRAME_SOURCES: readonly string[] = SEQUENCES.flatMap((sequence) =>
+  Array.from({ length: sequence.count }, (_, i) => frameUrl(sequence.id, i + 1)),
+)
+
+export const FRAME_COUNT = FRAME_SOURCES.length
+export const LAST_FRAME = FRAME_COUNT - 1
+
+/** Flat index of the first frame of sequence 02. */
+const SEQ_02_START = SEQUENCES[0].count
+
+/* ------------------------------------------------------------------ *
+ * Scroll timeline
+ *
+ * All beats below are fractions of the FILM TRACK (0 → 1); the hand-off that
+ * follows the film is expressed past 1 so the film never has to move.
+ * ------------------------------------------------------------------ */
+
+/**
+ * Scroll distance the film occupies: the original 720vh track less the 100vh
+ * sticky viewport. Every fraction below is a fraction of THIS distance, so the
+ * film's pacing in absolute pixels is untouched by anything appended after it.
+ */
+export const FILM_TRACK_VH = 620
+
+/**
+ * Extra scroll appended after the film for the hand-off into the floor
+ * explorer: the closing title retires, the explorer settles over the held
+ * final frame, and only then does the level selector take input.
+ */
+export const HANDOFF_TRACK_VH = 200
+
+/** Height of the whole scroll track. The visual viewport stays sticky inside it. */
+export const CHAPTER_HEIGHT_VH = 100 + FILM_TRACK_VH + HANDOFF_TRACK_VH
+
+/**
+ * Length of the chapter in "film units" (1 = the film track). The scrubbed
+ * timeline is this long, so the film beats keep their positions and the
+ * hand-off beats simply sit past 1.
+ */
+export const CHAPTER_UNITS = (FILM_TRACK_VH + HANDOFF_TRACK_VH) / FILM_TRACK_VH
+
+const afterFilm = (vh: number) => 1 + vh / FILM_TRACK_VH
+
+/**
+ * Hand-off beats, in film units, measured from the end of the film track.
+ * The final frame holds throughout; only what sits over it changes.
+ */
+export const HANDOFF = {
+  /** The closing title lifts away. */
+  copyOutStart: afterFilm(50),
+  copyOutEnd: afterFilm(105),
+  /** The explorer — building still, copy, level list — settles in. */
+  explorerInStart: afterFilm(85),
+  explorerInEnd: afterFilm(165),
+  /**
+   * From here the selector takes hover, tap and keyboard. A little before the
+   * last of the type has settled, so a scroll that comes to rest just short
+   * of the end of the track still lands on a working selector.
+   */
+  activeAt: afterFilm(150),
+} as const
+
+/**
+ * The film's final frame as a still, for the explorer to hold and annotate.
+ * Same framing as the last frame of sequence 02 (it is that frame, at the
+ * source's full 1920×1080 rather than the 1600×900 the film streams, written
+ * by `scripts/extract-sequence.py` alongside the frames), so the hand-off
+ * from canvas to still is invisible.
+ */
+export const FINAL_FRAME_STILL = {
+  src: '/assets/opening/building/final-frame.webp',
+  width: 1920,
+  height: 1080,
+} as const
+
+/** Flat index of the last frame of sequence 01 and the first of sequence 02. */
+const SEQ_01_LAST = SEQ_02_START - 1 // 199
+const SEQ_02_FIRST = SEQ_02_START //    200
+
+/**
+ * The chapter break — where sequence 01 hands over to sequence 02.
+ *
+ * The two supplied clips end and begin on the same subject, the Al Furjan
+ * villa ring, but not from the same camera: the altitude, the heading and the
+ * horizon all differ, and the ring itself changes size by roughly a sixth
+ * across the cut. No dissolve hides that. Cross-fading two aerials this far
+ * apart reads as a double exposure; cutting reads as two different videos
+ * spliced together.
+ *
+ * So the mismatch is not hidden — it is used. The film arrives at the end of
+ * the approach, holds, and darkens into a title card; the picture is exchanged
+ * while the frame is at its darkest; and the card lifts to reveal the site,
+ * ready to be built. The break belongs to the story rather than to the edit,
+ * which is the one reading under which a change of camera is not a mistake.
+ *
+ * `start` is where sequence 01 has reached its final frame and stops advancing;
+ * `end` is where sequence 02 begins to advance. The band between them is
+ * 0.104 film units — 64.5vh of scroll, which on a 900px viewport is 580px, or
+ * roughly 0.8s at a brisk 700px/s and 1.2s at an unhurried 480px/s.
+ *
+ * The cost is paid by the two clips, not by the page: the chapter is exactly
+ * as long as it was, sequence 01 now scrubs at 1.27vh per frame instead of
+ * 1.34, and sequence 02 at 1.00 instead of 1.14. Nothing else moves.
+ */
+export const CHAPTER_BREAK = {
+  start: 0.408,
+  end: 0.512,
+} as const
+
+export const CHAPTER_BREAK_SPAN = CHAPTER_BREAK.end - CHAPTER_BREAK.start
+
+/** A beat inside the break, in film units. `t` runs 0 → 1 across the band. */
+export const breakAt = (t: number): number => CHAPTER_BREAK.start + CHAPTER_BREAK_SPAN * t
+
+/** A duration inside the break, in film units. */
+export const breakSpan = (from: number, to: number): number => (to - from) * CHAPTER_BREAK_SPAN
+
+/**
+ * Where inside the break the picture is exchanged, as fractions of the band.
+ *
+ * Both ends sit inside the window where the veil is at full strength, so the
+ * exchange happens with 4% of the frame showing. The two frames differ by a
+ * mean of 55/255 levels; at 4% that residual is 2.2 levels, under a 6px blur,
+ * spread continuously over ~11vh of scroll. There is no step for the eye to
+ * catch — which is the whole point of doing it here rather than in the open.
+ */
+const SWAP_FROM = 0.44
+const SWAP_TO = 0.62
+
+/** Progress at which the film reaches its final frame and simply holds. */
+const FILM_END = 0.9
+
+/* Overlay beats -------------------------------------------------------- */
+
+/** The opening title holds, then lifts away as the descent begins. */
+export const HERO_EXIT_START = 0.02
+export const HERO_EXIT_END = 0.105
+
+/** The scroll cue retires almost immediately. */
+export const HINT_EXIT_END = 0.028
+
+/** The closing title arrives once the facade has completed. */
+export const FINAL_IN_START = 0.878
+export const FINAL_IN_END = 0.942
+
+/* ------------------------------------------------------------------ *
+ * Progress → frame resolution
+ * ------------------------------------------------------------------ */
+
+export interface FrameState {
+  /** Primary frame index. */
+  readonly a: number
+  /** Secondary frame index, drawn over `a` at `mix` opacity. */
+  readonly b: number
+  /** 0 = show `a` only, 1 = show `b` only. */
+  readonly mix: number
+}
+
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t
+const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v)
+
+/** Smoothstep. Flat at both ends so the exchange begins and ends without an edge. */
+const smooth = (t: number) => t * t * (3 - 2 * t)
+
+/**
+ * Maps film progress (in film units — see `CHAPTER_UNITS`) onto the flat
+ * frame list. Anything past 1 is the hand-off and simply holds the last frame.
+ *
+ *   0.000 → 0.408   sequence 01   clouds → Dubai → Al Furjan
+ *   0.408 → 0.454   hold on the final approach frame, the frame darkens
+ *   0.454 → 0.472   the picture is exchanged, under the title card
+ *   0.472 → 0.512   hold on the first construction frame, the card lifts
+ *   0.512 → 0.900   sequence 02   construction → completed Reposé
+ *   0.900 → 1.000   hold on the finished tower
+ *
+ * The two holds are deliberate: the camera stops, so the transition is read as
+ * a chapter ending rather than a camera stumbling between two clips. Nothing
+ * about it is idle — the veil, the type, the sweep and a slow push on the
+ * canvas all run through it, scrubbed from the same timeline (see
+ * `OpeningExperience`), so the scroll never feels like it has stalled.
+ */
+export function resolveFrame(progress: number): FrameState {
+  const p = clamp01(progress)
+
+  if (p <= CHAPTER_BREAK.start) {
+    const index = lerp(0, SEQ_01_LAST, p / CHAPTER_BREAK.start)
+    return { a: index, b: index, mix: 0 }
+  }
+
+  if (p < CHAPTER_BREAK.end) {
+    const t = (p - CHAPTER_BREAK.start) / CHAPTER_BREAK_SPAN
+
+    if (t <= SWAP_FROM) return { a: SEQ_01_LAST, b: SEQ_01_LAST, mix: 0 }
+    if (t >= SWAP_TO) return { a: SEQ_02_FIRST, b: SEQ_02_FIRST, mix: 0 }
+
+    return {
+      a: SEQ_01_LAST,
+      b: SEQ_02_FIRST,
+      mix: smooth((t - SWAP_FROM) / (SWAP_TO - SWAP_FROM)),
+    }
+  }
+
+  if (p >= FILM_END) {
+    return { a: LAST_FRAME, b: LAST_FRAME, mix: 0 }
+  }
+
+  const t = (p - CHAPTER_BREAK.end) / (FILM_END - CHAPTER_BREAK.end)
+  const index = lerp(SEQ_02_FIRST, LAST_FRAME, t)
+  return { a: index, b: index, mix: 0 }
+}
+
+/* ------------------------------------------------------------------ *
+ * Loader tuning
+ * ------------------------------------------------------------------ */
+
+/** Frames fetched before the chapter is considered ready to travel through. */
+export const PRIME_COUNT = 24
+
+/** Parallel image requests. */
+export const MAX_CONCURRENT_LOADS = 6
+
+/** How far either side of the requested frame to accept a stand-in. */
+export const NEAREST_RADIUS = 14
+
+/** How far ahead of the playhead to pre-decode. */
+export const WARM_AHEAD = 24
+
+/** Frames pre-decoded per animation frame. Higher catches up faster after a fast scrub. */
+export const WARM_BUDGET = 4
+
+/* ------------------------------------------------------------------ *
+ * Renderer tuning
+ * ------------------------------------------------------------------ */
+
+/**
+ * Upper bound on the canvas backing store.
+ *
+ * Trimmed from (2, 3840) — a full-quality 4K@2x surface is the single most
+ * expensive thing this renderer does every frame (two cover-fit draws,
+ * high-quality resampled, of up to ~4000×2250px each), and it is the first
+ * thing to cause visible stutter on integrated/fanless GPUs. The frames are
+ * pre-compressed WebP to begin with, so the ceiling below is well past the
+ * point of a visible sharpness difference.
+ */
+export const MAX_DPR = 1.6
+export const MAX_BACKING_WIDTH = 3200
+
+/**
+ * Cover-crop focal point.
+ *
+ * Horizontally centred: the aerials are centre-weighted and the tower stands
+ * dead centre of the frame.
+ *
+ * Vertically biased a little above centre. On viewports wider than the source
+ * 16:9 the crop takes height off both edges, and the top of that crop holds the
+ * tower's crown while the bottom holds foreground roadway — so the roadway is
+ * the half to give up. The bias is kept small so the aerials, which have no
+ * such asymmetry, are effectively unaffected.
+ */
+export const FOCAL_X = 0.5
+export const FOCAL_Y = 0.44
+
+/* ------------------------------------------------------------------ *
+ * Copy
+ * ------------------------------------------------------------------ */
+
+export const OPENING_COPY = {
+  titleLines: ['Reposé', 'Residence'],
+  tagline: 'A luxurious lifestyle awaits you',
+  developerLabel: 'Developed by',
+  logoSrc: '/assets/opening/branding/saion-logo.png',
+  logoAlt: 'SAION Properties',
+  hint: 'Scroll',
+} as const
+
+/** The chapter card between the approach and the construction. */
+export const CHAPTER_COPY = {
+  titleLines: ['Ready', 'to Rise.'],
+  project: 'Reposé Residence',
+  location: 'Al Furjan · Dubai',
+} as const
+
+export const FINAL_COPY = {
+  titleLines: ['Stately', 'Serenity'],
+  project: 'Reposé Residence',
+  location: 'Al Furjan · Dubai',
+} as const

@@ -1,0 +1,75 @@
+/* =====================================================================
+   Reposé Residence — global baseline
+   Deliberately minimal: this is a full-bleed cinematic experience, so the
+   document owns almost nothing beyond colour, type tokens and reset.
+   ===================================================================== */
+
+:root {
+  /* Palette */
+  --ink: #090c10; /* the ground behind every frame */
+  --paper: #f6f4f1; /* warm off-white for type over imagery */
+
+  /* Type */
+  --font-display: 'Cormorant Garamond', 'Times New Roman', times, serif;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', roboto, sans-serif;
+
+  /* Editorial margins, shared by every chapter */
+  --gutter: clamp(1.6rem, 6.5vw, 8.5rem);
+  --gutter-block: clamp(1.8rem, 5vh, 3.6rem);
+
+  color-scheme: dark;
+  color: var(--paper);
+  background-color: var(--ink);
+
+  font-family: var(--font-sans);
+  font-synthesis: none;
+  text-rendering: optimizelegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* Lenis owns smoothing; native smooth scrolling would fight it. */
+  scroll-behavior: auto;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  background-color: var(--ink);
+  overflow-x: hidden;
+}
+
+#root {
+  isolation: isolate;
+}
+
+img {
+  max-width: 100%;
+}
+
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+/* Lenis's stock stylesheet hides overflow while stopped. Not here: with a
+   sticky chapter viewport, Chrome resolves any scroll-into-view request on an
+   element inside an overflow-hidden root by scrolling to the very top, which
+   would rewind the film behind an open floorplate. The lock in lib/scrollLock
+   holds the page still without it. */
+
+::selection {
+  background: rgb(246 244 241 / 18%);
+}

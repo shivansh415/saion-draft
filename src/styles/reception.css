@@ -1,0 +1,479 @@
+/* =====================================================================
+   Reposé Residence — Chapter 03: "Enter inside"
+   =====================================================================
+
+   Sits in the opening's sticky viewport above the floor explorer. At rest
+   it is nothing but the cue at the entrance; every other layer below rests
+   invisible and untransformed, exactly where the clean building already is,
+   and is driven only by the timeline in `ReceptionExperience`. Nothing
+   untweened is ever painted.
+   ===================================================================== */
+
+.rc {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  color: var(--paper);
+  pointer-events: none;
+}
+
+/* Underway or inside, the frame is the journey's: nothing underneath may be
+   reached (the explorer is also made inert). */
+.rc:not([data-phase='idle']) {
+  pointer-events: auto;
+}
+
+/* At rest the scene is not merely transparent but absent: its base layer is
+   the film's own final frame, which laid over the film would cover every
+   frame before it. It appears on the click — identical to the pixels beneath
+   it — and is gone again the moment the journey ends. */
+.rc[data-phase='idle'] .rc__camera,
+.rc[data-phase='idle'] .rc__bloom,
+.rc[data-phase='idle'] .rc__vignette,
+.rc[data-phase='idle'] .rc__inside,
+.rc[data-phase='idle'] .rc__back,
+.rc[data-phase='idle'] .rc__welcome {
+  visibility: hidden;
+}
+
+/* ---------------------------------------------------------------------
+   The camera and its layers
+   --------------------------------------------------------------------- */
+
+.rc__camera {
+  position: absolute;
+  inset: 0;
+  /* Deliberately NOT will-change: transform. A promoted layer is rasterised
+     once and stretched by the GPU, which at seven times is mush — and holding
+     that raster while a child's opacity changes builds an offscreen buffer at
+     the same scale, which stalled the return for seconds. Left to itself the
+     browser re-rasters the exterior at the live scale from the full still. */
+}
+
+.rc__film,
+.rc__still {
+  position: absolute;
+  display: block;
+  max-width: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Arrives over the frame on the first beat of the journey. */
+.rc__still {
+  opacity: 0;
+}
+
+/* The lobby, seen through the door: clipped to the opening at rest. */
+.rc__through {
+  position: absolute;
+  overflow: hidden;
+  will-change: clip-path;
+}
+
+.rc__through img {
+  display: block;
+  max-width: none;
+}
+
+/* The opening, and the two leaves cut from the still's own pixels. Overflow
+   is clipped so a turning leaf never paints past its jamb. */
+.rc__aperture {
+  position: absolute;
+  overflow: hidden;
+  transform-style: flat;
+}
+
+.rc__leaf {
+  position: absolute;
+  background-repeat: no-repeat;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+/* One reflection across the glass as the threshold is crossed. */
+.rc__streak {
+  position: absolute;
+  opacity: 0;
+  background: linear-gradient(
+    104deg,
+    rgb(255 248 236 / 0%) 30%,
+    rgb(255 248 236 / 55%) 47%,
+    rgb(255 252 246 / 85%) 52%,
+    rgb(255 248 236 / 45%) 58%,
+    rgb(255 248 236 / 0%) 74%
+  );
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------
+   The crossing
+   --------------------------------------------------------------------- */
+
+/* Exposure: the lit lobby meets the eye. Warm, centred where the door has
+   been brought to. */
+.rc__bloom {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(
+    58% 62% at 50% 50%,
+    rgb(255 244 226 / 96%) 0%,
+    rgb(255 240 218 / 55%) 38%,
+    rgb(255 236 210 / 0%) 74%
+  );
+  pointer-events: none;
+}
+
+/* The edge of the threshold: the jambs, gone dark, passing either side. */
+.rc__vignette {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: radial-gradient(
+    64% 68% at 50% 50%,
+    rgb(9 12 16 / 0%) 46%,
+    rgb(9 12 16 / 58%) 82%,
+    rgb(9 12 16 / 88%) 100%
+  );
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------
+   Inside
+   --------------------------------------------------------------------- */
+
+/* The reception at full size, unscaled by any ancestor, so the drawing —
+   and the SAION PROPERTIES wall — is exactly the supplied pixels. */
+.rc__inside {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+  background: var(--ink);
+}
+
+.rc__inside img {
+  position: absolute;
+  display: block;
+  max-width: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* The way back. Same language as the floorplate's return. */
+.rc__back {
+  position: absolute;
+  left: var(--gutter);
+  top: var(--gutter-block);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.5rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.58rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 0;
+  text-shadow: 0 1px 10px rgb(9 12 16 / 45%);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rc[data-phase='idle'] .rc__back,
+.rc[data-phase='leaving'] .rc__back {
+  pointer-events: none;
+}
+
+.rc__back-rule {
+  display: block;
+  width: 26px;
+  height: 1px;
+  background: currentcolor;
+  opacity: 0.7;
+  transition: width 500ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.rc__back:hover .rc__back-rule,
+.rc__back:focus-visible .rc__back-rule {
+  width: 40px;
+}
+
+.rc__back:focus-visible {
+  outline: 1px solid rgb(255 255 255 / 60%);
+  outline-offset: 4px;
+}
+
+/* A word, once the lobby has settled. Low and to the left, over the marble,
+   away from the wall that carries the name. */
+.rc__welcome {
+  position: absolute;
+  left: var(--gutter);
+  bottom: var(--gutter-block);
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(1.4rem, 2.4vw, 2.6rem);
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+  opacity: 0;
+  text-shadow: 0 2px 18px rgb(9 12 16 / 40%);
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------
+   The cue
+   --------------------------------------------------------------------- */
+
+/* Anchored at the label's centre; the leader and pin hang from it. Present
+   the moment the clean building is; sharpens under the pointer, never
+   changes its words. */
+.rc {
+  /* 1 at rest; the journey takes it to 0 on its first beat and back on its last. */
+  --rc-cue: 1;
+}
+
+.rc-cue {
+  position: absolute;
+  opacity: 0;
+}
+
+/* Fades up once the clean building is there; from then on the journey's
+   variable and the explorer's state decide, and only in the idle phase does
+   a change of state ease. */
+.rc[data-active] .rc-cue {
+  opacity: calc(var(--rc-cue) * 1);
+}
+
+.rc[data-phase='idle'] .rc-cue {
+  transition: opacity 900ms ease 500ms;
+}
+
+/* Yields a little while the explorer has the frame; gone while a plan is open. */
+.fx[data-revealed] ~ .rc[data-active] .rc-cue {
+  opacity: calc(var(--rc-cue) * 0.55);
+}
+
+.fx:not([data-mode='selector']) ~ .rc[data-active] .rc-cue,
+.fx[data-suspended] ~ .rc[data-active] .rc-cue {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.rc-cue__button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0.55rem 0.7rem;
+  border: 0;
+  background: transparent;
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.56rem;
+  letter-spacing: 0.36em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  opacity: 0.74;
+  transform: translate(-50%, -50%);
+  text-shadow: 0 1px 12px rgb(9 12 16 / 60%);
+  pointer-events: auto;
+  transition: opacity 500ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rc-cue__label {
+  padding-inline-start: 0.36em; /* optical centring against the tracking */
+}
+
+.rc-cue__arrow {
+  display: inline-block;
+  font-size: 0.7rem;
+  letter-spacing: 0;
+  opacity: 0.8;
+  transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.rc-cue:hover .rc-cue__button,
+.rc-cue__button:focus-visible {
+  opacity: 1;
+}
+
+.rc-cue:hover .rc-cue__arrow,
+.rc-cue__button:focus-visible .rc-cue__arrow {
+  transform: translateX(5px);
+}
+
+.rc-cue__button:focus-visible {
+  outline: 1px solid rgb(255 255 255 / 60%);
+  outline-offset: 2px;
+}
+
+/* The leader: a hairline from under the label down to the soffit. */
+.rc-cue__leader {
+  position: absolute;
+  left: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, rgb(255 255 255 / 0%) 0%, rgb(255 255 255 / 52%) 18%, rgb(255 255 255 / 52%) 100%);
+  opacity: 0.55;
+  pointer-events: none;
+  transition: opacity 500ms ease;
+}
+
+.rc-cue__pin {
+  position: absolute;
+  left: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 86%);
+  box-shadow: 0 0 8px rgb(255 255 255 / 40%);
+  transform: translate(-50%, -50%);
+  opacity: 0.7;
+  pointer-events: none;
+  transition: opacity 500ms ease;
+}
+
+.rc-cue:hover .rc-cue__leader,
+.rc-cue:hover .rc-cue__pin {
+  opacity: 1;
+}
+
+/* A breath of warmth on the portal when the cue is hovered. */
+.rc-cue__glow {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(255 226 178 / 40%), rgb(255 226 178 / 0%));
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 700ms ease;
+}
+
+.rc-cue:hover .rc-cue__glow {
+  opacity: 1;
+}
+
+/* ---------------------------------------------------------------------
+   Narrow viewports
+   --------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .rc-cue__button {
+    font-size: 0.54rem;
+    padding: 0.7rem 0.8rem; /* a tap target */
+  }
+
+  .rc__welcome {
+    font-size: clamp(1.2rem, 6vw, 1.8rem);
+    right: var(--gutter);
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Reduced motion — the arrow and the reflection stand still
+   --------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .rc-cue__arrow,
+  .rc-cue__button,
+  .rc-cue__leader,
+  .rc-cue__pin,
+  .rc-cue__glow {
+    transition: none;
+  }
+
+  .rc-cue:hover .rc-cue__arrow {
+    transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   On — into the lifestyle chapter
+   Same language as the way back, mirrored to the far corner: low and to
+   the right, over the marble, away from the wall that carries the name.
+   Arrives last, once the lobby has settled; rests invisible otherwise.
+   --------------------------------------------------------------------- */
+
+.rc__explore {
+  position: absolute;
+  right: var(--gutter);
+  bottom: var(--gutter-block);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.5rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.58rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  opacity: 0;
+  text-shadow: 0 1px 10px rgb(9 12 16 / 45%);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rc[data-phase='idle'] .rc__explore {
+  visibility: hidden;
+}
+
+.rc[data-phase='idle'] .rc__explore,
+.rc[data-phase='entering'] .rc__explore,
+.rc[data-phase='leaving'] .rc__explore {
+  pointer-events: none;
+}
+
+.rc__explore-arrow {
+  display: inline-block;
+  font-size: 0.7rem;
+  letter-spacing: 0;
+  opacity: 0.8;
+  transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.rc__explore:hover .rc__explore-arrow,
+.rc__explore:focus-visible .rc__explore-arrow {
+  transform: translateX(5px);
+}
+
+.rc__explore:focus-visible {
+  outline: 1px solid rgb(255 255 255 / 60%);
+  outline-offset: 4px;
+}
+
+@media (max-width: 900px) {
+  /* The welcome spans the width here; the way on sits above it, at the margin. */
+  .rc__explore {
+    right: auto;
+    left: var(--gutter);
+    bottom: calc(var(--gutter-block) + 3.2rem);
+    padding: 0.7rem 0; /* a tap target */
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rc__explore-arrow {
+    transition: none;
+  }
+
+  .rc__explore:hover .rc__explore-arrow {
+    transform: none;
+  }
+}

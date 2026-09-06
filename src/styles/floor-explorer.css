@@ -1,0 +1,1063 @@
+/* =====================================================================
+   Reposé Residence — Chapter 02: "Explore Residences"
+   =====================================================================
+
+   Lives inside the opening chapter's sticky viewport, over the film's held
+   final frame. The building stays the subject: type keeps to the left and
+   right margins, the one line on the tower is a hairline, and the only
+   colour is the render's own.
+
+   Hidden states are declared here, so nothing untweened is ever painted.
+   ===================================================================== */
+
+.fx {
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  color: var(--paper);
+  opacity: 0; /* scrubbed in by the opening's hand-off */
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.fx[data-active] {
+  pointer-events: auto;
+}
+
+/* While a plan is opening, open or closing, the selector is faded out and
+   must not keep taking clicks or showing a pointer through the plan. */
+.fx:not([data-mode='selector']) .fx-hit,
+.fx:not([data-mode='selector']) .fx__list,
+.fx:not([data-mode='selector']) .fx__readout {
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------
+   Clean building → explorer
+
+   The film ends on the completed tower and leaves it alone. Nothing below
+   is visible or clickable until the visitor asks for it; asking is hovering
+   the tower, tapping the invitation, or tabbing into the level rail.
+   --------------------------------------------------------------------- */
+
+/* The group the reveal brings in. It only carries opacity — the copy and the
+   rail inside it keep their own, which the floorplate transitions animate —
+   so the two never write to the same property. */
+.fx__ui {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.fx__ui > * {
+  pointer-events: auto;
+}
+
+/* The building's grade arrives with the explorer and leaves with it, so the
+   default state is the render as photographed. */
+.fx__scrim {
+  opacity: 0;
+}
+
+/* Standing down for another chapter: nothing is offered, nothing answers. */
+.fx[data-suspended] {
+  pointer-events: none;
+}
+
+.fx[data-suspended] .fx__invite {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 300ms ease, visibility 0s linear 300ms;
+}
+
+/* Nothing on the building answers the pointer until the explorer is up. */
+.fx:not([data-revealed]) .fx-hit,
+.fx:not([data-revealed]) .fx__list,
+.fx:not([data-revealed]) .fx__readout {
+  pointer-events: none;
+}
+
+/* The residential tower — the one part of the frame that invites the
+   explorer. Clipped to the calibrated envelope (see `towerZone.ts`), which
+   clips hit-testing with it, so the sky, the podium, the entrance and the
+   streetscape are all outside. Armed only while the building is clean. */
+.fx__tower {
+  position: absolute;
+  pointer-events: none;
+}
+
+.fx[data-active][data-mode='selector']:not([data-revealed]) .fx__tower {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* Touch cannot hover, so it is given something to press. */
+.fx__invite {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0.65rem 1.1rem;
+  border: 1px solid rgb(255 255 255 / 26%);
+  border-radius: 999px;
+  background: rgb(9 12 16 / 42%);
+  backdrop-filter: blur(6px);
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.58rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 420ms ease,
+    visibility 0s linear 420ms;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fx[data-active][data-mode='selector']:not([data-revealed]) .fx__invite {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    opacity 700ms ease 240ms,
+    visibility 0s linear;
+}
+
+.fx__invite-label {
+  padding-inline-start: 0.28em; /* optical centring against the tracking */
+}
+
+.fx__invite-arrow {
+  font-size: 0.72rem;
+  letter-spacing: 0;
+  opacity: 0.72;
+}
+
+/* ---------------------------------------------------------------------
+   The still — painted at the exact cover-fit rectangle the canvas uses
+   --------------------------------------------------------------------- */
+
+.fx__stage {
+  position: absolute;
+  transform-origin: 50% 46%;
+  will-change: transform, opacity;
+}
+
+.fx__building {
+  display: block;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* ---------------------------------------------------------------------
+   Rest, scrim, hairline
+   --------------------------------------------------------------------- */
+
+/* Everything but the indicated level rests a little. The band between the
+   two custom properties is left untouched and its edges soften over 12px;
+   the rest falls away toward the margins, so the copy on the left and the
+   list on the right are never dimmed — only the building rests. */
+.fx__dim {
+  --fx-band-top: 0px;
+  --fx-band-bottom: 0px;
+
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to right,
+    rgb(9 12 16 / 0%) 6%,
+    rgb(9 12 16 / 46%) 28%,
+    rgb(9 12 16 / 46%) 72%,
+    rgb(9 12 16 / 0%) 94%
+  );
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0,
+    #000 calc(var(--fx-band-top) - 12px),
+    transparent var(--fx-band-top),
+    transparent var(--fx-band-bottom),
+    #000 calc(var(--fx-band-bottom) + 12px),
+    #000 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0,
+    #000 calc(var(--fx-band-top) - 12px),
+    transparent var(--fx-band-top),
+    transparent var(--fx-band-bottom),
+    #000 calc(var(--fx-band-bottom) + 12px),
+    #000 100%
+  );
+}
+
+/* Legibility for the copy on the left and the list on the right, without
+   flattening the render in between. */
+.fx__scrim {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(100deg, rgb(9 12 16 / 62%) 0%, rgb(9 12 16 / 34%) 26%, rgb(9 12 16 / 0%) 52%),
+    linear-gradient(to left, rgb(9 12 16 / 44%) 0%, rgb(9 12 16 / 0%) 22%),
+    linear-gradient(to top, rgb(9 12 16 / 26%) 0%, rgb(9 12 16 / 0%) 22%);
+}
+
+.fx__hits {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fx-hit {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* One hairline, moved by transform only: x/y place it, scaleX spans it. */
+.fx__line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 1px;
+  background: rgb(255 255 255 / 92%);
+  box-shadow: 0 0 8px rgb(255 255 255 / 30%);
+  transform-origin: 0 0;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.fx__tag {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  font-variant-numeric: tabular-nums;
+  color: rgb(255 255 255 / 86%);
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* ---------------------------------------------------------------------
+   Left — chapter copy and the live readout
+   --------------------------------------------------------------------- */
+
+/* The outer element positions; the inner one is what the hand-off and the
+   floorplate transition animate, so a CSS transform here is never clobbered. */
+.fx__copy {
+  position: absolute;
+  left: var(--gutter);
+  top: 50%;
+  transform: translateY(-56%);
+  max-width: min(34vw, 30rem);
+  pointer-events: none;
+}
+
+.fx__copy-inner {
+  will-change: transform, opacity;
+}
+
+.fx__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(2rem, 4.6vw, 5.4rem);
+  line-height: 0.92;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  width: max-content;
+  max-width: 100%;
+}
+
+.fx__title-line {
+  display: block;
+}
+
+.fx__rule {
+  margin-block-start: clamp(1.1rem, 2.2vh, 1.8rem);
+  width: clamp(56px, 5vw, 96px);
+  height: 1px;
+  background: currentcolor;
+  opacity: 0.42;
+}
+
+.fx__lead {
+  margin: clamp(1rem, 1.9vh, 1.5rem) 0 0;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: clamp(0.58rem, 0.74vw, 0.76rem);
+  letter-spacing: 0.3em;
+  line-height: 1.7;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 70%);
+}
+
+.fx__readout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: clamp(1.6rem, 3.6vh, 2.8rem);
+  min-height: 3.6rem;
+  opacity: 0;
+  pointer-events: auto;
+  will-change: transform, opacity;
+}
+
+.fx__readout-level {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(1.15rem, 1.6vw, 1.75rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.fx__readout-types {
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: clamp(0.56rem, 0.7vw, 0.72rem);
+  letter-spacing: 0.24em;
+  line-height: 1.75;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 78%);
+}
+
+.fx__open,
+.fx-plate__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.5rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.58rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fx__open {
+  margin-top: 0.4rem;
+  width: max-content;
+}
+
+.fx__open-rule,
+.fx-plate__back-rule {
+  display: block;
+  width: 26px;
+  height: 1px;
+  background: currentcolor;
+  opacity: 0.7;
+  transition: width 500ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.fx__open:hover .fx__open-rule,
+.fx-plate__back:hover .fx-plate__back-rule,
+.fx__open:focus-visible .fx__open-rule,
+.fx-plate__back:focus-visible .fx-plate__back-rule {
+  width: 40px;
+}
+
+.fx__open:focus-visible,
+.fx-plate__back:focus-visible,
+.fx-level:focus-visible {
+  outline: 1px solid rgb(255 255 255 / 60%);
+  outline-offset: 4px;
+}
+
+/* ---------------------------------------------------------------------
+   Right — the level list
+   --------------------------------------------------------------------- */
+
+.fx__list {
+  position: absolute;
+  right: var(--gutter);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.fx__list ol {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.15rem, 0.7vh, 0.5rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  will-change: transform, opacity;
+}
+
+.fx-level {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  width: 100%;
+  min-height: 1.55rem;
+  margin: 0;
+  padding: 0.1rem 0 0.1rem 2rem;
+  border: 0;
+  background: transparent;
+  color: var(--paper);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fx-level__rule {
+  display: block;
+  width: 0;
+  height: 1px;
+  background: currentcolor;
+  opacity: 0.85;
+  transition: width 480ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.fx-level__number {
+  display: block;
+  min-width: 1.6em;
+  text-align: right;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  opacity: 0.52;
+  transition:
+    opacity 320ms ease,
+    transform 480ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.fx-level.is-selected .fx-level__number {
+  opacity: 0.8;
+}
+
+.fx-level.is-shown .fx-level__number {
+  opacity: 1;
+}
+
+.fx-level.is-shown .fx-level__rule {
+  width: 22px;
+}
+
+/* ---------------------------------------------------------------------
+   The floorplate view
+   --------------------------------------------------------------------- */
+
+/* The drawings float over the scene: relit copies with the paper keyed out
+   (see scripts/relight-plans.py). Residences at rest sink toward the ground;
+   the indicated one is outlined in light. */
+.fx {
+  --fx-rest: rgb(9 12 16 / 60%);
+  --fx-rest-deep: rgb(9 12 16 / 82%);
+  --fx-line: rgb(255 255 255 / 88%);
+  --fx-line-soft: rgb(255 255 255 / 5%);
+}
+
+.fx-plate {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fx[data-mode='floorplate'] .fx-plate {
+  pointer-events: auto;
+}
+
+/* A fine technical grid behind the sheet, breathing out toward the margins. */
+.fx-plate__grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background-image:
+    linear-gradient(rgb(255 255 255 / 6%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(255 255 255 / 6%) 1px, transparent 1px);
+  background-size: 64px 64px;
+  background-position: center;
+  -webkit-mask-image: radial-gradient(ellipse 64% 60% at 50% 56%, #000 24%, transparent 100%);
+  mask-image: radial-gradient(ellipse 64% 60% at 50% 56%, #000 24%, transparent 100%);
+  transition: opacity 1200ms ease;
+}
+
+.fx[data-mode='floorplate'] .fx-plate__grid,
+.fx[data-mode='openingResidence'] .fx-plate__grid,
+.fx[data-mode='residence'] .fx-plate__grid,
+.fx[data-mode='closingResidence'] .fx-plate__grid {
+  opacity: 1;
+}
+
+.fx-plate__head {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  top: var(--gutter-block);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.55rem;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.fx-plate__head > * {
+  pointer-events: auto;
+}
+
+.fx-plate__back {
+  margin-bottom: clamp(0.6rem, 1.6vh, 1.2rem);
+}
+
+.fx-plate__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(1.7rem, 2.9vw, 3.4rem);
+  letter-spacing: 0.04em;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.fx-plate__types {
+  margin: 0.15rem 0 0;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: clamp(0.56rem, 0.7vw, 0.72rem);
+  letter-spacing: 0.26em;
+  line-height: 1.75;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 82%);
+}
+
+.fx-plate__shared {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.55rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 46%);
+}
+
+/* Readout of the indicated residence — the level on the left, the residence
+   on the right, one header line across the top of the sheet. */
+.fx-plate__unit {
+  position: absolute;
+  right: 0;
+  top: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.45rem;
+  text-align: right;
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 380ms ease,
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.fx[data-mode='floorplate'] .fx-plate__unit[data-visible='true'] {
+  opacity: 1;
+  transform: none;
+}
+
+.fx-plate__unit-rule {
+  display: block;
+  width: 28px;
+  height: 1px;
+  margin-bottom: 0.3rem;
+  background: currentcolor;
+  opacity: 0.4;
+}
+
+.fx-plate__unit-name {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(1.05rem, 1.45vw, 1.55rem);
+  letter-spacing: 0.06em;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.fx-plate__unit-variant,
+.fx-plate__unit-pending {
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.56rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 70%);
+}
+
+.fx-plate__unit-pending {
+  color: rgb(255 255 255 / 42%);
+}
+
+/* The room the sheet may occupy; the sheet is fitted and centred inside it.
+   When the drawing is unreadably small relative to this room (a phone held
+   upright) the view fits it to the height instead and the room pans. */
+.fx-plate__area {
+  position: absolute;
+  left: calc(var(--gutter) + 1.5vw);
+  right: calc(var(--gutter) + 1.5vw);
+  top: clamp(11.5rem, 24vh, 14rem);
+  bottom: clamp(3rem, 9vh, 5rem);
+  max-width: 1440px;
+  margin-inline: auto;
+  overflow: hidden;
+}
+
+.fx-plate__area[data-pans],
+.fx-res__area[data-pans] {
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.fx-plate__area[data-pans]::-webkit-scrollbar,
+.fx-res__area[data-pans]::-webkit-scrollbar {
+  display: none;
+}
+
+/* The drawing's own box — nothing behind it but a soft lift of light, so it
+   reads as floating in the space rather than printed on anything. */
+.fx-plate__figure,
+.fx-res__figure {
+  position: absolute;
+  margin: 0;
+  opacity: 0;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+}
+
+.fx-plate__figure::before,
+.fx-res__figure::before {
+  content: '';
+  position: absolute;
+  inset: -12% -8%;
+  background: radial-gradient(ellipse 60% 60% at 50% 50%, rgb(255 255 255 / 5.5%), rgb(255 255 255 / 0%) 70%);
+  pointer-events: none;
+}
+
+.fx-plate__image,
+.fx-res__image {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: 50% 50%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Thin technical guides flanking the drawing, fading at their ends. */
+.fx-plate__guides,
+.fx-res__guides {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fx-plate__guides::before,
+.fx-plate__guides::after,
+.fx-res__guides::before,
+.fx-res__guides::after {
+  content: '';
+  position: absolute;
+  top: 6%;
+  bottom: 6%;
+  width: 1px;
+  background: linear-gradient(to bottom, rgb(255 255 255 / 0%), rgb(255 255 255 / 16%) 30%, rgb(255 255 255 / 16%) 70%, rgb(255 255 255 / 0%));
+}
+
+.fx-plate__guides::before,
+.fx-res__guides::before {
+  left: 0;
+}
+
+.fx-plate__guides::after,
+.fx-res__guides::after {
+  right: 0;
+}
+
+/* ---------------------------------------------------------------------
+   Residences on the sheet
+   --------------------------------------------------------------------- */
+
+.fx-units {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.fx:not([data-mode='floorplate']) .fx-units,
+.fx:not([data-mode='floorplate']) .fx-units__tags {
+  pointer-events: none;
+}
+
+.fx-unit {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 1.4px;
+  stroke-linejoin: round;
+  cursor: pointer;
+  outline: none;
+  pointer-events: auto;
+  transition:
+    fill 420ms ease,
+    stroke 420ms ease;
+}
+
+.fx-unit[data-open='false'] {
+  cursor: default;
+}
+
+/* Something is indicated: the rest of the floor sinks toward the ground; the
+   indicated residence is outlined in light and left exactly as drawn. */
+.fx-units[data-shown] .fx-unit {
+  fill: var(--fx-rest);
+}
+
+.fx-units[data-shown] .fx-unit.is-shown {
+  fill: var(--fx-line-soft);
+  stroke: var(--fx-line);
+}
+
+/* A residence is opening or open: the rest goes deeper still. */
+.fx-units[data-focus] .fx-unit:not(.is-shown) {
+  fill: var(--fx-rest-deep);
+}
+
+.fx-unit:focus-visible {
+  stroke: var(--fx-line);
+  stroke-dasharray: 4 3;
+}
+
+.fx-units__tags {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* The brochure's own variant letter, at the residence's centre. */
+.fx-unit-tag {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(0.9rem, 1.4vw, 1.5rem);
+  line-height: 1;
+  color: var(--paper);
+  opacity: 0;
+  text-shadow:
+    0 0 6px rgb(9 12 16 / 90%),
+    0 0 16px rgb(9 12 16 / 80%);
+  transition:
+    opacity 380ms ease,
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.fx-unit-tag.is-shown {
+  opacity: 1;
+}
+
+/* ---------------------------------------------------------------------
+   The residence view
+   --------------------------------------------------------------------- */
+
+.fx-res {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fx[data-mode='residence'] .fx-res {
+  pointer-events: auto;
+}
+
+.fx-res__head {
+  position: absolute;
+  left: var(--gutter);
+  top: var(--gutter-block);
+  width: min(30vw, 26rem);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.fx-res__eyebrow {
+  margin: clamp(0.6rem, 1.6vh, 1.2rem) 0 0;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.58rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 60%);
+}
+
+.fx-res__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(1.9rem, 3.6vw, 4.4rem);
+  letter-spacing: 0.02em;
+  line-height: 0.96;
+  text-transform: uppercase;
+}
+
+.fx-res__variant {
+  margin: 0.2rem 0 0;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: clamp(0.58rem, 0.74vw, 0.76rem);
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 82%);
+}
+
+.fx-res__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: clamp(1.2rem, 3vh, 2.2rem) 0 0;
+  padding: clamp(0.9rem, 2vh, 1.4rem) 0 0;
+  border-top: 1px solid rgb(255 255 255 / 14%);
+  width: 100%;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  text-transform: uppercase;
+}
+
+.fx-res__meta div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.fx-res__meta dt {
+  font-size: 0.55rem;
+  letter-spacing: 0.28em;
+  color: rgb(255 255 255 / 46%);
+}
+
+.fx-res__meta dd {
+  margin: 0;
+  font-size: 0.58rem;
+  letter-spacing: 0.24em;
+  text-align: right;
+  color: rgb(255 255 255 / 84%);
+}
+
+.fx-res__actions {
+  margin-top: clamp(1.4rem, 3.4vh, 2.4rem);
+}
+
+.fx-res__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 0;
+  padding: 0.85rem 1.4rem;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.58rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    border-color 400ms ease,
+    background-color 400ms ease;
+}
+
+.fx-res__cta:hover,
+.fx-res__cta:focus-visible {
+  border-color: rgb(255 255 255 / 60%);
+  background: rgb(255 255 255 / 5%);
+}
+
+.fx-res__cta-arrow {
+  display: inline-block;
+  transition: transform 500ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.fx-res__cta:hover .fx-res__cta-arrow {
+  transform: translateX(4px);
+}
+
+/* The plan's room: right of the copy, as large as the frame allows. */
+.fx-res__area {
+  position: absolute;
+  left: calc(var(--gutter) + min(29vw, 27rem));
+  right: var(--gutter);
+  top: clamp(4rem, 9vh, 7rem);
+  bottom: clamp(2.5rem, 7vh, 4.5rem);
+  max-width: 1240px;
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------------
+   Narrow viewports — tap, not hover
+   --------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  /* The tower fills the width here, so the rest is even rather than falling
+     away toward margins the building itself occupies. */
+  .fx__dim {
+    background: rgb(9 12 16 / 46%);
+  }
+
+  .fx__scrim {
+    background:
+      linear-gradient(to top, rgb(9 12 16 / 78%) 0%, rgb(9 12 16 / 40%) 30%, rgb(9 12 16 / 0%) 52%),
+      linear-gradient(to left, rgb(9 12 16 / 46%) 0%, rgb(9 12 16 / 0%) 34%),
+      linear-gradient(to bottom, rgb(9 12 16 / 30%) 0%, rgb(9 12 16 / 0%) 18%);
+  }
+
+  .fx__copy {
+    top: auto;
+    bottom: calc(var(--gutter-block) + 0.5rem);
+    transform: none;
+    max-width: calc(100vw - var(--gutter) - 5.5rem);
+  }
+
+  .fx__title {
+    font-size: clamp(1.7rem, 8.4vw, 2.6rem);
+  }
+
+  .fx__readout {
+    margin-top: 1.1rem;
+    min-height: 2.8rem;
+  }
+
+  .fx__list {
+    right: calc(var(--gutter) * 0.55);
+  }
+
+  .fx__list ol {
+    gap: 0;
+  }
+
+  .fx-level {
+    min-height: 2.05rem; /* comfortable tap target; 15 rows still fit an 812px screen */
+    padding-left: 1rem;
+  }
+
+  .fx-level.is-shown .fx-level__rule {
+    width: 12px;
+  }
+
+  .fx__tag {
+    display: none;
+  }
+
+  .fx-plate__head {
+    right: var(--gutter);
+  }
+
+  .fx-plate__title {
+    font-size: clamp(1.5rem, 7vw, 2.2rem);
+  }
+
+  .fx-plate__unit {
+    position: static;
+    align-items: flex-start;
+    text-align: left;
+    margin-top: 0.8rem;
+    min-height: 2.6rem;
+  }
+
+  .fx-plate__area {
+    left: 3vw;
+    right: 3vw;
+    top: clamp(15rem, 38vh, 20rem);
+    bottom: 4vh;
+  }
+
+  .fx-unit-tag {
+    font-size: 1.1rem;
+  }
+
+  .fx-res__head {
+    right: var(--gutter);
+    width: auto;
+  }
+
+  .fx-res__title {
+    font-size: clamp(1.6rem, 7.4vw, 2.4rem);
+  }
+
+  .fx-res__meta {
+    margin-top: 0.9rem;
+    padding-top: 0.7rem;
+  }
+
+  .fx-res__actions {
+    margin-top: 0.9rem;
+  }
+
+  .fx-res__cta {
+    padding: 0.7rem 1.1rem;
+  }
+
+  .fx-res__area {
+    left: 3vw;
+    right: 3vw;
+    top: clamp(17rem, 39vh, 21rem);
+    bottom: 3vh;
+    max-width: none;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Reduced motion — the explorer fades instead of travelling
+   --------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-level__rule,
+  .fx-level__number,
+  .fx__open-rule,
+  .fx-plate__back-rule {
+    transition: none;
+  }
+}
