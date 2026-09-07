@@ -31,9 +31,17 @@ dist-ssr
 .DS_Store
 Thumbs.db
 
-# Unused sub-project and helper scripts
-repose-experience/
-scripts/
+# Unused sub-project and helper scripts.
+#
+# Anchored with a leading slash — deliberately. A gitignore pattern with a
+# trailing slash and NO leading slash matches a directory of that name at ANY
+# depth, so a bare `repose-experience/` also matched
+# `public/assets/repose-experience/` and quietly excluded all 82 of the
+# lifestyle chapter's photographs from the repository. They were on disk
+# locally and absent from every deployment, so the chapter opened on its green
+# ground with no imagery. Keep these anchored to the project root.
+/repose-experience/
+/scripts/
 
 # Source/master assets (not used at runtime, large PNGs)
 public/floor-explorer/repose-floor-explorer-assets/units-master/
