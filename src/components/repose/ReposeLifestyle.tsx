@@ -3,8 +3,9 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { lockScroll, unlockScroll } from '../../lib/scrollLock'
 import { ArchPortal } from './ArchPortal'
 import { ReposeLoader } from './ReposeLoader'
-import { ASSET_BASE, amenityDetails, chapters, project } from './data/experience'
+import { ASSET_BASE, DEFERRED_PHOTOS, amenityDetails, chapters, project } from './data/experience'
 import type { DetailKey } from './data/experience'
+import { warmPhotos } from './data/warmPhotos'
 import { ScrollTrigger } from './motion/gsap'
 import { glideTo, jumpTo, pageTop } from './motion/hostScroll'
 import { useStoryMotion } from './motion/useStoryMotion'
@@ -40,13 +41,25 @@ type Modal = 'menu' | 'enquire' | DetailKey
 
 const TOWER_SRC = `${ASSET_BASE}/tower-original.png`
 
-/** Both pictures of the final exchange, fetched and decoded ahead of it. */
-function warm(src: string): void {
+/**
+ * Both pictures of the final exchange, fetched and decoded ahead of it.
+ *
+ * At low priority, and deliberately NOT at mount: the tower is a 2.6MB PNG
+ * wanted only on the chapter's last screen, and starting it while the loader
+ * is up put it in direct competition with the four photographs the first
+ * screens actually need. It now follows the rest of the chapter's imagery,
+ * which still leaves it nine sections of scrolling ahead of the arch.
+ */
+function warmSource(src: string): void {
   const image = new Image()
   image.decoding = 'async'
+  image.fetchPriority = 'low'
   image.src = src
   void image.decode().catch(() => {})
 }
+
+/** The film's final frame, the other half of the arch's exchange. */
+const FINAL_FRAME_SRC = '/assets/opening/building/final-frame.webp'
 
 /**
  * Chapter 04 — "The art of living": the approved lifestyle journey, mounted
@@ -71,6 +84,14 @@ export function ReposeLifestyle({ onReturn }: Props) {
   const heldRef = useRef(false)
 
   const [phase, setPhase] = useState<Phase>('loading')
+  /**
+   * The loader element outlives the phase change by the length of its own last
+   * fade: the chapter goes live underneath it, so the cost of building the
+   * chapter's motion is paid while the frame is still covered.
+   */
+  const [loaderUp, setLoaderUp] = useState(true)
+  /** True once the chapter's own imagery is in and the arch's may follow. */
+  const [portalSources, setPortalSources] = useState(false)
   const [modal, setModal] = useState<Modal | null>(null)
 
   const returnRef = useRef(onReturn)
@@ -102,8 +123,6 @@ export function ReposeLifestyle({ onReturn }: Props) {
         lockScroll()
       }
     })
-    warm(TOWER_SRC)
-    warm('/assets/opening/building/final-frame.webp')
     return () => {
       cancelAnimationFrame(frame)
       if (heldRef.current) {
@@ -121,8 +140,52 @@ export function ReposeLifestyle({ onReturn }: Props) {
     setPhase('exploring')
   }, [])
 
+  const dismissLoader = useCallback(() => setLoaderUp(false), [])
+
   const exploring = phase === 'exploring'
   useStoryMotion(root, exploring, horizontal)
+
+  /* --------------------------------------------------------------- *
+   * The rest of the chapter, fetched behind the visitor
+   *
+   * The loader waited for the first screens and nothing more. From here
+   * the remaining photographs are warmed in the order they are met, a
+   * few at a time and at low priority, so each section is decoded before
+   * it is reached — and so nothing in this queue can ever be competing
+   * with the picture the visitor is actually looking at.
+   *
+   * It starts a moment after the reveal rather than with it: the chapter's
+   * entry animation gets the frame to itself.
+   * --------------------------------------------------------------- */
+  useEffect(() => {
+    if (!exploring) return
+    let cancelled = false
+    let warm: ReturnType<typeof warmPhotos> | null = null
+    const begin = () => {
+      warm = warmPhotos(DEFERRED_PHOTOS, ASSET_BASE, { concurrency: 3, priority: 'low' })
+      // The arch's two pictures last of all — 2.8MB between them, and not
+      // wanted until the final screen.
+      void warm.promise.then(() => {
+        if (cancelled) return
+        // Decoded here, and rendered into the portal's own elements by the
+        // same flag — one fetch, and a bitmap already in hand for the
+        // pixel-exact exchange at the end.
+        warmSource(TOWER_SRC)
+        warmSource(FINAL_FRAME_SRC)
+        setPortalSources(true)
+      })
+    }
+    const idle =
+      typeof requestIdleCallback === 'function'
+        ? requestIdleCallback(begin, { timeout: 1500 })
+        : window.setTimeout(begin, 1200)
+    return () => {
+      cancelled = true
+      if (typeof cancelIdleCallback === 'function') cancelIdleCallback(idle)
+      else window.clearTimeout(idle)
+      warm?.cancel()
+    }
+  }, [exploring])
 
   /* --------------------------------------------------------------- *
    * Leaving upward — back into the building the ordinary way
@@ -255,6 +318,7 @@ export function ReposeLifestyle({ onReturn }: Props) {
               active={exploring}
               host={root}
               towerSrc={TOWER_SRC}
+              sources={portalSources}
               triggerRef={portal}
               onComplete={() => returnRef.current('arch')}
             />
@@ -262,7 +326,7 @@ export function ReposeLifestyle({ onReturn }: Props) {
         />
       </div>
 
-      {phase === 'loading' && <ReposeLoader assetBase={ASSET_BASE} onComplete={complete} />}
+      {loaderUp && <ReposeLoader assetBase={ASSET_BASE} onReveal={complete} onComplete={dismissLoader} />}
 
       <Dialog
         open={modal !== null}

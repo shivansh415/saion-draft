@@ -25,6 +25,14 @@ interface Props {
   host: RefObject<HTMLDivElement | null>
   /** The capture the approved finale shows inside its arch. */
   towerSrc: string
+  /**
+   * Whether the arch's two pictures may be fetched yet. They are 2.8MB
+   * between them and are not wanted until the chapter's last screen; started
+   * at mount they competed with the four photographs the first screens need,
+   * and started at the reveal they competed with the entry animation. The
+   * chapter turns this on once the rest of its imagery is in.
+   */
+  sources: boolean
   /** Receives the pin's ScrollTrigger, so the chapter can glide to the end of the transition. */
   triggerRef: MutableRefObject<ScrollTrigger | null>
   /** Called once the building stands alone and the page already rests at the opening's end. */
@@ -78,7 +86,7 @@ const NARROW = '(max-width: 900px)'
  * the very same still in the very same rectangle — and the chapter is handed
  * back. Nothing on screen changes; only who owns it.
  */
-export function ArchPortal({ active, host, towerSrc, triggerRef, onComplete }: Props) {
+export function ArchPortal({ active, host, towerSrc, sources, triggerRef, onComplete }: Props) {
   const ref = useRef<HTMLDivElement | null>(null)
   const completeRef = useRef(onComplete)
   useEffect(() => {
@@ -343,26 +351,30 @@ export function ArchPortal({ active, host, towerSrc, triggerRef, onComplete }: P
     <div className="rp-portal" ref={ref} data-rp-portal aria-hidden="true">
       <div className="rp-portal-mask" data-rp-mask>
         <div className="rp-portal-content" data-rp-content>
+          {/* Both boxes are sized by their width/height attributes, so
+              withholding the sources shifts nothing either way. */}
           {/* The explorer's still, beneath: where the chapter ends up. */}
           <img
             className="rp-portal-still"
             data-rp-b
-            src={FINAL_FRAME_STILL.src}
+            src={sources ? FINAL_FRAME_STILL.src : undefined}
             width={FINAL_FRAME_STILL.width}
             height={FINAL_FRAME_STILL.height}
             alt=""
             decoding="async"
+            fetchPriority="low"
             draggable={false}
           />
           {/* The capture the finale shows, registered onto the still. */}
           <img
             className="rp-portal-capture"
             data-rp-a
-            src={towerSrc}
+            src={sources ? towerSrc : undefined}
             width={TOWER.width}
             height={TOWER.height}
             alt=""
             decoding="async"
+            fetchPriority="low"
             draggable={false}
           />
         </div>

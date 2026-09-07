@@ -1,15 +1,12 @@
 import {BRAND_LOGO,connections,essentialFacts,wellnessScenes,type DetailKey} from '../data/experience';
-import manifest from '../data/asset-manifest.json';
+import {photoSources} from '../data/photoSources';
 import type {ReactNode} from 'react';
-type AssetRecord={file:string;nativeWidth?:number;responsiveFile?:string;responsiveAvifFile?:string;responsiveJpegFile?:string};
-const assetMeta:Record<string,AssetRecord>=Object.fromEntries((manifest as AssetRecord[]).map(record=>[record.file.replace(/\.webp$/,''),record]));
 export function Photo({name,alt,assetBase,className='',eager=false,sizes='100vw',responsive=true}:{name:string;alt:string;assetBase:string;className?:string;eager?:boolean;sizes?:string;responsive?:boolean}){
- const meta=assetMeta[name];
- const nativeWidth=meta?.nativeWidth||1200;
- const hasResponsive=responsive&&Boolean(meta?.responsiveFile);
- const avifSet=hasResponsive?`${assetBase}/${name}-720.avif 720w, ${assetBase}/${name}.avif ${nativeWidth}w`:`${assetBase}/${name}.avif`;
- const webpSet=hasResponsive?`${assetBase}/${name}-720.webp 720w, ${assetBase}/${name}.webp ${nativeWidth}w`:`${assetBase}/${name}.webp`;
- return <picture className="rp-photo"><source type="image/avif" srcSet={avifSet} sizes={sizes}/><source type="image/webp" srcSet={webpSet} sizes={sizes}/><img className={className} src={`${assetBase}/${name}.jpg`} sizes={sizes} alt={alt} loading={eager?'eager':'lazy'} fetchPriority={eager?'high':'auto'} decoding="async"/></picture>;
+ // The URL set comes from data/photoSources, which is also what the
+ // preloader warms — so the file this asks for is always the file that was
+ // already fetched and decoded behind the loader.
+ const {avifSet,webpSet,jpgSrc}=photoSources(name,assetBase,responsive);
+ return <picture className="rp-photo"><source type="image/avif" srcSet={avifSet} sizes={sizes}/><source type="image/webp" srcSet={webpSet} sizes={sizes}/><img className={className} src={jpgSrc} sizes={sizes} alt={alt} loading={eager?'eager':'lazy'} fetchPriority={eager?'high':'auto'} decoding="async"/></picture>;
 }
 export function ChapterLabel({number,children}:{number:string;children:ReactNode}){return <p className="rp-eyebrow"><span>{number}</span><i/>{children}</p>;}
 export function ArrowLink({children,onClick,className=''}:{children:ReactNode;onClick:()=>void;className?:string}){return <button className={`rp-text-link ${className}`} onClick={onClick}><span>{children}</span><span aria-hidden="true">↗</span></button>;}
@@ -30,14 +27,14 @@ export function HorizontalAmenities({assetBase,onScene,onDetail}:{assetBase:stri
   <div className="rp-panels">
    <article className="rp-panel rp-panel-pause" data-scene="0">
     <div className="rp-panel-number">01 — 05</div><h2 className="rp-layer-title">A slower<br/>kind of<br/><em>everyday.</em></h2>
-    <figure className="rp-panel-photo rp-pause-photo"><Photo name="zen-garden-01" alt="Stone pathway and greenery in the Reposé zen garden" assetBase={assetBase} sizes="40vw"/><figcaption>01 / THE ART OF PAUSE</figcaption></figure>
+    <figure className="rp-panel-photo rp-pause-photo"><Photo name="zen-garden-01" alt="Stone pathway and greenery in the Reposé zen garden" assetBase={assetBase} sizes="40vw" eager/><figcaption>01 / THE ART OF PAUSE</figcaption></figure>
     <p className="rp-panel-copy">A collection of spaces for<br/>movement, stillness, and everything<br/>that makes a day your own.</p>
     <span className="rp-horizontal-invite">SCROLL TO WANDER <b aria-hidden="true">⟶</b></span>
    </article>
    <article className="rp-panel rp-panel-balance" data-scene="1">
     <h2 className="rp-layer-title">Find your<br/><em>balance.</em></h2>
-    <figure className="rp-panel-photo rp-yoga-photo"><Photo name="yoga-01" alt="The calm Reposé yoga studio with mats and garden-facing windows" assetBase={assetBase} sizes="65vw"/></figure>
-    <figure className="rp-panel-photo rp-zen-inset"><Photo name="zen-garden-01" alt="A closer look at the zen garden" assetBase={assetBase} sizes="24vw"/></figure>
+    <figure className="rp-panel-photo rp-yoga-photo"><Photo name="yoga-01" alt="The calm Reposé yoga studio with mats and garden-facing windows" assetBase={assetBase} sizes="65vw" eager/></figure>
+    <figure className="rp-panel-photo rp-zen-inset"><Photo name="zen-garden-01" alt="A closer look at the zen garden" assetBase={assetBase} sizes="24vw" eager/></figure>
     <div className="rp-panel-copy"><span className="rp-micro">02 / YOGA & ZEN</span><p>A little movement.<br/>A moment of stillness.</p><ArrowLink onClick={()=>onDetail('wellness')}>THE WELLNESS COLLECTION</ArrowLink></div>
    </article>
    <article className="rp-panel rp-panel-move" data-scene="2">
@@ -125,7 +122,7 @@ export function ConnectednessExperience({assetBase}:{assetBase:string}){
 export function FinalRepose({assetBase,onEnquire,onRestart,portal}:{assetBase:string;onEnquire:()=>void;onRestart:()=>void;portal?:ReactNode}){
  return <section id="finale" data-chapter="09" className="rp-finale rp-dark">
   <span className="rp-final-intro">THIS IS YOUR NEXT CHAPTER.</span><h2 className="rp-final-word">REPOSÉ</h2>
-  <figure className="rp-final-image"><img src={`${assetBase}/tower-original.webp`} alt="The supplied completed Reposé Residence tower image" loading="lazy" decoding="async"/></figure>
+  <figure className="rp-final-image"><img src={`${assetBase}/tower-original.png`} alt="The supplied completed Reposé Residence tower image" loading="lazy" decoding="async"/></figure>
   {portal}
   <div className="rp-final-call"><p>Make room for<br/><em>a different rhythm.</em></p><ArrowLink onClick={onEnquire}>ENQUIRE ABOUT REPOSÉ</ArrowLink></div>
   <div className="rp-final-base"><img src={BRAND_LOGO} alt="SAION Properties — Engineered Excellence" loading="lazy"/><span>REPOSÉ RESIDENCE<br/>AL FURJAN · DUBAI</span><ArrowLink onClick={onRestart}>BACK TO RECEPTION</ArrowLink></div>
