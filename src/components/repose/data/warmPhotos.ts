@@ -89,7 +89,19 @@ export function warmPhoto(spec: PhotoSpec, assetBase: string, priority: 'high' |
       // is a copy rather than a decode.
       image.decode().then(finish, finish)
     }
-    image.onerror = finish
+    image.onerror = () => {
+      // Resolving rather than rejecting is deliberate — a file that is not
+      // coming must never hold the chapter shut. But it must not pass in
+      // silence either: this is precisely what a whole folder missing from a
+      // deployment looks like from in here, and without a word in the console
+      // it is indistinguishable from a completed load. Say so, by name.
+      console.error(
+        `[Reposé] image failed to load: ${image.currentSrc || jpgSrc}\n` +
+          '  The chapter will open without it. If this is a deployment, check that ' +
+          'public/assets/repose-experience/ is actually in the build — `npm run check:assets`.',
+      )
+      finish()
+    }
     image.src = jpgSrc
   })
 }
