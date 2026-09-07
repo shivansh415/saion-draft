@@ -2,7 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- interactive-widget=resizes-content: tells iOS Safari that the address
+         bar (and other "interactive widgets") resizes the layout viewport
+         rather than the visual viewport. Without this, the bar collapsing
+         mid-scroll fires a resize that makes ScrollTrigger re-measure every
+         trigger — felt as a hitch. maximum-scale=1 prevents iOS from zooming
+         in on form inputs, which would also trigger a layout recalculation. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, interactive-widget=resizes-content" />
+
     <meta name="theme-color" content="#090c10" />
     <meta
       name="description"

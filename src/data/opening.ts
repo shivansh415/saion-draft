@@ -287,8 +287,9 @@ export const LOADER_MAX_MS = 12000
 /** Longest the fonts are waited on before the reveal goes ahead without them. */
 export const FONT_WAIT_MS = 4000
 
-/** Parallel image requests. */
-export const MAX_CONCURRENT_LOADS = 6
+/** Parallel image requests. HTTP/2 multiplexes these over one connection — 8 saturates it
+ *  well without adding head-of-line blocking pressure. */
+export const MAX_CONCURRENT_LOADS = 8
 
 /** How far either side of the requested frame to accept a stand-in. */
 export const NEAREST_RADIUS = 14
@@ -296,8 +297,9 @@ export const NEAREST_RADIUS = 14
 /** How far ahead of the playhead to pre-decode. */
 export const WARM_AHEAD = 24
 
-/** Frames pre-decoded per animation frame. Higher catches up faster after a fast scrub. */
-export const WARM_BUDGET = 4
+/** Frames pre-decoded per animation frame. 6 catches up faster after a fast scrub while
+ *  staying within a single 16ms rAF budget on integrated GPUs. */
+export const WARM_BUDGET = 6
 
 /* ------------------------------------------------------------------ *
  * Renderer tuning

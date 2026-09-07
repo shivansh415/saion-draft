@@ -27,19 +27,38 @@ ScrollTrigger.config({ ignoreMobileResize: true })
  *
  * Lenis is the *only* smoothing layer in the chapter — the renderer reads its
  * output straight off ScrollTrigger with no second lerp on top — so all of the
- * film's inertia lives here. That let the value below move from a light touch
- * to genuine glide without the sluggish, "chasing" feel a second smoothing
- * pass on top of it used to cause.
+ * film's inertia lives here.
+ *
+ * Mobile tuning:
+ * - `syncTouch: false` — prevents Lenis adding a second smoothing pass on top
+ *   of the OS's own touch momentum, which was causing a mushy, delayed feel on
+ *   phones. False = Lenis still handles the scroll position, but defers inertia
+ *   to the browser's native touch physics on touch devices.
+ * - `touchMultiplier` is lowered on phones: native touch momentum already
+ *   provides the distance; the old 1.4 multiplied it and felt too fast.
+ * - `wheelMultiplier` stays at 1.15 for trackpad/mouse users on desktop.
  */
 export function useSmoothScroll() {
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
+    // Detect primary pointer type: 'fine' = mouse/trackpad, 'coarse' = touch screen
+    const isTouchPrimary = window.matchMedia('(pointer: coarse)').matches
+
     const lenis = new Lenis({
-      lerp: 0.075,
+      // Slightly crisper than the old 0.075 — one smoothing layer feels more
+      // responsive without losing the cinematic glide.
+      lerp: isTouchPrimary ? 0.1 : 0.08,
       wheelMultiplier: 1.15,
-      touchMultiplier: 1.4,
+      // On touch devices the OS already applies momentum; keep the multiplier
+      // at 1.0 so Lenis does not compound it into an over-scrolling feeling.
+      touchMultiplier: isTouchPrimary ? 1.0 : 1.4,
       smoothWheel: true,
+      // Do NOT add a second lerp on top of native touch inertia. Without this,
+      // touch devices were running through two independent smoothing filters
+      // (the OS's and Lenis's), compounding latency and producing a sluggish,
+      // "chasing" feel on mobile that was absent on desktop.
+      syncTouch: false,
     })
 
     const update = () => ScrollTrigger.update()
@@ -59,3 +78,4 @@ export function useSmoothScroll() {
     }
   }, [])
 }
+

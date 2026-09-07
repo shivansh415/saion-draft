@@ -35,10 +35,15 @@ interface Props {
  *   2. All critical images are loaded (or timed out)
  *
  * The exit is a cinematic clip-path shrink that reveals the page underneath.
+ *
+ * Performance: progress is written directly to the bar element's inline style
+ * (CSS custom property) via a ref, not via React state. This avoids N
+ * re-renders during the load sequence — only `exiting` causes a re-render.
  */
 export function SitePreloader({ onReady }: Props) {
   const rootRef = useRef<HTMLDivElement>(null)
-  const [progress, setProgress] = useState(0)
+  const barRef = useRef<HTMLDivElement>(null)
+  const percentRef = useRef<HTMLDivElement>(null)
   const [exiting, setExiting] = useState(false)
   const readyRef = useRef(false)
   const onReadyRef = useRef(onReady)
@@ -53,7 +58,7 @@ export function SitePreloader({ onReady }: Props) {
     setExiting(true)
   }, [])
 
-  // Load all critical images
+  // Load all critical images — progress written directly to the DOM, never to state.
   useEffect(() => {
     let cancelled = false
     let loaded = 0
@@ -66,7 +71,11 @@ export function SitePreloader({ onReady }: Props) {
     const updateProgress = () => {
       if (cancelled) return
       const fraction = loaded / total
-      setProgress(fraction)
+      // Write directly to the DOM — no React re-render, no reconciler overhead.
+      const bar = barRef.current
+      if (bar) bar.style.setProperty('--progress', String(fraction))
+      const pct = percentRef.current
+      if (pct) pct.textContent = `${Math.round(fraction * 100).toString().padStart(2, '0')}%`
     }
 
     const checkDone = () => {
@@ -174,16 +183,17 @@ export function SitePreloader({ onReady }: Props) {
         By SAION Properties
       </div>
 
-      {/* Progress bar */}
+      {/* Progress bar — driven by direct DOM writes, not React state */}
       <div className="site-preloader__progress">
         <div
+          ref={barRef}
           className="site-preloader__bar"
-          style={{ '--progress': progress } as React.CSSProperties}
+          style={{ '--progress': 0 } as React.CSSProperties}
         />
       </div>
 
-      <div className="site-preloader__percent">
-        {Math.round(progress * 100).toString().padStart(2, '0')}%
+      <div ref={percentRef} className="site-preloader__percent">
+        00%
       </div>
 
       {/* Location */}
@@ -193,3 +203,4 @@ export function SitePreloader({ onReady }: Props) {
     </div>
   )
 }
+

@@ -26,12 +26,23 @@
   text-rendering: optimizelegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Prevents iOS Safari from automatically bumping text sizes when the
+     viewport changes (e.g. rotation, address bar collapse). Without this,
+     a font-size change mid-scroll triggers a layout recalculation that the
+     rAF loop reads as a sudden jump. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+  /* Remove the blue tap-highlight flash that appears on interactive elements
+     on iOS/Android. Without this every button and link shows a coloured
+     overlay on touch that fights the dark cinematic palette. */
+  -webkit-tap-highlight-color: transparent;
 }
 
 html {
@@ -44,10 +55,19 @@ body {
   min-height: 100svh;
   background-color: var(--ink);
   overflow-x: hidden;
+  /* Prevent the elastic overscroll bounce at the very top and bottom of the
+     page. On mobile, the rubber-band effect conflicts with the sticky
+     viewport and reads as a scroll stall or a frame jump at the chapter
+     boundaries. */
+  overscroll-behavior: none;
 }
 
 #root {
   isolation: isolate;
+  /* Prevent iOS long-press from opening a context menu over the canvas film.
+     The canvas is aria-hidden so there is nothing useful to select; the menu
+     appearing mid-scroll is a jarring interruption. */
+  -webkit-touch-callout: none;
 }
 
 img {
@@ -73,3 +93,4 @@ html.lenis body {
 ::selection {
   background: rgb(246 244 241 / 18%);
 }
+

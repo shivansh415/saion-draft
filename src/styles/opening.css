@@ -23,6 +23,13 @@
   width: 100%;
   overflow: hidden;
   background: var(--ink);
+  /* Let vertical scroll gestures pass through uninterrupted. Without this,
+     the browser may classify the touch as ambiguous (pan vs pinch) and delay
+     the scroll event by the full touch-start timeout — felt as input lag. */
+  touch-action: pan-y;
+  /* Prevent pull-to-refresh and elastic overscroll while the film is playing;
+     the rAF loop is inside a sticky frame and overscroll reads as a stall. */
+  overscroll-behavior: none;
 }
 
 .opening__canvas {
@@ -72,7 +79,9 @@
 .op-line__inner {
   display: block;
   transform: translateY(116%);
-  will-change: transform;
+  /* will-change is set by GSAP at animation time and cleared afterward.
+     A permanent declaration here would keep this layer promoted at all times,
+     wasting compositor memory on a line that only animates once. */
 }
 
 .op-rule {
@@ -83,7 +92,6 @@
   opacity: 0.42;
   transform: scaleX(0);
   transform-origin: left center;
-  will-change: transform;
 }
 
 /* ---------------------------------------------------------------------
@@ -100,7 +108,6 @@
   padding-block: var(--gutter-block);
   color: var(--paper);
   pointer-events: none;
-  will-change: transform, opacity, filter;
 }
 
 .op-hero__inner {
@@ -131,7 +138,6 @@
   color: rgb(255 255 255 / 84%);
   opacity: 0;
   transform: translateY(16px);
-  will-change: transform, opacity;
 }
 
 /* Developer branding: present, deliberately quiet, and never in
@@ -146,7 +152,6 @@
   gap: 0.7rem;
   opacity: 0;
   transform: translateY(12px);
-  will-change: transform, opacity;
 }
 
 .op-brand__label {
@@ -175,7 +180,6 @@
   bottom: calc(var(--gutter-block) - 0.25rem);
   transform: translateX(-50%);
   pointer-events: none;
-  will-change: transform, opacity;
 }
 
 .op-hint__inner {
@@ -184,7 +188,6 @@
   align-items: center;
   gap: 0.85rem;
   opacity: 0;
-  will-change: opacity;
 }
 
 .op-hint__label {
@@ -286,7 +289,6 @@
   );
   transform: scaleY(0);
   transform-origin: top center;
-  will-change: transform;
 }
 
 .cb__type {
@@ -301,7 +303,6 @@
   text-align: center;
   color: var(--paper);
   opacity: 0;
-  will-change: transform, opacity, filter;
 }
 
 .cb__title {
@@ -341,7 +342,6 @@
   font-weight: 300;
   text-transform: uppercase;
   opacity: 0;
-  will-change: transform, opacity;
 }
 
 /* The trailing letter-space is padded back in so the tracked lines sit on the
@@ -377,7 +377,6 @@
     rgb(255 255 255 / 4%) 68%,
     rgb(255 255 255 / 0%) 100%
   );
-  will-change: transform, opacity;
 }
 
 /* ---------------------------------------------------------------------
@@ -404,6 +403,9 @@
   background: rgb(255 255 255 / 55%);
   transform: scaleX(0);
   transform-origin: left center;
+  /* will-change added here is justified: this bar is written imperatively
+     on every image-load event and needs its own compositor layer so the
+     transform update doesn't repaint the canvas behind it. */
   will-change: transform;
 }
 

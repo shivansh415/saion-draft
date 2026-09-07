@@ -32,24 +32,30 @@ interface DrawState {
  * no path by which a white or black flash can appear between sequences. It is
  * mounted once and painted imperatively from the parent's rAF loop — React does
  * not re-render while scrolling.
+ *
+ * Performance note: `clientWidth`/`clientHeight` are cached in a ref after each
+ * resize and read from there in `paint()` rather than queried from the DOM on
+ * every animation frame. A DOM dimension read forces a style recalculation; at
+ * 60 fps that is 60 layout queries per second that this eliminates.
  */
 export const CanvasSequence = forwardRef<CanvasSequenceHandle, Props>(
   function CanvasSequence({ className }, ref) {
     const canvasRef = useRef<HTMLCanvasElement | null>(null)
     const contextRef = useRef<CanvasRenderingContext2D | null>(null)
     const lastRef = useRef<DrawState>({ a: null, b: null, mix: 0 })
+    /** Cached logical size — updated in resize(), read in paint(). */
+    const sizeRef = useRef({ width: 0, height: 0, dpr: 1 })
 
     /** Cover-fit: fill the viewport, preserve aspect ratio, never distort. */
     const paint = (state: DrawState) => {
-      const canvas = canvasRef.current
       const context = contextRef.current
-      if (!canvas || !context) return
+      if (!context) return
 
       const { a, b, mix } = state
       if (!a) return
 
-      const width = canvas.clientWidth
-      const height = canvas.clientHeight
+      // Read from the cached size — never from the DOM.
+      const { width, height } = sizeRef.current
       if (width === 0 || height === 0) return
 
       const cover = (image: HTMLImageElement) => {
@@ -86,6 +92,9 @@ export const CanvasSequence = forwardRef<CanvasSequenceHandle, Props>(
       const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR, MAX_BACKING_WIDTH / width)
       const backingWidth = Math.round(width * dpr)
       const backingHeight = Math.round(height * dpr)
+
+      // Update cached logical size so paint() never has to query the DOM.
+      sizeRef.current = { width, height, dpr }
 
       if (canvas.width !== backingWidth || canvas.height !== backingHeight) {
         canvas.width = backingWidth
@@ -144,3 +153,4 @@ export const CanvasSequence = forwardRef<CanvasSequenceHandle, Props>(
     return <canvas ref={canvasRef} className={className} data-opening-canvas aria-hidden="true" />
   },
 )
+
