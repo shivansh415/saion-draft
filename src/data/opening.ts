@@ -331,17 +331,34 @@ export const PRIME_COUNT = 24
  * ------------------------------------------------------------------ */
 
 /**
- * Frames from the head of the film that must be in hand before the chapter
- * is shown. 32 frames is ~1.2 MB and, at the film's 1.27vh per frame, close
- * to half a second of continuous playback at a brisk scroll — by which point
- * the queue, running six wide and always reaching forward of the playhead,
- * is comfortably ahead of any human thumb.
+ * What the preloader holds the frame for.
  *
- * It is deliberately a prefix of sequence 01 and nothing else. The rest of
- * the film, the reception, the lifestyle chapter and its imagery all load
- * behind the visitor, after the reveal.
+ * Not a prefix of the film, and not all of it: enough of the LATTICE that
+ * `useImageSequence` fetches on (a dense head, then every 8th frame, then
+ * every 4th, then every 2nd, then the rest) to cover the whole film at one
+ * frame in four.
+ *
+ * This is the number that made the difference, and it is a coverage figure
+ * rather than a count. It used to be 32 — a dense prefix — which meant that
+ * when the loader left, the film was perfect for one second and a frozen hole
+ * after it. Measured at 25 Mbps, the old ordering left the longest run of
+ * missing frames at 211; the lattice, with the same bytes in hand at the same
+ * moment, leaves it at 3. `getNearest` covers a gap of three without anyone
+ * being able to tell; it can do nothing at all about a gap of two hundred.
+ *
+ * The head is `PRIME_COUNT` frames in order, because the opening seconds are
+ * watched closely and at a slow scroll and must be every frame. The two
+ * coarsest passes then lay one frame in four across the rest, which is what
+ * this figure counts.
+ *
+ * Encoding cannot help make this cheaper, and it was measured rather than
+ * assumed: these frames re-encode LARGER as WebP at every quality tried, and
+ * AVIF at a quality worth shipping is 113% of their current size. They came
+ * off a video and are already at the floor of intra-frame coding. The only
+ * real compression left is inter-frame — a video — which is a different
+ * renderer and a different set of risks.
  */
-export const CRITICAL_FRAMES = 32
+export const CRITICAL_FRAMES = PRIME_COUNT + Math.round((FRAME_COUNT - PRIME_COUNT) / 4)
 
 /**
  * The shortest the preloader is on screen. Long enough for its own line
@@ -351,20 +368,36 @@ export const CRITICAL_FRAMES = 32
 export const LOADER_MIN_MS = 1700
 
 /**
- * The longest it will hold out for `CRITICAL_FRAMES`. Past this the chapter
- * is revealed with whatever has arrived — never with nothing (the first
- * frame and the fonts are still required), but a slow line should not trap
- * anyone behind a loader indefinitely. The film degrades gracefully from
- * here: `getNearest` holds the closest loaded frame rather than flashing.
+ * The buffering budget: the longest the loader will hold out for the film.
+ *
+ * With the gate above set to the whole film, this is the number that actually
+ * decides what the visitor experiences, so it is a trade made on purpose.
+ * Measured at 40ms RTT: a 100 Mbps line has the entire film inside this and
+ * the loader leaves early; 25 Mbps buffers a little under half of it; 8 Mbps
+ * gets ~65 frames, still twice what the old gate ever waited for. Past this
+ * the chapter is revealed with whatever arrived — never with nothing, since
+ * the first frame and the fonts are still required — and the queue keeps
+ * reaching forward of the playhead from a far deeper start than before.
+ *
+ * Six seconds, not the fifteen it takes to guarantee the whole film on an
+ * average line. A loader is a held breath, and fifteen seconds of one is a
+ * worse first impression than an occasional held frame late in a hard scrub.
  */
-export const LOADER_MAX_MS = 12000
+export const LOADER_MAX_MS = 6000
 
 /** Longest the fonts are waited on before the reveal goes ahead without them. */
 export const FONT_WAIT_MS = 4000
 
-/** Parallel image requests. HTTP/2 multiplexes these over one connection — 8 saturates it
- *  well without adding head-of-line blocking pressure. */
-export const MAX_CONCURRENT_LOADS = 8
+/**
+ * Parallel image requests, multiplexed by HTTP/2 over one connection.
+ *
+ * Twelve rather than eight. Fetching four hundred small files is latency-bound
+ * long before it is bandwidth-bound — each frame costs a round trip whatever
+ * its size — and the number in flight is the multiplier on that. Eight was
+ * chosen when only 32 frames were ever waited on; now that the loader holds
+ * for most of the film, the depth of the queue is the loader's duration.
+ */
+export const MAX_CONCURRENT_LOADS = 12
 
 /** How far either side of the requested frame to accept a stand-in. */
 export const NEAREST_RADIUS = 14

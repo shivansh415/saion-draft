@@ -46,15 +46,26 @@ export interface SequenceController {
   setPriority(index: number): void
   /** Pre-decodes a small window ahead of the playhead. */
   warm(index: number): void
+  /**
+   * Whether the film is still the only thing the page wants. True while the
+   * preloader is up — nothing else is on screen to compete — and false from
+   * the reveal, when the reception's stills and the lifestyle bundle start
+   * wanting the same pipe.
+   */
+  setEager(eager: boolean): void
   readonly loadedCount: number
   readonly total: number
 }
 
 interface Options {
   /**
-   * How many frames from the head of the list must have settled before the
-   * chapter is fit to be shown. The preloader holds the frame until then, so
-   * the film has a real buffer in hand before anyone can scroll into it.
+   * How many frames must have settled before the chapter is fit to be shown.
+   * The preloader holds the frame until then, so the film has a real buffer in
+   * hand before anyone can scroll into it.
+   *
+   * How many, not which: the queue's lattice order (see `nextIndex`) is what
+   * decides that they are spread evenly across the film rather than piled at
+   * its head, which is the whole reason a partial buffer is watchable.
    *
    * "Settled" rather than "loaded" on purpose: a frame that 404s or fails must
    * still count, or one missing file would hold the loader up for ever.
@@ -92,6 +103,7 @@ export function useImageSequence(sources: readonly string[], options: Options = 
     let loadedCount = 0
     let criticalSettled = 0
     let priority = 0
+    let eager = true
     let disposed = false
     const pending = new Set<HTMLImageElement>()
 
@@ -112,12 +124,21 @@ export function useImageSequence(sources: readonly string[], options: Options = 
         status[index] = FAILED
       }
 
-      // The gate the preloader waits on. Counted whether the frame arrived or
-      // failed: the visitor must never be held behind a file that is not
-      // coming.
-      if (criticalCount > 0 && index < criticalCount) {
+      // The gate the preloader waits on: HOW MANY frames are in hand, not
+      // which. It used to test `index < criticalCount`, which was right when
+      // the queue fetched 0,1,2,3… and the gate meant "the first N". The queue
+      // now fetches on a lattice, so a low index is no longer an early fetch —
+      // and counting by index made the loader wait for the stride-1 pass to
+      // sweep the head of the film, which is most of the way through the whole
+      // download. Counting arrivals is what the gate always meant; the lattice
+      // is what guarantees they are spread across the film rather than piled
+      // at the front.
+      //
+      // Counted whether the frame arrived or failed: the visitor must never be
+      // held behind a file that is not coming.
+      if (criticalCount > 0) {
         criticalSettled++
-        optionsRef.current.onCriticalProgress?.(criticalSettled / criticalCount)
+        optionsRef.current.onCriticalProgress?.(Math.min(1, criticalSettled / criticalCount))
         if (criticalSettled >= criticalCount) setCriticalReady(true)
       }
 
@@ -130,27 +151,70 @@ export function useImageSequence(sources: readonly string[], options: Options = 
 
       const image = new Image()
       image.decoding = 'async'
-      // The prefix the preloader is waiting on is the most urgent thing the
-      // page will ever fetch; everything after it is a background stream the
-      // visitor is scrolling towards, and saying so lets the browser give way
-      // to what is actually needed sooner — the lifestyle bundle, the
-      // reception's stills — instead of queueing them behind four hundred
-      // frames. The queue's own six-at-a-time limit means 'low' cannot starve
-      // it either way.
-      image.fetchPriority = index < criticalCount ? 'high' : 'low'
+      // Priority by PHASE, not by index.
+      //
+      // It used to be 'high' for the waited-on prefix and 'low' for everything
+      // after, so that four hundred frames could not queue ahead of the
+      // lifestyle bundle and the reception's stills. But the gate now asks for
+      // the whole film, so an index test would mark all four hundred urgent
+      // for ever — and 'low', at the other extreme, parks requests behind
+      // everything, which is what left the tail of the film arriving late.
+      //
+      // While the loader is up the film IS the page and nothing competes with
+      // it. From the reveal, 'auto' lets the browser weigh the rest of the
+      // film against whatever else is now in flight, rather than always
+      // winning or always losing.
+      image.fetchPriority = eager ? 'high' : 'auto'
       pending.add(image)
       image.onload = () => settle(index, image, true)
       image.onerror = () => settle(index, image, false)
       image.src = sources[index]
     }
 
-    /** Nearest idle frame: ahead of the playhead first, then behind it. */
+    /**
+     * What to fetch next.
+     *
+     * NOT simply "the next one along". Fetching 0,1,2,3… in order means that
+     * at any moment before the film is complete, the buffer is a dense prefix
+     * followed by a hole — and a visitor who reaches the hole sees the film
+     * stop dead on a held frame, because `getNearest` has nothing ahead to
+     * offer. That is the "stuck frame" this ordering exists to remove.
+     *
+     * So: a dense head first, then the whole film on a coarsening lattice.
+     *
+     *   1. frames 0…PRIME_COUNT in order — the opening seconds are watched
+     *      closely and at a slow scroll, and they must be every frame;
+     *   2. then every 8th frame, then every 4th, then every 2nd, then the
+     *      rest — each pass sweeping forward from the playhead and then
+     *      backfilling behind it, exactly as before.
+     *
+     * The difference this makes is not subtle. Half a film loaded in order is
+     * a perfect first half and a frozen second one. Half a film loaded like
+     * this is the WHOLE film at half its frame rate, refining as it goes —
+     * which reads as a slightly softer motion for a moment, and never as a
+     * stall. `getNearest`'s radius covers the gaps the lattice leaves, so
+     * every frame the playhead lands on has something honest to draw.
+     */
+    const STRIDES = [8, 4, 2, 1]
+
     const nextIndex = (): number => {
-      for (let i = priority; i < total; i++) {
+      // The dense head, always first.
+      const head = Math.min(PRIME_COUNT, total)
+      for (let i = 0; i < head; i++) {
         if (status[i] === IDLE) return i
       }
-      for (let i = priority - 1; i >= 0; i--) {
-        if (status[i] === IDLE) return i
+
+      // Then the lattice, coarsest first. A pass skips what earlier passes
+      // already took, so `stride` here is simply how far apart the candidates
+      // of this pass are, not a claim about what is still missing.
+      for (const stride of STRIDES) {
+        const from = Math.ceil(priority / stride) * stride
+        for (let i = from; i < total; i += stride) {
+          if (status[i] === IDLE) return i
+        }
+        for (let i = from - stride; i >= 0; i -= stride) {
+          if (status[i] === IDLE) return i
+        }
       }
       return -1
     }
@@ -180,6 +244,10 @@ export function useImageSequence(sources: readonly string[], options: Options = 
           if (forward < total && status[forward] === LOADED) return images[forward]
         }
         return null
+      },
+
+      setEager: (next) => {
+        eager = next
       },
 
       setPriority: (index) => {

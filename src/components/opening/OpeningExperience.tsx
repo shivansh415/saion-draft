@@ -282,7 +282,12 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onNearL
 
   useEffect(() => {
     revealedRef.current = revealed
-  }, [revealed])
+    // From here the film is no longer the only thing the page wants: the
+    // reception's stills and the lifestyle bundle are about to ask for the
+    // same pipe, and whatever is left of the film should be weighed against
+    // them rather than outranking them.
+    if (revealed) controllerRef.current?.setEager(false)
+  }, [revealed, controllerRef])
 
   // The lifestyle chapter is a separate bundle, fetched only when the building
   // is complete and one of its two cues could actually be pressed — off the

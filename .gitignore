@@ -59,3 +59,8 @@ public/assets/reception-entry/Reception-done.webp
 
 # Scratch/agent output recordings
 /Claude outputs/
+
+# Full-resolution masters kept beside the project but never shipped.
+# The 8000px reception render lives here; public/ carries the 4800px WebP
+# the site actually loads. Out of git so a 48MB blob never enters history.
+/assets-master/
