@@ -51,9 +51,10 @@
 }
 
 .site-preloader__name {
-  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-family: var(--font-display);
   font-size: clamp(22px, 3.5vw, 40px);
-  font-weight: 300;
+  font-weight: var(--weight-display);
+  line-height: var(--lh-heading);
   letter-spacing: 0.22em;
   text-transform: uppercase;
   opacity: 0;
@@ -62,7 +63,9 @@
 }
 
 .site-preloader__developer {
-  font-family: Inter, system-ui, sans-serif;
+  font-family: var(--font-sans);
+  font-weight: var(--weight-sans);
+  line-height: var(--lh-ui);
   font-size: clamp(9px, 1.2vw, 12px);
   letter-spacing: 0.28em;
   text-transform: uppercase;
@@ -107,8 +110,10 @@
 }
 
 .site-preloader__percent {
-  font-family: Inter, system-ui, sans-serif;
-  font-size: 11px;
+  font-family: var(--font-sans);
+  font-weight: var(--weight-sans);
+  line-height: var(--lh-ui);
+  font-size: var(--type-micro);
   letter-spacing: 0.18em;
   color: #f6f4f160;
   margin-top: 0.8rem;
@@ -121,7 +126,9 @@
 .site-preloader__location {
   position: absolute;
   bottom: clamp(24px, 4vh, 48px);
-  font-family: Inter, system-ui, sans-serif;
+  font-family: var(--font-sans);
+  font-weight: var(--weight-sans);
+  line-height: var(--lh-ui);
   font-size: 10px;
   letter-spacing: 0.24em;
   text-transform: uppercase;

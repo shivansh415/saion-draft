@@ -1,7 +1,8 @@
-@font-face{font-family:ReposeDisplay;src:url('../assets/fonts/display.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
-@font-face{font-family:ReposeDisplay;src:url('../assets/fonts/display-italic.woff2') format('woff2');font-weight:400;font-style:italic;font-display:swap}
-@font-face{font-family:ReposeSans;src:url('../assets/fonts/sans.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
-.repose-experience{--rp-paper:#f0eee6;--rp-ink:#303329;--rp-sage:#cedbd7;--rp-olive:#33382d;--rp-line:rgba(48,51,41,.25);--rp-display:ReposeDisplay,Georgia,serif;--rp-sans:ReposeSans,Arial,sans-serif;position:relative;isolation:isolate;width:100%;overflow-x:clip;background:var(--rp-paper);color:var(--rp-ink);font-family:var(--rp-sans);font-size:16px;line-height:1.55;font-weight:400;-webkit-font-smoothing:antialiased}
+/* The two faces are declared once for the whole site in `src/index.css` and
+   served from `public/assets/fonts`. This chapter names neither: --rp-display
+   and --rp-sans below are aliases onto the site tokens, kept so the chapter's
+   own selectors read unchanged. */
+.repose-experience{--rp-paper:#f0eee6;--rp-ink:#303329;--rp-sage:#cedbd7;--rp-olive:#33382d;--rp-line:rgba(48,51,41,.25);--rp-display:var(--font-display);--rp-sans:var(--font-sans);position:relative;isolation:isolate;width:100%;overflow-x:clip;background:var(--rp-paper);color:var(--rp-ink);font-family:var(--rp-sans);font-size:var(--type-body);line-height:var(--lh-body);font-weight:var(--weight-sans);-webkit-font-smoothing:antialiased}
 .repose-experience *, .rp-dialog *{box-sizing:border-box}
 .repose-experience :where(h1,h2,h3,p,figure){margin:0}
 .repose-experience :where(h1,h2,h3){font-weight:400}
@@ -11,10 +12,10 @@
 .repose-experience button:focus-visible,.repose-experience a:focus-visible,.rp-dialog button:focus-visible,.rp-dialog a:focus-visible{outline:2px solid currentColor;outline-offset:7px}
 .repose-experience picture{display:block;width:100%;height:100%}
 .repose-experience img{display:block;width:100%;height:100%;object-fit:cover}
-.repose-experience em,.rp-dialog em{font-family:var(--rp-display,ReposeDisplay,Georgia,serif);font-weight:400}
+.repose-experience em,.rp-dialog em{font-family:var(--font-display);font-style:italic;font-weight:var(--weight-display)}
 .repose-experience ::selection{background:#8f815e;color:#fff}
 .repose-experience .rp-dark{background:var(--rp-olive);color:var(--rp-paper)}
-.repose-experience .rp-micro,.rp-dialog .rp-micro{display:block;font:400 12px/1.6 ReposeSans,Arial,sans-serif;letter-spacing:.12em;text-transform:uppercase}
+.repose-experience .rp-micro,.rp-dialog .rp-micro{display:block;font-family:var(--font-sans);font-weight:var(--weight-sans);font-size:var(--type-ui);line-height:var(--lh-ui);letter-spacing:var(--track-ui);text-transform:uppercase}
 .repose-experience .rp-small{font-size:14px;line-height:1.65}
 .rp-clip{display:block;overflow:hidden;padding:.03em 0 .1em;margin-bottom:-.1em}
 .rp-clip>span{display:block}
@@ -45,7 +46,13 @@
 .rp-scroll-word{writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:.18em;font-size:10px;margin:6px 0}
 .rp-chapter-index{bottom:28px;right:3.3vw;display:flex;gap:10px;align-items:center;font-size:12px}
 .rp-chapter-index i{width:32px;height:1px;background:currentColor;opacity:.5}
-[data-phase=loading] .rp-ui{visibility:hidden}
+/* The fixed journey chrome — the brand, the chapter menu, the progress rail
+   and the 01/10 index — belongs to the amenities. During the residence
+   chapter there is no journey to be at 01 of and no chapter to jump to yet,
+   so the room is left to itself; it arrives with the amenities, from behind
+   the loader that introduces them. */
+[data-phase=residence] .rp-ui,[data-phase=loading] .rp-ui{visibility:hidden}
+
 /* The loader is centred by a single full-viewport grid cell rather than by a
    translate. It used to centre with `transform:translate(-50%,-50%)` on the
    window itself — the same property GSAP animates. GSAP can only read a
@@ -223,11 +230,11 @@
 .rp-final-base>.rp-text-link{font-size:10px!important;gap:22px}
 /* Dialog composition uses the installed accessible Radix / Shadcn primitive. */
 .rp-modal-open [data-slot=dialog-overlay]{position:fixed;inset:0;background:#182118a8;backdrop-filter:blur(8px);z-index:110}
-.rp-dialog[data-slot=dialog-content]{--rp-display:ReposeDisplay,Georgia,serif;--rp-sans:ReposeSans,Arial,sans-serif;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:111;width:min(610px,calc(100% - 32px));max-width:none;max-height:90svh;overflow:auto;overscroll-behavior:contain;display:block;background:#f0eee6;color:#303329;padding:66px 45px 36px;border:1px solid #aeb3a5;border-radius:0;box-shadow:none;font:400 16px/1.6 ReposeSans,Arial,sans-serif;outline:none}
+.rp-dialog[data-slot=dialog-content]{--rp-display:var(--font-display);--rp-sans:var(--font-sans);position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:111;width:min(610px,calc(100% - 32px));max-width:none;max-height:90svh;overflow:auto;overscroll-behavior:contain;display:block;background:#f0eee6;color:#303329;padding:66px 45px 36px;border:1px solid #aeb3a5;border-radius:0;box-shadow:none;font-family:var(--rp-sans);font-weight:var(--weight-sans);font-size:var(--type-body);line-height:var(--lh-body);outline:none}
 .rp-dialog-close{position:absolute!important;top:20px;right:24px;display:flex;gap:18px;align-items:center;font-size:11px!important;letter-spacing:.1em;min-height:30px}
 .rp-dialog-close span{font-size:26px;line-height:1}
-.rp-dialog .rp-dialog-title{font:400 62px/.95 ReposeDisplay,Georgia,serif;letter-spacing:-.025em;margin:15px 0 22px}
-.rp-dialog .rp-dialog-description{font:400 15px/1.7 ReposeSans,Arial,sans-serif;color:#454a3d;margin:22px 0}
+.rp-dialog .rp-dialog-title{font-family:var(--rp-display);font-weight:var(--weight-display);font-size:62px;line-height:.95;letter-spacing:var(--track-display);margin:15px 0 22px}
+.rp-dialog .rp-dialog-description{font-family:var(--rp-sans);font-weight:var(--weight-sans);font-size:15px;line-height:1.7;color:#454a3d;margin:22px 0}
 .rp-dialog>img{display:block;width:100%;height:245px;object-fit:cover;margin:28px 0}
 .rp-dialog-foot{display:block;font-size:10px;letter-spacing:.12em;border-top:1px solid #30332944;padding-top:20px;margin-top:30px}
 .rp-contact-links{margin:35px 0}
@@ -239,7 +246,7 @@
 .rp-dialog-menu nav button{display:flex;gap:24px;align-items:center;width:100%;text-align:left;border-top:1px solid #30332933;padding:10px 0;transition:padding .3s}
 .rp-dialog-menu nav button:hover{padding-left:10px}
 .rp-dialog-menu nav button>span:first-child{font-size:11px;width:24px}
-.rp-dialog-menu nav button>span:nth-child(2){font:400 29px/1.3 ReposeDisplay,Georgia,serif;flex:1}
+.rp-dialog-menu nav button>span:nth-child(2){font-family:var(--rp-display);font-weight:var(--weight-display);font-size:29px;line-height:1.3;flex:1}
 .rp-dialog-menu nav button>span:last-child{font-size:20px}
 /* Compact laptop heights retain the composition without collisions. */
 @media(min-width:901px) and (max-height:780px){
@@ -329,4 +336,88 @@
 @media(prefers-reduced-motion:no-preference){
  .rp-life-title .rp-clip>span{transform:translateY(112%)}
  .rp-life-image img{transform:scale(1.06)}
+}
+
+/* Slack past the end of the arch's pin — see the note at its markup. The
+   finale's own ground, so there is nothing to see even if it is reached. */
+.rp-after{height:40vh;background:var(--rp-olive)}
+
+/* =====================================================================
+   01 — THE AMENITY COLLECTION (the index)
+   Replaces the "The art of living." title screen. An editorial index, not
+   an icon grid: fourteen rows in the supplied order, and one plate beside
+   them that follows whichever row is being read.
+   ===================================================================== */
+.rp-index{position:relative;background:var(--rp-paper);color:var(--rp-ink);padding:clamp(12vh,16vh,18vh) 12vw clamp(9vh,12vh,14vh);min-height:100svh}
+.rp-index-head{max-width:52ch}
+.rp-index-title{margin-top:clamp(1.6rem,3vh,2.6rem);font-family:var(--rp-display);font-weight:var(--weight-display);font-size:clamp(58px,7.6vw,132px);line-height:.88;letter-spacing:var(--track-display)}
+.rp-index-title:focus{outline:none}
+.rp-index-lead{margin-top:clamp(1.6rem,3vh,2.4rem);max-width:44ch;font-size:var(--type-body);line-height:var(--lh-body);color:#454a3d}
+.rp-index-body{display:grid;grid-template-columns:minmax(0,42%) minmax(0,1fr);gap:clamp(2.5rem,5vw,6rem);align-items:start;margin-top:clamp(6vh,10vh,12vh)}
+/* Sticky rather than pinned: no ScrollTrigger, no extra pin spacer, nothing
+   for the chapter's existing pins to be sorted against. */
+.rp-index-stage{position:sticky;top:18vh;aspect-ratio:4/5;overflow:hidden;background:#e4e1d6}
+.rp-index-plate{position:absolute;inset:0;opacity:0;transition:opacity .75s cubic-bezier(.4,0,.2,1)}
+.rp-index-plate[data-shown]{opacity:1}
+.rp-index-plate img{object-position:50% 55%}
+.rp-index-list{margin:0;padding:0;list-style:none}
+.rp-index-row{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:baseline;column-gap:clamp(14px,1.6vw,28px);padding:clamp(18px,2.4vh,30px) 0;border-top:1px solid var(--rp-line);transition:opacity .55s cubic-bezier(.4,0,.2,1)}
+/* Dimming the rows that are not being read is the hook's doing, and only once
+   it has attached (`is-live`). Left to CSS alone every row would rest at 40%,
+   so a motion failure — or reduced motion — would ship a permanently faded
+   list. This way the resting state is the readable one. */
+.rp-index-list.is-live .rp-index-row{opacity:.4}
+.rp-index-row:last-child{border-bottom:1px solid var(--rp-line)}
+.rp-index-list.is-live .rp-index-row[data-active]{opacity:1}
+.rp-index-num{font-family:var(--rp-sans);font-size:var(--type-ui);letter-spacing:var(--track-ui);color:#5c6350;font-variant-numeric:tabular-nums}
+.rp-index-name{font-family:var(--rp-display);font-weight:var(--weight-display);font-size:clamp(24px,2.5vw,42px);line-height:1.06;letter-spacing:var(--track-heading);transition:transform .6s cubic-bezier(.2,.7,.2,1)}
+.rp-index-row[data-active] .rp-index-name{transform:translateX(10px)}
+.rp-index-group{color:#5c6350;white-space:nowrap}
+.rp-index-note{grid-column:2/-1;margin-top:8px;max-width:48ch;font-size:var(--type-small);line-height:1.65;color:#454a3d}
+.rp-index-foot{display:flex;justify-content:space-between;align-items:flex-end;gap:25px;margin-top:clamp(4vh,7vh,9vh);color:#5c6350}
+
+/* =====================================================================
+   The films, in the approved panels
+   Same box, same cover fit, same crop — a moving surface where a still was.
+   ===================================================================== */
+.repose-experience .rp-film{display:block;width:100%;height:100%;object-fit:cover;background:#1b1e18}
+.rp-water-visual>.rp-film{position:absolute;inset:0;object-position:50% 65%}
+
+/* =====================================================================
+   09 — AMENITIES MAP
+   The supplied drawing, presented whole. Never cropped or recoloured; the
+   only motion is the reveal and a slow scale, and the only marks are the
+   five the drawing puts beyond doubt.
+   ===================================================================== */
+.rp-map{position:relative;background:var(--rp-paper);color:var(--rp-ink);padding:clamp(11vh,14vh,16vh) 8vw clamp(9vh,13vh,15vh)}
+.rp-map-head{max-width:56ch;margin:0 auto;text-align:center}
+.rp-map-head .rp-eyebrow{justify-content:center}
+.rp-map-title{margin-top:clamp(1.4rem,2.8vh,2.4rem);font-family:var(--rp-display);font-weight:var(--weight-display);font-size:clamp(56px,7.4vw,128px);line-height:.9;letter-spacing:var(--track-display)}
+.rp-map-lead{margin-top:clamp(1.4rem,2.6vh,2.2rem);font-size:var(--type-body);line-height:var(--lh-body);color:#454a3d}
+.rp-map-figure{margin:clamp(5vh,8vh,10vh) auto 0;width:min(100%,1500px)}
+.rp-map-plate{position:relative;width:100%;overflow:hidden;background:#e4e1d6}
+/* The chapter's global rule covers every image; the drawing is the one that
+   must be shown whole rather than filled to a box. */
+.rp-map-plate img{width:100%;height:auto;object-fit:contain}
+.rp-map-mark{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:11px;pointer-events:none;white-space:nowrap}
+.rp-map-mark i{flex:none;width:9px;height:9px;border:1px solid #303329;border-radius:50%;background:rgb(240 238 230/.9)}
+.rp-map-mark__label{background:rgb(240 238 230/.88);padding:5px 10px;color:#303329}
+.rp-map-note{display:block;margin-top:clamp(1.2rem,2.4vh,2rem);text-align:center;color:#5c6350}
+
+@media(max-width:900px){
+ .rp-index{padding:11vh 9vw 9vh}
+ .rp-index-body{grid-template-columns:1fr;gap:2.4rem}
+ .rp-index-stage{top:9vh;aspect-ratio:16/10;z-index:2}
+ .rp-index-row{grid-template-columns:44px minmax(0,1fr);opacity:.55}
+ .rp-index-group{grid-column:2;justify-self:start;margin-top:6px}
+ .rp-index-note{grid-column:2}
+ .rp-index-foot{flex-direction:column;align-items:flex-start;gap:18px}
+ .rp-map{padding:10vh 5vw}
+ /* Labels on a drawing this size stop being legible and start being clutter. */
+ .rp-map-mark__label{display:none}
+}
+
+@media(prefers-reduced-motion:reduce){
+ .rp-index-list.is-live .rp-index-row{opacity:1}
+ .rp-index-plate{transition:none}
 }

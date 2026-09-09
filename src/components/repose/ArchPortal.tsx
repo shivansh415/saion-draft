@@ -16,7 +16,6 @@ import {
 } from './archTransition'
 import type { Box } from './archTransition'
 import { gsap, ScrollTrigger } from './motion/gsap'
-import { jumpTo, pageTop } from './motion/hostScroll'
 
 interface Props {
   /** True once the chapter is exploring; the pin exists only then. */
@@ -252,9 +251,12 @@ export function ArchPortal({ active, host, towerSrc, sources, triggerRef, onComp
       // before the page is moved and before anything can be painted.
       const root = host.current
       if (root) root.style.visibility = 'hidden'
-      const opening = document.querySelector<HTMLElement>('[data-opening-root]')
-      if (opening) jumpTo(Math.ceil(pageTop(opening) + opening.offsetHeight - window.innerHeight))
-      // Held still until the application has taken the chapter down.
+      // Held still until the application has taken the chapter down, and put
+      // the page back. WHERE it goes back to is the application's to decide
+      // (`App` → `ARCH_RETURN_AT`): this used to jump to the end of the
+      // opening section itself, which was the right answer when the chapter
+      // was mounted there — the opening now carries the reception too, so its
+      // end is the arrived lobby rather than the settled building.
       lockScroll()
       completeRef.current()
     }
@@ -324,7 +326,7 @@ export function ArchPortal({ active, host, towerSrc, sources, triggerRef, onComp
         end: () => `+=${Math.round(window.innerHeight * distance)}`,
         pin: true,
         pinSpacing: true,
-        anticipatePin: 1,
+        anticipatePin: 0,
         scrub: true,
         animation: timeline,
         onRefreshInit: measure,
@@ -337,6 +339,13 @@ export function ArchPortal({ active, host, towerSrc, sources, triggerRef, onComp
           if (viewportTop() !== placedAt) apply()
           if (self.progress >= 0.999) handoff()
         },
+        // And from the boundary itself. `onUpdate` stops being called once a
+        // smoothed scroll has settled, so a last update that landed a
+        // thousandth short of the end would leave the arch fully expanded and
+        // the hand-back never fired — with the journey's only way home on the
+        // wrong side of a rounding error. `onLeave` fires when the trigger
+        // passes its end, whatever the last update happened to read.
+        onLeave: handoff,
       })
       triggerRef.current = trigger
     }, finale)

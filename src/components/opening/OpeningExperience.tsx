@@ -14,7 +14,9 @@ import {
   HERO_EXIT_END,
   HERO_EXIT_START,
   HINT_EXIT_END,
+  LIFESTYLE_MOUNT_AT,
   resolveFrame,
+  unitFraction,
 } from '../../data/opening'
 import { useImageSequence } from '../../hooks/useImageSequence'
 import { FloorExplorer } from '../floor-explorer/FloorExplorer'
@@ -49,19 +51,40 @@ gsap.registerPlugin(ScrollTrigger)
  */
 interface Props {
   /**
-   * True while the lifestyle chapter has the frame (and while it is handing
-   * it back). The explorer stands down and the reception's journey is put to
-   * rest, so the chapter returns to the clean building.
+   * True while the terrace has the frame. It covers this chapter completely
+   * — a fixed layer, not a section after it — so the film has nothing worth
+   * painting and nothing here should answer a pointer or a Tab.
    */
-  lifestyleActive: boolean
+  terraceActive: boolean
   /**
    * On into the lifestyle chapter, from the reception inside or from the
-   * amenities cue on the podium. Both open it at its beginning.
+   * amenities cue on the podium. Both travel the page to its beginning.
    */
   onExplore: () => void
+  /** Up to the terrace, from above Level 15 in the floor explorer. */
+  onTerrace: () => void
+  /**
+   * The visitor is deep enough in this chapter that the next one should be in
+   * the document below them. Fired once on the way down; the chapter is put
+   * there BELOW the current position, so the document grows and nothing moves
+   * under the visitor — which is what makes the journey continuous rather
+   * than a hand-over between two states.
+   */
+  onNearLifestyle: () => void
 }
 
-export function OpeningExperience({ lifestyleActive, onExplore }: Props) {
+export function OpeningExperience({ terraceActive, onExplore, onTerrace, onNearLifestyle }: Props) {
+  /**
+   * True when this chapter's picture is nobody's business: the visitor has
+   * scrolled past it into the chapters below, or the terrace has covered it.
+   *
+   * It used to mean "the lifestyle chapter is mounted". That is no longer the
+   * same thing — the lifestyle chapter is now put into the document long
+   * before the visitor reaches it, and the two are on one continuous scroll —
+   * so it is measured rather than inferred.
+   */
+  const [scrolledPast, setScrolledPast] = useState(false)
+  const covered = scrolledPast || terraceActive
   const sectionRef = useRef<HTMLElement | null>(null)
   const canvasRef = useRef<CanvasSequenceHandle | null>(null)
   const meterRef = useRef<HTMLDivElement | null>(null)
@@ -250,12 +273,12 @@ export function OpeningExperience({ lifestyleActive, onExplore }: Props) {
   // Coming back, the next tick is forced to repaint rather than trusting the
   // key it left behind.
   useEffect(() => {
-    dormantRef.current = lifestyleActive
-    if (!lifestyleActive) {
+    dormantRef.current = covered
+    if (!covered) {
       lastKeyRef.current = ''
       approximateRef.current = true
     }
-  }, [lifestyleActive])
+  }, [covered])
 
   useEffect(() => {
     revealedRef.current = revealed
@@ -267,6 +290,39 @@ export function OpeningExperience({ lifestyleActive, onExplore }: Props) {
   useEffect(() => {
     if (explorerActive) prefetchLifestyle()
   }, [explorerActive])
+
+  // Is this chapter still on screen at all? Everything expensive here — the
+  // frame resolution, the compositing, the explorer's pointer handling — is
+  // switched off while it is not.
+  useEffect(() => {
+    const section = sectionRef.current
+    if (!section) return
+    const trigger = ScrollTrigger.create({
+      trigger: section,
+      start: 'top bottom',
+      end: 'bottom top',
+      onToggle: (self) => setScrolledPast(!self.isActive),
+    })
+    return () => trigger.kill()
+  }, [])
+
+  // And: put the next chapter into the document, once, on the way down.
+  useEffect(() => {
+    const section = sectionRef.current
+    if (!section) return
+    const trigger = ScrollTrigger.create({
+      trigger: section,
+      start: () => `top top-=${section.offsetHeight * unitFraction(LIFESTYLE_MOUNT_AT)}`,
+      invalidateOnRefresh: true,
+      onEnter: onNearLifestyle,
+      // Deliberately no `onLeaveBack`: once the chapter is in the document it
+      // stays. Taking it out again on the way up would change the document's
+      // height under a moving scroll, which is exactly the jump this
+      // architecture exists to avoid. The arch at the far end is the only
+      // thing that removes it, and it does so behind its own cover.
+    })
+    return () => trigger.kill()
+  }, [onNearLifestyle])
 
   /* --------------------------------------------------------------- *
    * Scroll → typography
@@ -449,6 +505,75 @@ export function OpeningExperience({ lifestyleActive, onExplore }: Props) {
       )
 
       /* ----------------------------------------------------------- *
+       * WHY DUBAI? — during the construction, when the building is
+       * half-built. The text fades in and slides up, then retires
+       * before the tower completes.
+       *
+       * Film units: 0.58 → 0.76. The chapter break ends at 0.512,
+       * so the building is well into construction by the time this
+       * appears.
+       * ----------------------------------------------------------- */
+      timeline.fromTo(
+        '[data-why-dubai]',
+        { opacity: 0 },
+        { opacity: 1, duration: 0.06, ease: 'power2.out' },
+        0.58,
+      )
+      timeline.fromTo(
+        '[data-why-heading]',
+        { opacity: 0, y: 40 },
+        { opacity: 1, y: 0, duration: 0.08, ease: 'power3.out' },
+        0.58,
+      )
+      timeline.fromTo(
+        '[data-why-body]',
+        { opacity: 0, y: 24 },
+        { opacity: 1, y: 0, duration: 0.08, ease: 'power3.out' },
+        0.62,
+      )
+      // Retire
+      timeline.to(
+        '[data-why-dubai]',
+        { opacity: 0, y: -20, duration: 0.06, ease: 'power2.in' },
+        0.74,
+      )
+
+      /* ----------------------------------------------------------- *
+       * TALLEST BUILDING — right-side, once the building is complete.
+       * Film units: in at 0.78, out at 0.92.
+       * ----------------------------------------------------------- */
+      timeline.fromTo(
+        '[data-tallest-eyebrow]',
+        { opacity: 0 },
+        { opacity: 1, duration: 0.05, ease: 'power2.out' },
+        0.78,
+      )
+      timeline.fromTo(
+        '[data-tallest-rule]',
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.06, ease: 'power2.out' },
+        0.80,
+      )
+      timeline.fromTo(
+        '[data-tallest-heading]',
+        { opacity: 0, x: 30 },
+        { opacity: 1, x: 0, duration: 0.08, ease: 'power3.out' },
+        0.80,
+      )
+      timeline.fromTo(
+        '[data-tallest-sub]',
+        { opacity: 0 },
+        { opacity: 1, duration: 0.05, ease: 'power2.out' },
+        0.85,
+      )
+      timeline.fromTo(
+        '[data-tallest]',
+        { opacity: 1 },
+        { opacity: 0, duration: 0.05, ease: 'power2.in' },
+        0.92,
+      )
+
+      /* ----------------------------------------------------------- *
        * Hand-off — the film holds its last frame and the floor
        * explorer settles over the same picture.
        *
@@ -535,6 +660,7 @@ export function OpeningExperience({ lifestyleActive, onExplore }: Props) {
       data-opening-root
       style={{ height: `${CHAPTER_HEIGHT_VH}vh` }}
       aria-label="Reposé Residence — the approach"
+      inert={terraceActive || undefined}
     >
       <div className="opening__viewport">
         <CanvasSequence ref={canvasRef} className="opening__canvas" />
@@ -548,13 +674,36 @@ export function OpeningExperience({ lifestyleActive, onExplore }: Props) {
             own layers, so its veil covers every one of them. */}
         <ChapterBreak />
 
+        {/* WHY DUBAI? — appears during the construction sequence (seq 02),
+            scrubbed by the same timeline as the chapter break. */}
+        <div className="why-dubai" data-why-dubai aria-hidden="true">
+          <h2 className="why-dubai__heading" data-why-heading>WHY DUBAI?</h2>
+          <p className="why-dubai__body" data-why-body>
+            From global trade and innovation to luxury living and world-class
+            experiences, Dubai has become a magnet for ambition. It's where
+            opportunity meets security—drawing millions who want more
+            than just a place to live.
+          </p>
+        </div>
+
+        {/* TALLEST BUILDING IN AL FURJAN — after construction completes, right-side */}
+        <div className="tallest-building" data-tallest aria-hidden="true">
+          <span className="tallest-building__eyebrow" data-tallest-eyebrow>Reposé Residence · Al Furjan</span>
+          <span className="tallest-building__rule" data-tallest-rule />
+          <h2 className="tallest-building__heading" data-tallest-heading>
+            Tallest<br />
+            <em>in Al Furjan.</em>
+          </h2>
+          <span className="tallest-building__sub" data-tallest-sub>The uptown of Dubai</span>
+        </div>
+
         {/* Chapter 02 rests over the held final frame; the hand-off above scrubs it in. */}
-        <FloorExplorer active={explorerActive} suspended={entering || lifestyleActive} />
+        <FloorExplorer active={explorerActive} onTerrace={onTerrace} suspended={entering || covered} />
 
         {/* The way to the amenities, marked on the storey it belongs to. It is a
             sibling of the explorer so the stylesheet can retire it the moment the
             explorer is revealed and the level bands claim those pixels. */}
-        <AmenitiesHotspot active={explorerActive && !entering && !lifestyleActive} onExplore={onExplore} />
+        <AmenitiesHotspot active={explorerActive && !entering && !covered} onExplore={onExplore} />
 
         {/* Chapter 03 rests over the same frame, above the explorer: only the cue at
             the entrance until it is asked for; then the walk into the reception.
@@ -564,7 +713,6 @@ export function OpeningExperience({ lifestyleActive, onExplore }: Props) {
           active={explorerActive}
           onJourney={setEntering}
           onExplore={onExplore}
-          dismissed={lifestyleActive}
           preload={revealed}
         />
 

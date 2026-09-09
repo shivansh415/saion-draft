@@ -1,6 +1,11 @@
+import {AMENITIES,AMENITIES_MAP,INDEX_COPY,MAP_COPY,MAP_MARKS,PLATE_SIZES} from '../data/amenities';
 import {BRAND_LOGO,connections,essentialFacts,wellnessScenes,type DetailKey} from '../data/experience';
 import {photoSources} from '../data/photoSources';
+import {Cinemagraph} from './Cinemagraph';
 import type {ReactNode} from 'react';
+
+/** Where the amenity films live. Posters are the same name, `.webp`. */
+const FILMS='/assets/amenity-videos';
 export function Photo({name,alt,assetBase,className='',eager=false,sizes='100vw',responsive=true}:{name:string;alt:string;assetBase:string;className?:string;eager?:boolean;sizes?:string;responsive?:boolean}){
  // The URL set comes from data/photoSources, which is also what the
  // preloader warms — so the file this asks for is always the file that was
@@ -10,14 +15,39 @@ export function Photo({name,alt,assetBase,className='',eager=false,sizes='100vw'
 }
 export function ChapterLabel({number,children}:{number:string;children:ReactNode}){return <p className="rp-eyebrow"><span>{number}</span><i/>{children}</p>;}
 export function ArrowLink({children,onClick,className=''}:{children:ReactNode;onClick:()=>void;className?:string}){return <button className={`rp-text-link ${className}`} onClick={onClick}><span>{children}</span><span aria-hidden="true">↗</span></button>;}
-export function LifestyleIntro({assetBase,onDiscover}:{assetBase:string;onDiscover:()=>void}){
- return <section id="life" data-chapter="01" className="rp-life rp-dark" aria-labelledby="life-title">
-  <div className="rp-life-image"><Photo name="pool-01" alt="The Reposé podium swimming pool, framed by timber ceilings and tropical planting" assetBase={assetBase} eager/></div>
-  <div className="rp-life-shade"/>
-  <div className="rp-life-top">STATELY SERENITY<span>AL FURJAN · DUBAI</span></div>
-  <h1 id="life-title" tabIndex={-1} className="rp-life-title"><span className="rp-clip"><span>The art of</span></span><span className="rp-clip"><span><em>living.</em></span></span></h1>
-  <div className="rp-life-side"><span>REPOSÉ RESIDENCE</span><i/><span>BY SAION PROPERTIES</span></div>
-  <div className="rp-life-bottom"><ChapterLabel number="01">LIFE AT REPOSÉ</ChapterLabel><p>Room to breathe.<br/>Space to belong.</p><ArrowLink onClick={onDiscover}>DISCOVER YOUR RHYTHM</ArrowLink></div>
+export function AmenitiesIndex({assetBase,onDiscover}:{assetBase:string;onDiscover:()=>void}){
+ // 01 — the amenity collection. This replaces the "The art of living." title
+ // screen the client asked to remove, and it is not a substitute hero: the
+ // introduction to the amenities is now the amenities themselves, read as an
+ // editorial index. All fourteen official names, in the supplied order, with
+ // a plate beside them that follows whichever row is being read.
+ return <section id="life" data-chapter="01" className="rp-index" aria-labelledby="life-title">
+  <div className="rp-index-head">
+   <ChapterLabel number={INDEX_COPY.number}>THE AMENITY COLLECTION</ChapterLabel>
+   <h1 id="life-title" tabIndex={-1} className="rp-index-title"><span className="rp-clip"><span>{INDEX_COPY.title[0]}</span></span><span className="rp-clip"><span><em>{INDEX_COPY.title[1]}</em></span></span></h1>
+   <p className="rp-index-lead">{INDEX_COPY.lead}</p>
+  </div>
+  <div className="rp-index-body">
+   {/* The plates are stacked and cross-faded rather than swapped on one
+       element: a single <img> whose src changes shows the browser's own
+       blank frame between two decodes. */}
+   <figure className="rp-index-stage" aria-hidden="true">
+    {AMENITIES.map((amenity,i)=><span className="rp-index-plate" key={amenity.id} data-plate={i} data-shown={i===0||undefined}>
+      {amenity.photo
+        ? <Photo name={amenity.photo} alt="" assetBase={assetBase} sizes={PLATE_SIZES} eager={i<2}/>
+        : <img src={amenity.src} alt="" loading="lazy" decoding="async"/>}
+    </span>)}
+   </figure>
+   <ol className="rp-index-list">
+    {AMENITIES.map((amenity,i)=><li className="rp-index-row" key={amenity.id} data-row={i}>
+      <span className="rp-index-num">{String(i+1).padStart(2,'0')}</span>
+      <span className="rp-index-name">{amenity.name}</span>
+      <span className="rp-index-group rp-micro">{amenity.group}</span>
+      <span className="rp-index-note">{amenity.note}</span>
+    </li>)}
+   </ol>
+  </div>
+  <div className="rp-index-foot"><span className="rp-micro">{INDEX_COPY.count}</span><ArrowLink onClick={onDiscover}>DISCOVER YOUR RHYTHM</ArrowLink></div>
  </section>;
 }
 export function HorizontalAmenities({assetBase,onScene,onDetail}:{assetBase:string;onScene:(i:number)=>void;onDetail:(key:DetailKey)=>void}){
@@ -33,18 +63,21 @@ export function HorizontalAmenities({assetBase,onScene,onDetail}:{assetBase:stri
    </article>
    <article className="rp-panel rp-panel-balance" data-scene="1">
     <h2 className="rp-layer-title">Find your<br/><em>balance.</em></h2>
+    {/* No yoga film was supplied with the other three. When one is, this
+        becomes: <Cinemagraph src={`${FILMS}/yoga.mp4`} poster={`${FILMS}/yoga.webp`} alt="…"/>
+        and nothing else in the panel changes. */}
     <figure className="rp-panel-photo rp-yoga-photo"><Photo name="yoga-01" alt="The calm Reposé yoga studio with mats and garden-facing windows" assetBase={assetBase} sizes="65vw" eager/></figure>
     <figure className="rp-panel-photo rp-zen-inset"><Photo name="zen-garden-01" alt="A closer look at the zen garden" assetBase={assetBase} sizes="24vw" eager/></figure>
     <div className="rp-panel-copy"><span className="rp-micro">02 / YOGA & ZEN</span><p>A little movement.<br/>A moment of stillness.</p><ArrowLink onClick={()=>onDetail('wellness')}>THE WELLNESS COLLECTION</ArrowLink></div>
    </article>
    <article className="rp-panel rp-panel-move" data-scene="2">
-    <figure className="rp-panel-photo rp-gym-photo"><Photo name="gym-01" alt="Reposé’s equipped gym with strength and functional training equipment" assetBase={assetBase} sizes="65vw"/></figure>
+    <figure className="rp-panel-photo rp-gym-photo"><Cinemagraph src={`${FILMS}/gym.mp4`} poster={`${FILMS}/gym.webp`} alt="Reposé’s equipped gym with strength and functional training equipment"/></figure>
     <h2 className="rp-layer-title"><em>Room</em><br/>to move.</h2>
     <figure className="rp-panel-photo rp-gym-inset"><Photo name="gym-02" alt="Second view of the gym and exercise equipment" assetBase={assetBase} sizes="28vw"/></figure>
     <div className="rp-panel-copy"><span className="rp-micro">03 / THE GYM</span><p>Make time for<br/>your own momentum.</p></div>
    </article>
    <article className="rp-panel rp-panel-exhale" data-scene="3">
-    <figure className="rp-panel-photo rp-steam-photo"><Photo name="steam-room-01" alt="Warmly lit Reposé steam room and lockers" assetBase={assetBase} sizes="85vw"/></figure>
+    <figure className="rp-panel-photo rp-steam-photo"><Cinemagraph src={`${FILMS}/steam-room.mp4`} poster={`${FILMS}/steam-room.webp`} alt="Warmly lit Reposé steam room and lockers"/></figure>
     <h2 className="rp-layer-title">Time to<br/><em>exhale.</em></h2>
     <div className="rp-panel-copy"><span className="rp-micro">04 / THE STEAM ROOM</span><p>Warmth. Quiet.<br/>A welcome pause.</p><span className="rp-small">Steam room with personal lockers.</span></div>
    </article>
@@ -62,7 +95,7 @@ export function HorizontalAmenities({assetBase,onScene,onDetail}:{assetBase:stri
 export function WaterExperience({assetBase,onDetail}:{assetBase:string;onDetail:(key:DetailKey)=>void}){
  return <section id="water" data-chapter="03" className="rp-water" aria-label="The swimming pool and a moment of pause">
   <div className="rp-water-stage">
-   <div className="rp-water-visual"><Photo name="pool-01" alt="Full view of the all-weather swimming pool at Reposé" assetBase={assetBase}/><div className="rp-water-shade"/>
+   <div className="rp-water-visual"><Cinemagraph src={`${FILMS}/pool.mp4`} poster={`${FILMS}/pool.webp`} alt="Full view of the all-weather swimming pool at Reposé"/><div className="rp-water-shade"/>
     <ChapterLabel number="03">BY THE WATER</ChapterLabel>
     <h2 className="rp-water-title">Nothing to do.<br/><em>Everything to feel.</em></h2>
     <button className="rp-hotspot rp-hotspot-one" onClick={()=>onDetail('pool')} aria-label="Discover the pool amenities"><span>+</span><span className="rp-hotspot-label">THE POOL</span></button>
@@ -119,8 +152,29 @@ export function ConnectednessExperience({assetBase}:{assetBase:string}){
   <div className="rp-connected-bottom"><p>A connected community.<br/>A place to call your own.</p><span>TRAVEL TIMES AS PRESENTED IN THE PROJECT BROCHURE.<br/>ACTUAL JOURNEY TIMES MAY VARY.</span></div>
  </section>;
 }
+export function AmenitiesMap(){
+ // 09 — placed between "08 AL FURJAN · DUBAI / Your world. Within reach." and
+ // the final Reposé chapter, and treated as a chapter in its own right. The
+ // drawing itself is untouched: it is presented whole, scaled and revealed,
+ // never cropped, recoloured or redrawn.
+ return <section id="amenities-map" data-chapter="09" className="rp-map" aria-labelledby="map-title">
+  <div className="rp-map-head"><ChapterLabel number={MAP_COPY.number}>AMENITIES MAP</ChapterLabel>
+   <h2 id="map-title" className="rp-map-title rp-reveal">Everything<br/><em>within reach.</em></h2>
+   <p className="rp-map-lead">{MAP_COPY.lead}</p>
+  </div>
+  <figure className="rp-map-figure">
+   <div className="rp-map-plate">
+    <img src={AMENITIES_MAP} alt="The Reposé Residence podium level seen from above, showing the pool, the courts, the play and exercise zones, the planting and the walking track" loading="lazy" decoding="async"/>
+    {/* Only the marks the drawing puts beyond doubt. Positions are per cent
+        of the image, so they hold at every crop. */}
+    {MAP_MARKS.map(mark=><span className="rp-map-mark" key={mark.id} style={{left:`${mark.x}%`,top:`${mark.y}%`}}><i aria-hidden="true"/><span className="rp-map-mark__label rp-micro">{mark.label}</span></span>)}
+   </div>
+   <figcaption className="rp-map-note rp-micro">{MAP_COPY.note}</figcaption>
+  </figure>
+ </section>;
+}
 export function FinalRepose({assetBase,onEnquire,onRestart,portal}:{assetBase:string;onEnquire:()=>void;onRestart:()=>void;portal?:ReactNode}){
- return <section id="finale" data-chapter="09" className="rp-finale rp-dark">
+ return <section id="finale" data-chapter="10" className="rp-finale rp-dark">
   <span className="rp-final-intro">THIS IS YOUR NEXT CHAPTER.</span><h2 className="rp-final-word">REPOSÉ</h2>
   <figure className="rp-final-image"><img src={`${assetBase}/tower-original.png`} alt="The supplied completed Reposé Residence tower image" loading="lazy" decoding="async"/></figure>
   {portal}

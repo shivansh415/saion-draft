@@ -1,22 +1,30 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { lockScroll, unlockScroll } from '../../lib/scrollLock'
 import { ArchPortal } from './ArchPortal'
-import { ReposeLoader } from './ReposeLoader'
-import { ASSET_BASE, DEFERRED_PHOTOS, amenityDetails, chapters, project } from './data/experience'
+import {
+  ASSET_BASE,
+  CHAPTER_COUNT,
+  DEFERRED_PHOTOS,
+  amenityDetails,
+  chapters,
+  project,
+} from './data/experience'
 import type { DetailKey } from './data/experience'
 import { warmPhotos } from './data/warmPhotos'
+import { ResidenceChapter } from './interiors/ResidenceChapter'
 import { ScrollTrigger } from './motion/gsap'
-import { glideTo, jumpTo, pageTop } from './motion/hostScroll'
+import { glideTo, pageTop } from './motion/hostScroll'
 import { useStoryMotion } from './motion/useStoryMotion'
 import {
+  AmenitiesIndex,
+  AmenitiesMap,
   ConnectednessExperience,
   ConvenienceExperience,
   FamilyExperience,
   FinalRepose,
   HorizontalAmenities,
   InteriorExperience,
-  LifestyleIntro,
   Photo,
   TerraceExperience,
   WaterExperience,
@@ -24,19 +32,28 @@ import {
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from './ui/dialog'
 import './styles/experience.css'
 
-/** How the chapter gives the page back. */
-export type ReturnReason =
-  /** The arch has expanded to the building; the page already rests at the opening's end, held still. */
-  | 'arch'
-  /** The visitor scrolled back up out of the chapter into the building. */
-  | 'scrollback'
-
 interface Props {
-  /** The chapter is finished with: take it down. */
-  onReturn: (reason: ReturnReason) => void
+  /**
+   * The arch has become the building. The chapter is finished with — take it
+   * down and put the page back on the settled tower.
+   *
+   * There is no second way out any more. Scrolling back up out of the chapter
+   * used to remove it; on one continuous document that would change the
+   * document's height under a moving scroll, so the way up is now simply the
+   * way down, travelled backwards.
+   */
+  onReturn: () => void
 }
 
-type Phase = 'loading' | 'exploring'
+/**
+ * Where the chapter is.
+ *
+ *   residence  the new residence chapter — the four interiors and their
+ *              films — reached from the reception by scrolling on, with no
+ *              loader between the two
+ *   exploring  the amenities journey — flows directly from the residence
+ */
+type Phase = 'residence' | 'exploring'
 type Modal = 'menu' | 'enquire' | DetailKey
 
 const TOWER_SRC = `${ASSET_BASE}/tower-original.png`
@@ -62,8 +79,13 @@ function warmSource(src: string): void {
 const FINAL_FRAME_SRC = '/assets/opening/building/final-frame.webp'
 
 /**
- * Chapter 04 — "The art of living": the approved lifestyle journey, mounted
- * in the document after the opening chapter and entered from the reception.
+ * Everything after the reception, in one bundle and one scroll.
+ *
+ *   reception ──scroll──▶ RESIDENCE (four interiors, four films)
+ *             ──tail────▶ amenities loader
+ *             ──────────▶ 01 amenity index · 02 rhythm · 03 water · 04 terrace
+ *                         05 family · 06 interiors · 07 essentials
+ *                         08 Al Furjan · 09 AMENITIES MAP · 10 finale ──▶ arch
  *
  * What is the approved experience's own is left alone — sections, styles,
  * motion, pacing, panels. What was standalone is not here: no reception of
@@ -71,8 +93,13 @@ const FINAL_FRAME_SRC = '/assets/opening/building/final-frame.webp'
  * own (the application's one instance drives everything, through
  * `motion/hostScroll`), no page shell.
  *
- * On mount the loader is already covering the frame, so the page is put at
- * the chapter's top underneath it and held there until the loader has gone.
+ * There is no loader on the way IN. This chapter is put into the document
+ * below the visitor while they are still on the building, so the reception
+ * runs on into the residence by scrolling and by nothing else. The loader
+ * belongs to the handover from the residence to the amenities — where the
+ * client asked for it, and where the wait is real: its pictures, its faces
+ * and its three films.
+ *
  * The chapter ends in `ArchPortal`: the arch becomes the building, the page
  * is placed at the opening's end, and `onReturn` hands the frame back.
  */
@@ -81,15 +108,10 @@ export function ReposeLifestyle({ onReturn }: Props) {
   const horizontal = useRef<ScrollTrigger | null>(null)
   const portal = useRef<ScrollTrigger | null>(null)
   const pendingNavigation = useRef<string | null>(null)
-  const heldRef = useRef(false)
 
-  const [phase, setPhase] = useState<Phase>('loading')
-  /**
-   * The loader element outlives the phase change by the length of its own last
-   * fade: the chapter goes live underneath it, so the cost of building the
-   * chapter's motion is paid while the frame is still covered.
-   */
-  const [loaderUp, setLoaderUp] = useState(true)
+  const main = useRef<HTMLDivElement>(null)
+
+  const [phase, setPhase] = useState<Phase>('residence')
   /** True once the chapter's own imagery is in and the arch's may follow. */
   const [portalSources, setPortalSources] = useState(false)
   const [modal, setModal] = useState<Modal | null>(null)
@@ -100,49 +122,27 @@ export function ReposeLifestyle({ onReturn }: Props) {
   }, [onReturn])
 
   /* --------------------------------------------------------------- *
-   * Arrival — under the loader
+   * The handover — the residence chapter's tail reaches the middle of
+   * the screen and the amenity sections mount directly. No loader.
    * --------------------------------------------------------------- */
-  useLayoutEffect(() => {
-    const element = root.current
-    if (!element) return
-
-    // The chapter opens at its own beginning — the hero — every time. This is
-    // the only scroll this component performs, and it is not a shortcut past
-    // anything: the chapter is appended to a document that is already scrolled
-    // to the end of the opening, so without it the visitor would arrive
-    // mid-chapter. It runs under the loader, before it lifts.
-    jumpTo(pageTop(element))
-    lockScroll()
-    heldRef.current = true
-    // Belt and braces: the same jump once the frame has settled, still under cover.
-    const frame = requestAnimationFrame(() => {
-      const el = root.current
-      if (el && heldRef.current) {
-        unlockScroll()
-        jumpTo(pageTop(el))
-        lockScroll()
-      }
+  useEffect(() => {
+    if (phase !== 'residence' || !root.current) return
+    const tail = root.current.querySelector<HTMLElement>('[data-residence-tail]')
+    if (!tail) return
+    const trigger = ScrollTrigger.create({
+      trigger: tail,
+      start: 'top 62%',
+      once: true,
+      onEnter: () => {
+        setPhase('exploring')
+      },
     })
-    return () => {
-      cancelAnimationFrame(frame)
-      if (heldRef.current) {
-        heldRef.current = false
-        unlockScroll()
-      }
-    }
-  }, [])
-
-  const complete = useCallback(() => {
-    if (heldRef.current) {
-      heldRef.current = false
-      unlockScroll()
-    }
-    setPhase('exploring')
-  }, [])
-
-  const dismissLoader = useCallback(() => setLoaderUp(false), [])
+    return () => trigger.kill()
+  }, [phase])
 
   const exploring = phase === 'exploring'
+  /** True once the amenity sections are in the document at all. */
+  const amenities = phase !== 'residence'
   useStoryMotion(root, exploring, horizontal)
 
   /* --------------------------------------------------------------- *
@@ -187,19 +187,6 @@ export function ReposeLifestyle({ onReturn }: Props) {
     }
   }, [exploring])
 
-  /* --------------------------------------------------------------- *
-   * Leaving upward — back into the building the ordinary way
-   * --------------------------------------------------------------- */
-  useEffect(() => {
-    if (!exploring || !root.current) return
-    const trigger = ScrollTrigger.create({
-      trigger: root.current,
-      start: 'top bottom',
-      onLeaveBack: () => returnRef.current('scrollback'),
-    })
-    return () => trigger.kill()
-  }, [exploring])
-
   useEffect(() => {
     if (exploring) root.current?.querySelector<HTMLElement>('#life-title')?.focus({ preventScroll: true })
   }, [exploring])
@@ -210,8 +197,9 @@ export function ReposeLifestyle({ onReturn }: Props) {
   const goTo = useCallback((id: string) => {
     if (id === 'finale-end') {
       const end = portal.current?.end
+      // The arch's own scroll position. Travelling there runs the arch, and
+      // the arch is what hands the page back.
       if (end !== undefined) glideTo(end)
-      else returnRef.current('scrollback')
       return
     }
     if (id === 'rhythm' && horizontal.current) {
@@ -297,11 +285,19 @@ export function ReposeLifestyle({ onReturn }: Props) {
       <div className="rp-ui rp-chapter-index">
         <span data-chapter-count>01</span>
         <i />
-        09
+        {CHAPTER_COUNT}
       </div>
 
-      <div className="rp-main">
-        <LifestyleIntro assetBase={ASSET_BASE} onDiscover={() => navigate('rhythm')} />
+      {/* The residence chapter — reached from the reception by scrolling on,
+          and the only thing in the document until its tail hands over. */}
+      <ResidenceChapter />
+
+      {/* The approved amenities journey. It is not in the document at all
+          until the handover, so nothing in it is measured, decoded or
+          triggered while the visitor is still in the residence. */}
+      {amenities && (
+      <div className="rp-main" ref={main}>
+        <AmenitiesIndex assetBase={ASSET_BASE} onDiscover={() => navigate('rhythm')} />
         <HorizontalAmenities assetBase={ASSET_BASE} onScene={scene} onDetail={showModal} />
         <WaterExperience assetBase={ASSET_BASE} onDetail={showModal} />
         <TerraceExperience assetBase={ASSET_BASE} />
@@ -309,6 +305,8 @@ export function ReposeLifestyle({ onReturn }: Props) {
         <InteriorExperience assetBase={ASSET_BASE} />
         <ConvenienceExperience assetBase={ASSET_BASE} />
         <ConnectednessExperience assetBase={ASSET_BASE} />
+        {/* 09 — between "Your world. Within reach." and the final chapter. */}
+        <AmenitiesMap />
         <FinalRepose
           assetBase={ASSET_BASE}
           onEnquire={enquire}
@@ -320,13 +318,27 @@ export function ReposeLifestyle({ onReturn }: Props) {
               towerSrc={TOWER_SRC}
               sources={portalSources}
               triggerRef={portal}
-              onComplete={() => returnRef.current('arch')}
+              onComplete={() => returnRef.current()}
             />
           }
         />
-      </div>
+        {/*
+          Slack after the arch, and nothing else.
 
-      {loaderUp && <ReposeLoader assetBase={ASSET_BASE} onReveal={complete} onComplete={dismissLoader} />}
+          The arch is pinned for `innerHeight * distance` and its pin spacer
+          used to end on the document's LAST PIXEL, so reaching the progress
+          that hands the page back to the building meant landing exactly on
+          that pixel — which a smoothed scroll settling asymptotically does not
+          reliably do. The journey's only way back was a rounding error away
+          from never firing.
+
+          This is scroll room past the end of the pin, in the finale's own
+          ground, so the arch completes with margin. It is never seen: the
+          hand-back happens as the pin ends, which is before this scrolls up.
+        */}
+        <div className="rp-after" aria-hidden="true" />
+      </div>
+      )}
 
       <Dialog
         open={modal !== null}

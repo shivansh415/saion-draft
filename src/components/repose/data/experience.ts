@@ -14,7 +14,7 @@ export const project = {
   contactSourcePage: 62,
 };
 export const chapters = [
-  {id:'life',name:'Life at Reposé',number:'01'},
+  {id:'life',name:'The amenity collection',number:'01'},
   {id:'rhythm',name:'A rhythm of your own',number:'02'},
   {id:'water',name:'By the water',number:'03'},
   {id:'terrace',name:'Above the everyday',number:'04'},
@@ -22,7 +22,17 @@ export const chapters = [
   {id:'interiors',name:'The feeling of home',number:'06'},
   {id:'essentials',name:'Life, considered',number:'07'},
   {id:'connected',name:'Perfectly connected',number:'08'},
-  {id:'finale',name:'Your next chapter',number:'09'},
+  {id:'amenities-map',name:'Amenities map',number:'09'},
+  {id:'finale',name:'Your next chapter',number:'10'},
+];
+/** How many chapters the index counts up to. Rendered, not written twice. */
+export const CHAPTER_COUNT = '10';
+
+/** The amenity films, warmed while the loader is up (see `warmVideos`). */
+export const AMENITY_FILMS: readonly string[] = [
+  '/assets/amenity-videos/pool.mp4',
+  '/assets/amenity-videos/gym.mp4',
+  '/assets/amenity-videos/steam-room.mp4',
 ];
 export const wellnessScenes = ['The art of pause','Find your balance','Room to move','Time to exhale','Simply be'];
 export const essentialFacts = [
@@ -54,15 +64,18 @@ export type DetailKey = keyof typeof amenityDetails;
  * ------------------------------------------------------------------ */
 
 /**
- * The first screens: the hero the chapter opens on, and the two wellness
- * panels immediately behind it. Nothing is revealed until all of these are
- * fetched AND decoded.
+ * The first screens: the amenity index the chapter now opens on — its first
+ * two plates — and the panel immediately behind it. Nothing is revealed until
+ * all of these are fetched AND decoded.
+ *
+ * `pool-01` at 100vw is the loader's OWN picture, the one behind the word
+ * REPOSÉ. It stays first: the loader cannot show it late.
  */
 export const CRITICAL_PHOTOS: readonly PhotoSpec[] = [
-  { name: 'pool-01', sizes: '100vw' },        // #life — "The art of living."
+  { name: 'pool-01', sizes: '100vw' },        // the loader's own window
+  { name: 'zen-garden-01', sizes: '42vw' },   // #life — index plate 01, shown on arrival
+  { name: 'yoga-01', sizes: '42vw' },         // #life — index plate 02
   { name: 'zen-garden-01', sizes: '40vw' },   // #rhythm scene 0 — the first panel
-  { name: 'yoga-01', sizes: '65vw' },         // #rhythm scene 1 — wellness
-  { name: 'zen-garden-01', sizes: '24vw' },   // #rhythm scene 1 — the inset
 ];
 
 /**
@@ -72,9 +85,17 @@ export const CRITICAL_PHOTOS: readonly PhotoSpec[] = [
  * loaded again here.
  */
 export const DEFERRED_PHOTOS: readonly PhotoSpec[] = [
-  { name: 'gym-01', sizes: '65vw' },                          // scene 2
+  // The rest of the index's plates, in the order the fourteen rows reach them.
+  { name: 'gym-01', sizes: '42vw' },
+  { name: 'pool-01', sizes: '42vw' },
+  { name: 'pool-02', sizes: '42vw' },
+  { name: 'steam-room-01', sizes: '42vw' },
+  { name: 'open-terrace-01', sizes: '42vw' },
+  { name: 'kids-play-01', sizes: '42vw' },
+  { name: 'yoga-01', sizes: '65vw' },                         // scene 1 — wellness
+  { name: 'zen-garden-01', sizes: '24vw' },                   // scene 1 — the inset
+  // Scenes 2 and 3 are films now; only their insets are still photographs.
   { name: 'gym-02', sizes: '28vw' },                          // scene 2
-  { name: 'steam-room-01', sizes: '85vw' },                   // scene 3
   { name: 'zen-garden-01', sizes: '35vw' },                   // scene 4
   { name: 'pool-01', sizes: '100vw' },                        // 03 by the water
   { name: 'pool-02', sizes: '25vw' },

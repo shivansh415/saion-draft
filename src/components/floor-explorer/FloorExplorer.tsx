@@ -13,8 +13,12 @@ import type { Level, UnitHotspot } from './floorExplorerData'
 import type { LevelId } from './levelCalibration'
 import { bandPx } from './levelGeometry'
 import { GROUND_Y, INVITE_X, INVITE_Y, TOWER_CLIP_PATH } from './towerZone'
+import { TERRACE_ENABLED, TERRACE_ID } from './terraceZone'
+import type { Marker } from './terraceZone'
+import { prefetchTerrace } from '../terrace/lazy'
 import { useCoverRect } from './useCoverRect'
 import { resetPlanViewer } from './usePlanViewer'
+import { warmImage } from './warmImage'
 import '../../styles/floor-explorer.css'
 
 /**
@@ -37,6 +41,11 @@ interface Props {
   /** True once the scroll hand-off has completed and the selector may take input. */
   active: boolean
   /**
+   * On up to the terrace — the destination above Level 15. The explorer does
+   * not own that chapter; it only hands over, and is suspended while it runs.
+   */
+  onTerrace: () => void
+  /**
    * True while another chapter has the frame (the walk into the reception).
    * The explorer stands down entirely — no pointer, no keyboard, no reveal —
    * and is put back to the clean building, so that when the frame is handed
@@ -55,23 +64,6 @@ const useMediaQuery = (query: string): boolean => {
     return () => list.removeEventListener('change', update)
   }, [query])
   return matches
-}
-
-/** Drawings fetched and decoded ahead of need, keyed by URL. */
-const warmed = new Map<string, Promise<void>>()
-function warmImage(src: string): Promise<void> {
-  let promise = warmed.get(src)
-  if (!promise) {
-    promise = new Promise<void>((resolve) => {
-      const image = new Image()
-      image.decoding = 'async'
-      image.onload = () => image.decode().then(resolve, () => resolve())
-      image.onerror = () => resolve()
-      image.src = src
-    })
-    warmed.set(src, promise)
-  }
-  return promise
 }
 
 const settle = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms))
@@ -95,7 +87,10 @@ const settle = (ms: number) => new Promise<void>((resolve) => window.setTimeout(
  * While a floorplate or a residence is open the page scroll is locked, so a
  * wheel over a plan never rewinds the film underneath it.
  */
-export function FloorExplorer({ active, suspended = false }: Props) {
+/** The terrace is off in production, so nothing warms its bundle. */
+const NO_PREFETCH = () => {}
+
+export function FloorExplorer({ active, onTerrace, suspended = false }: Props) {
   const rootRef = useRef<HTMLDivElement | null>(null)
   const backRef = useRef<HTMLButtonElement | null>(null)
   const lastTriggerRef = useRef<HTMLElement | null>(null)
@@ -107,6 +102,14 @@ export function FloorExplorer({ active, suspended = false }: Props) {
 
   const [hovered, setHovered] = useState<LevelId | null>(null)
   const [selected, setSelected] = useState<LevelId | null>(null)
+  /**
+   * The terrace, above the levels. It is indicated and committed to exactly
+   * as a level is, but it is not one of them — so it is held apart rather
+   * than smuggled into `LevelId`, and the two are folded into one `Marker`
+   * only where the selector needs a single answer.
+   */
+  const [terraceHovered, setTerraceHovered] = useState(false)
+  const [terraceSelected, setTerraceSelected] = useState(false)
   const [mode, setMode] = useState<Mode>('selector')
   const [openLevel, setOpenLevel] = useState<Level | null>(null)
 
@@ -173,8 +176,10 @@ export function FloorExplorer({ active, suspended = false }: Props) {
       if (modeRef.current !== 'selector') return
       setRevealed(false)
       setHovered(null)
-      // Back to clean means clean: no line, and no level still marked.
+      setTerraceHovered(false)
+      // Back to clean means clean: no line, and nothing still marked.
       setSelected(null)
+      setTerraceSelected(false)
     }, HIDE_DELAY)
   }, [coarse, cancelHide])
 
@@ -188,6 +193,7 @@ export function FloorExplorer({ active, suspended = false }: Props) {
     setWasActive(active)
     if (!active) {
       setHovered(null)
+      setTerraceHovered(false)
       setRevealed(false)
     }
   }
@@ -199,13 +205,20 @@ export function FloorExplorer({ active, suspended = false }: Props) {
     if (suspended) {
       setHovered(null)
       setSelected(null)
+      setTerraceHovered(false)
+      setTerraceSelected(false)
       setRevealed(false)
     }
   }
 
   const frozen = mode !== 'selector'
-  const shown: LevelId | null =
-    !active ? null : frozen ? (openLevel?.id ?? null) : revealed ? (hovered ?? selected) : null
+  // Hover and selection each resolve to at most one destination — entering a
+  // level clears the terrace and the other way about — so folding them is a
+  // fallback chain rather than a precedence puzzle.
+  const markedHover: Marker | null = hovered ?? (terraceHovered ? TERRACE_ID : null)
+  const markedSelection: Marker | null = selected ?? (terraceSelected ? TERRACE_ID : null)
+  const shown: Marker | null =
+    !active ? null : frozen ? (openLevel?.id ?? null) : revealed ? (markedHover ?? markedSelection) : null
 
   /**
    * The ground plane in viewport pixels — below the tower's base, and never
@@ -274,6 +287,8 @@ export function FloorExplorer({ active, suspended = false }: Props) {
       setOpenLevel(level)
       setSelected(level.id)
       setHovered(null)
+      setTerraceHovered(false)
+      setTerraceSelected(false)
       setUnitHovered(null)
       setUnitSelected(null)
       lockScroll()
@@ -643,6 +658,35 @@ export function FloorExplorer({ active, suspended = false }: Props) {
 
   const prefetch = useCallback((level: Level) => void warmImage(floorplateImage(level.floorplate)), [])
 
+  /* --------------------------------------------------------------- *
+   * The terrace
+   *
+   * The explorer does not open it — it hands over, and `onTerrace` takes the
+   * frame from here. What is owned here is the same two-step commitment a
+   * level gets on touch: the first tap marks the crown and brings its cue up,
+   * the second goes.
+   * --------------------------------------------------------------- */
+  const chooseTerrace = useCallback(() => {
+    // Off in production — see `terraceZone.TERRACE_ENABLED`. Nothing renders a
+    // way to call this, and if something did it would decline rather than
+    // fetch three.js and the GLB.
+    if (!TERRACE_ENABLED) return
+    if (!active || modeRef.current !== 'selector') return
+    if (coarse && !terraceSelected) {
+      setTerraceSelected(true)
+      setSelected(null)
+      prefetchTerrace()
+      return
+    }
+    onTerrace()
+  }, [active, coarse, terraceSelected, onTerrace])
+
+  const hoverTerrace = useCallback((hovered: boolean) => {
+    if (!TERRACE_ENABLED) return
+    setTerraceHovered(hovered)
+    if (hovered) setHovered(null)
+  }, [])
+
   return (
     <div
       className="fx"
@@ -718,7 +762,7 @@ export function FloorExplorer({ active, suspended = false }: Props) {
         model={data.model}
         rect={rect}
         shown={shown}
-        selected={selected}
+        selected={markedSelection}
         frozen={frozen || !active}
         revealed={revealed}
         coarse={coarse}
@@ -726,6 +770,9 @@ export function FloorExplorer({ active, suspended = false }: Props) {
         onHover={setHovered}
         onChoose={choose}
         onPrefetch={prefetch}
+        onTerraceHover={hoverTerrace}
+        onTerraceChoose={chooseTerrace}
+        onTerracePrefetch={TERRACE_ENABLED ? prefetchTerrace : NO_PREFETCH}
         onReveal={reveal}
       />
 
@@ -746,6 +793,7 @@ export function FloorExplorer({ active, suspended = false }: Props) {
         level={openLevel}
         hotspot={openResidence}
         interactive={mode === 'residence'}
+        reducedMotion={reducedMotion}
         onBack={closeUnit}
         ref={unitBackRef}
       />

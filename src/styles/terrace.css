@@ -1,0 +1,553 @@
+/* =====================================================================
+   Reposé Residence — Chapter 05: "Open terrace"
+   =====================================================================
+
+   Mounts over the building chapter, on the same document, with the page
+   held still. The terrace is the subject: the type keeps to the margins,
+   the one mark on the model is a hairline, and the only colour is the
+   plan's own.
+
+   Hidden states are declared here, so nothing untweened is ever painted.
+   ===================================================================== */
+
+.tr {
+  position: fixed;
+  inset: 0;
+  outline: none;
+  z-index: 500;
+  overflow: hidden;
+  background: var(--ink);
+  color: var(--paper);
+  isolation: isolate;
+}
+
+/* ---------------------------------------------------------------------
+   The rise — the building's own render, cranes up its own facade
+   --------------------------------------------------------------------- */
+
+.tr__rise {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.tr__still {
+  position: absolute;
+  will-change: transform, opacity, filter;
+}
+
+.tr__still img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.tr__veil {
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  opacity: 0;
+  will-change: opacity;
+}
+
+/* ---------------------------------------------------------------------
+   The terrace
+   --------------------------------------------------------------------- */
+
+.tr__scene {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  will-change: opacity, clip-path;
+}
+
+.tr__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* The chapter owns every gesture over the model: the browser must not
+     also try to pan or zoom the page underneath it. */
+  touch-action: none;
+  will-change: filter;
+}
+
+/* Wherever WebGL or the model cannot be had, the supplied plan stands in. */
+.tr__plan {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* The one mark on the terrace: a hairline ring where the amenity is, in the
+   same language as the level line on the building. Never a glowing pin. */
+.tr__mark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 340ms ease;
+  will-change: transform, opacity;
+}
+
+.tr__mark[data-shown] {
+  opacity: 1;
+}
+
+.tr__mark-ring {
+  display: block;
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgb(255 255 255 / 82%);
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgb(255 255 255 / 22%);
+}
+
+/* ---------------------------------------------------------------------
+   What is written on the terrace
+   --------------------------------------------------------------------- */
+
+.tr__ui {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.tr__ui > * {
+  pointer-events: auto;
+}
+
+/* A quiet legibility grade under the type, and nothing across the middle. */
+.tr__ui::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(100deg, rgb(9 12 16 / 88%) 0%, rgb(9 12 16 / 58%) 20%, rgb(9 12 16 / 0%) 44%),
+    linear-gradient(to left, rgb(9 12 16 / 86%) 0%, rgb(9 12 16 / 62%) 9%, rgb(9 12 16 / 20%) 20%, rgb(9 12 16 / 0%) 32%),
+    linear-gradient(to top, rgb(9 12 16 / 72%) 0%, rgb(9 12 16 / 20%) 16%, rgb(9 12 16 / 0%) 32%),
+    linear-gradient(to bottom, rgb(9 12 16 / 46%) 0%, rgb(9 12 16 / 0%) 18%);
+}
+
+.tr__head {
+  position: absolute;
+  left: var(--gutter);
+  top: var(--gutter-block);
+  max-width: min(32vw, 26rem);
+}
+
+.tr__eyebrow {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.55rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 52%);
+}
+
+.tr__title {
+  margin: 0.75rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(1.9rem, 4vw, 4.4rem);
+  line-height: 0.94;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.tr__lead {
+  margin: clamp(0.8rem, 1.6vh, 1.2rem) 0 0;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: clamp(0.56rem, 0.72vw, 0.72rem);
+  letter-spacing: 0.3em;
+  line-height: 1.7;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 68%);
+}
+
+.tr__readout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: clamp(1.4rem, 3vh, 2.4rem);
+  min-height: 5.2rem;
+}
+
+.tr__readout-index {
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.6rem;
+  letter-spacing: 0.3em;
+  font-variant-numeric: tabular-nums;
+  color: rgb(255 255 255 / 56%);
+}
+
+.tr__readout-label {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(1.15rem, 1.6vw, 1.75rem);
+  letter-spacing: 0.07em;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.tr__explore,
+.tr__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: max-content;
+  margin: 0;
+  padding: 0.45rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.58rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tr__explore {
+  margin-top: 0.2rem;
+}
+
+.tr__explore-rule {
+  display: block;
+  width: 26px;
+  height: 1px;
+  background: currentcolor;
+  opacity: 0.7;
+  transition: width 500ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tr__explore:hover .tr__explore-rule,
+.tr__explore:focus-visible .tr__explore-rule {
+  width: 40px;
+}
+
+.tr__explore-arrow,
+.tr__back-arrow {
+  font-size: 0.72rem;
+  letter-spacing: 0;
+  opacity: 0.72;
+}
+
+.tr__explore:focus-visible,
+.tr__back:focus-visible,
+.tr-amenity:focus-visible {
+  outline: 1px solid rgb(255 255 255 / 60%);
+  outline-offset: 4px;
+}
+
+/* Right — the amenities, counted down the margin the level rail uses. */
+.tr__index {
+  position: absolute;
+  right: var(--gutter);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.tr__index ol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: clamp(0.2rem, 0.9vh, 0.6rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tr-amenity {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  min-height: 1.7rem;
+  margin: 0;
+  padding: 0.1rem 0 0.1rem 1.6rem;
+  border: 0;
+  background: transparent;
+  color: var(--paper);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tr-amenity__index {
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.42;
+  transition: opacity 320ms ease;
+}
+
+.tr-amenity__rule {
+  display: block;
+  width: 0;
+  height: 1px;
+  background: currentcolor;
+  opacity: 0.85;
+  transition: width 480ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tr-amenity__label {
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.6rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  line-height: 1;
+  opacity: 0.5;
+  transition: opacity 320ms ease;
+}
+
+.tr-amenity.is-shown .tr-amenity__index,
+.tr-amenity.is-shown .tr-amenity__label,
+.tr-amenity:hover .tr-amenity__index,
+.tr-amenity:hover .tr-amenity__label {
+  opacity: 1;
+}
+
+.tr-amenity.is-shown .tr-amenity__rule,
+.tr-amenity:hover .tr-amenity__rule {
+  width: 22px;
+}
+
+/* Bottom — the way back, and how the terrace is travelled. */
+.tr__foot {
+  position: absolute;
+  left: var(--gutter);
+  bottom: var(--gutter-block);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.tr__hint {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.54rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 40%);
+}
+
+/* ---------------------------------------------------------------------
+   The detail — opened from the amenity's own place on the terrace
+   --------------------------------------------------------------------- */
+
+.tr__portal {
+  position: absolute;
+  inset: 0;
+  clip-path: circle(0 at 50% 50%);
+  background: var(--ink);
+  pointer-events: none;
+  will-change: clip-path;
+}
+
+.tr__portal[data-open] {
+  pointer-events: auto;
+}
+
+.tr__detail {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.tr__detail-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* The film, once one has been supplied, plays over its own plate — so the
+   frame is never empty between the portal opening and the first video frame. */
+.tr__detail-video {
+  z-index: 1;
+}
+
+.tr__detail-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background:
+    linear-gradient(to top, rgb(9 12 16 / 78%) 0%, rgb(9 12 16 / 12%) 44%, rgb(9 12 16 / 0%) 68%),
+    linear-gradient(to bottom, rgb(9 12 16 / 76%) 0%, rgb(9 12 16 / 26%) 12%, rgb(9 12 16 / 0%) 26%),
+    linear-gradient(100deg, rgb(9 12 16 / 44%) 0%, rgb(9 12 16 / 0%) 46%);
+}
+
+.tr__detail-copy {
+  position: absolute;
+  z-index: 3;
+  left: var(--gutter);
+  bottom: var(--gutter-block);
+  max-width: min(46vw, 34rem);
+}
+
+.tr__detail-index {
+  display: block;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.58rem;
+  letter-spacing: 0.34em;
+  font-variant-numeric: tabular-nums;
+  color: rgb(255 255 255 / 60%);
+}
+
+.tr__detail-title {
+  margin: 0.6rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(1.8rem, 3.4vw, 3.6rem);
+  line-height: 0.98;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.tr__detail-note {
+  margin: 0.75rem 0 0;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: clamp(0.6rem, 0.78vw, 0.8rem);
+  letter-spacing: 0.06em;
+  line-height: 1.7;
+  color: rgb(255 255 255 / 78%);
+}
+
+.tr__back--detail {
+  position: absolute;
+  z-index: 3;
+  left: var(--gutter);
+  top: var(--gutter-block);
+}
+
+/* ---------------------------------------------------------------------
+   Held only if the model is still on its way when the rise runs out of
+   building to climb. The delay is the whole of the logic: a model that
+   arrives in time is never announced.
+   --------------------------------------------------------------------- */
+
+.tr__waiting {
+  position: absolute;
+  left: 50%;
+  bottom: 12vh;
+  margin: 0;
+  transform: translateX(-50%);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.55rem;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 55%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tr__waiting[data-shown] {
+  animation: tr-waiting 600ms ease 300ms both;
+}
+
+@keyframes tr-waiting {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Narrow viewports
+   --------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .tr__ui::before {
+    background:
+      linear-gradient(to top, rgb(9 12 16 / 74%) 0%, rgb(9 12 16 / 24%) 34%, rgb(9 12 16 / 0%) 58%),
+      linear-gradient(to bottom, rgb(9 12 16 / 62%) 0%, rgb(9 12 16 / 0%) 30%);
+  }
+
+  .tr__head {
+    max-width: calc(100vw - var(--gutter) - 7.5rem);
+  }
+
+  .tr__title {
+    font-size: clamp(1.6rem, 8vw, 2.4rem);
+  }
+
+  .tr__readout {
+    min-height: 4.4rem;
+    margin-top: 1rem;
+  }
+
+  /* A plan this wide is a band across the middle of a portrait frame, and
+     the middle of the frame is where the rail would sit. So on a narrow
+     viewport the amenities stand under the terrace rather than beside it —
+     and they keep their names, because tapping a numeral on a plan this size
+     is not how anyone would choose one. */
+  .tr__index {
+    top: auto;
+    right: var(--gutter);
+    bottom: calc(var(--gutter-block) + 4.2rem);
+    transform: none;
+  }
+
+  .tr__index ol {
+    gap: 0;
+  }
+
+  .tr-amenity {
+    min-height: 1.9rem;
+    padding-left: 0.8rem;
+  }
+
+  .tr-amenity.is-shown .tr-amenity__rule,
+  .tr-amenity:hover .tr-amenity__rule {
+    width: 14px;
+  }
+
+  .tr__detail-copy {
+    max-width: calc(100vw - var(--gutter) * 2);
+  }
+
+  .tr__detail-title {
+    font-size: clamp(1.6rem, 7.4vw, 2.4rem);
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Reduced motion — the chapter fades rather than travels
+   --------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .tr-amenity__rule,
+  .tr-amenity__index,
+  .tr-amenity__label,
+  .tr__explore-rule,
+  .tr__mark {
+    transition: none;
+  }
+}

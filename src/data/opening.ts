@@ -64,15 +64,51 @@ export const FILM_TRACK_VH = 620
  */
 export const HANDOFF_TRACK_VH = 200
 
+/**
+ * The building's own stretch. Nothing changes across it: the completed tower
+ * is on screen and the floor explorer has the frame, hovering levels, opening
+ * plans, offering its cues. It exists so that reaching the explorer is not
+ * immediately followed by the reception assembling itself — the visitor gets
+ * a comfortable run of scroll in which the building is simply THERE.
+ *
+ * 260vh, not the 130 it was first written at. 130 is about 1.4 screens, and a
+ * smoothed scroll carries enough momentum that a single flick crosses it: in
+ * a real run, aiming to stop at y=8800 landed at 9502 — past the band
+ * entirely, with the walk into the reception already under way and the
+ * explorer already stood down. A window the visitor has to CATCH is not an
+ * interactive floor explorer. At ~2.7 screens the building is somewhere they
+ * can come to rest, hover a level and open a plan.
+ */
+export const EXPLORER_HOLD_VH = 260
+
+/**
+ * The walk into the reception, as scroll.
+ *
+ * The approved reception timeline is unchanged — same beats, same durations,
+ * same choreography. What changed is what drives it: it used to be played on
+ * a clock by a click, which made the building a dead end for anyone who just
+ * kept scrolling. It is now scrubbed across this band, so the walk in runs
+ * forward as the visitor descends and runs backward if they scroll up.
+ *
+ * 260vh reads at roughly the same pace as the 2.8s walk did at an unhurried
+ * scroll speed, and — unlike a clock — it cannot outrun the visitor.
+ */
+export const RECEPTION_TRACK_VH = 260
+
 /** Height of the whole scroll track. The visual viewport stays sticky inside it. */
-export const CHAPTER_HEIGHT_VH = 100 + FILM_TRACK_VH + HANDOFF_TRACK_VH
+export const CHAPTER_HEIGHT_VH =
+  100 + FILM_TRACK_VH + HANDOFF_TRACK_VH + EXPLORER_HOLD_VH + RECEPTION_TRACK_VH
 
 /**
  * Length of the chapter in "film units" (1 = the film track). The scrubbed
- * timeline is this long, so the film beats keep their positions and the
- * hand-off beats simply sit past 1.
+ * timeline is this long, so the film beats keep their positions and everything
+ * appended after the film simply sits past 1.
+ *
+ * This is why the film's pacing is untouched by any of the bands above: every
+ * beat in this file is a fraction of the FILM track, never of the chapter.
  */
-export const CHAPTER_UNITS = (FILM_TRACK_VH + HANDOFF_TRACK_VH) / FILM_TRACK_VH
+export const CHAPTER_UNITS =
+  (FILM_TRACK_VH + HANDOFF_TRACK_VH + EXPLORER_HOLD_VH + RECEPTION_TRACK_VH) / FILM_TRACK_VH
 
 const afterFilm = (vh: number) => 1 + vh / FILM_TRACK_VH
 
@@ -94,6 +130,45 @@ export const HANDOFF = {
    */
   activeAt: afterFilm(150),
 } as const
+
+/* ------------------------------------------------------------------ *
+ * The reception band, and the two marks either side of it
+ * ------------------------------------------------------------------ */
+
+/**
+ * Where the walk into the reception runs, in film units. `ReceptionExperience`
+ * maps the chapter's scroll progress through this band onto its own timeline's
+ * progress; outside it the reception is at rest (before) or fully arrived
+ * (after).
+ */
+export const RECEPTION_BAND = {
+  start: afterFilm(HANDOFF_TRACK_VH + EXPLORER_HOLD_VH),
+  end: afterFilm(HANDOFF_TRACK_VH + EXPLORER_HOLD_VH + RECEPTION_TRACK_VH),
+} as const
+
+export const RECEPTION_SPAN = RECEPTION_BAND.end - RECEPTION_BAND.start
+
+/**
+ * Where the lifestyle chapter is put into the document.
+ *
+ * Comfortably before the reception band, so by the time the visitor scrolls
+ * out of this chapter the next one is already below them and the scroll simply
+ * continues into it. It is appended BELOW the current position, so the
+ * document grows downward and nothing moves under the visitor.
+ */
+export const LIFESTYLE_MOUNT_AT = afterFilm(HANDOFF_TRACK_VH + 30)
+
+/**
+ * Where the arch at the end of the lifestyle chapter puts the page back.
+ *
+ * Just after the explorer takes input and well before `LIFESTYLE_MOUNT_AT`, so
+ * the return lands on the settled building with the mount threshold above the
+ * visitor again — scrolling down re-arms it exactly as it did the first time.
+ */
+export const ARCH_RETURN_AT = afterFilm(160)
+
+/** A film-unit position as a fraction of the chapter's scroll track. */
+export const unitFraction = (unit: number): number => unit / CHAPTER_UNITS
 
 /**
  * The film's final frame as a still, for the explorer to hold and annotate.

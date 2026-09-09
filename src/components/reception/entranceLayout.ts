@@ -18,7 +18,7 @@ import {
   STILL,
   SWING_PERSPECTIVE,
 } from './entranceCalibration'
-import { coverRect, stillBoxToScreen, stillRect, stillToScreen } from './imageSpace'
+import { containRect, stillBoxToScreen, stillRect, stillToScreen } from './imageSpace'
 import type { Box, Point } from './imageSpace'
 
 export interface EntranceLayout {
@@ -64,7 +64,7 @@ export function layoutEntrance(rect: CoverRect): EntranceLayout {
   const target = stillToScreen(rect, FILM_WINDOW, CAMERA_TARGET.x, CAMERA_TARGET.y)
   const centre: Point = { x: rect.containerWidth / 2, y: rect.containerHeight / 2 }
 
-  const reception = coverRect(
+  const reception = containRect(
     rect.containerWidth,
     rect.containerHeight,
     RECEPTION.width,

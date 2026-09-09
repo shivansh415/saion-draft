@@ -65,6 +65,32 @@ export function coverRect(
   }
 }
 
+/**
+ * The rectangle an image of `imageWidth × imageHeight` occupies when
+ * contain-fitted into a container around a focal point. Like `coverRect`
+ * but scales DOWN so the entire image is visible (no cropping).
+ */
+export function containRect(
+  containerWidth: number,
+  containerHeight: number,
+  imageWidth: number,
+  imageHeight: number,
+  focalX: number,
+  focalY: number,
+): CoverRect {
+  const scale = Math.min(containerWidth / imageWidth, containerHeight / imageHeight)
+  const width = imageWidth * scale
+  const height = imageHeight * scale
+  return {
+    x: (containerWidth - width) * focalX,
+    y: (containerHeight - height) * focalY,
+    width,
+    height,
+    containerWidth,
+    containerHeight,
+  }
+}
+
 /** A normalised point of the film frame, on screen. */
 export const filmToScreen = (rect: CoverRect, u: number, v: number): Point => ({
   x: rect.x + rect.width * u,

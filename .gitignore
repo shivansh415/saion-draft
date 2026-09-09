@@ -43,5 +43,19 @@ Thumbs.db
 /repose-experience/
 /scripts/
 
-# Source/master assets (not used at runtime, large PNGs)
+# The supplied terrace package and its source GLB. What the site actually
+# serves is the copy in `public/models/repose-terrace.glb`, which IS tracked;
+# this is the delivery it was taken from, with its 8.6MB of validation renders.
+/repose-terrace/
+/repose-terrace.glb
+
+# Source/master assets (not used at runtime, large PNGs/WebPs)
 public/floor-explorer/repose-floor-explorer-assets/units-master/
+public/assets/reception-entry/Reception-done.webp
+
+# The supplied camera masters, kept beside the project but never committed:
+# public/assets/{interiors,amenity-videos} hold the web encodes that actually ship.
+/media-src/
+
+# Scratch/agent output recordings
+/Claude outputs/

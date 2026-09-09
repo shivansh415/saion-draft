@@ -25,11 +25,14 @@ export default defineConfig({
     reportCompressedSize: false,
     rollupOptions: {
       output: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         manualChunks(id: string): string | undefined {
           // Heavy animation libraries — fetched once and cached independently
           if (id.includes('gsap')) return 'vendor-gsap'
           if (id.includes('lenis')) return 'vendor-lenis'
+          // Three.js — only ever fetched by the terrace chapter, and never on
+          // the way in. Its own chunk so it stays out of the opening's bundle
+          // and is cached apart from the chapter that asks for it.
+          if (id.includes('node_modules/three')) return 'vendor-three'
           // React runtime — long-lived cache, never changes between deploys
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
             return 'vendor-react'

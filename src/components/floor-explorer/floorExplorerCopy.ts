@@ -30,7 +30,23 @@ export const VIEWER_COPY = {
 export const RESIDENCE_COPY = {
   back: 'Back to floor',
   view3d: 'View in 3D',
+  /** The same control, once the plan is standing up. */
+  view2d: 'View in 2D',
+  /** For residences no render is supplied for — the control is a placeholder there. */
   view3dNote: 'Coming soon',
   floorplate: 'Floorplate',
   position: 'Position',
+} as const
+
+/**
+ * The terrace — the destination above Level 15. Not a level, so it has its
+ * own words rather than borrowing the rail's.
+ */
+export const TERRACE_COPY = {
+  /** How it reads in the level rail, above 15. */
+  rail: 'TR',
+  label: 'Open terrace',
+  /** The readout under the copy, where a level's residence types would be. */
+  types: 'Podium amenity level',
+  open: 'View terrace',
 } as const

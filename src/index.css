@@ -1,17 +1,92 @@
 /* =====================================================================
-   Reposé Residence — global baseline
+   Reposé Residence — global baseline and the site's ONE typographic system
    Deliberately minimal: this is a full-bleed cinematic experience, so the
    document owns almost nothing beyond colour, type tokens and reset.
    ===================================================================== */
+
+/* ---------------------------------------------------------------------
+   The two faces. Self-hosted rather than pulled from a font CDN: one less
+   third party in the critical path, no render-blocking cross-origin
+   request, and the display face is guaranteed present on the very first
+   paint of the title card.
+
+   They are declared HERE, once, for the whole site — not inside a chapter
+   stylesheet. Served from `public/assets/fonts/` so the URL is the same in
+   dev and in the build; the previous `/src/components/...` preload in
+   index.html pointed at a path that only exists before Vite hashes it, so
+   in production it warmed nothing.
+   --------------------------------------------------------------------- */
+@font-face {
+  font-family: ReposeDisplay;
+  src: url('/assets/fonts/repose-display.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: ReposeDisplay;
+  src: url('/assets/fonts/repose-display-italic.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: ReposeSans;
+  src: url('/assets/fonts/repose-sans.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   /* Palette */
   --ink: #090c10; /* the ground behind every frame */
   --paper: #f6f4f1; /* warm off-white for type over imagery */
 
-  /* Type */
-  --font-display: 'Cormorant Garamond', 'Times New Roman', times, serif;
-  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', roboto, sans-serif;
+  /* -------------------------------------------------------------------
+     TYPOGRAPHY — the whole site, in three faces and nothing else.
+
+       --font-display   the editorial serif. Hero headings, chapter titles,
+                        major statements. Its ITALIC is the same family
+                        (`font-style: italic`), never a second family: that
+                        is the expressive voice, and `em` carries it.
+       --font-sans      the clean sans. UI, labels, buttons, metadata,
+                        navigation, floor numbers, body copy.
+
+     Everything downstream reads these two tokens, so the pairing is
+     changed in one place. Nothing anywhere may name a family directly.
+     ------------------------------------------------------------------- */
+  --font-display: ReposeDisplay, 'Instrument Serif', Georgia, 'Times New Roman', times, serif;
+  --font-sans: ReposeSans, Manrope, system-ui, -apple-system, 'Segoe UI', roboto, sans-serif;
+
+  /* Weight. Both faces ship one upright weight; nothing synthesises a
+     second (`font-synthesis: none` below), so these are the only two used. */
+  --weight-display: 400;
+  --weight-sans: 400;
+
+  /* Line height, by role rather than by size. */
+  --lh-display: 0.9; /* chapter titles, major statements */
+  --lh-heading: 1.05; /* smaller headings, pull quotes */
+  --lh-body: 1.55;
+  --lh-ui: 1.4; /* labels, metadata, navigation */
+
+  /* Tracking. Display type is set tight; the site's one UI voice is small
+     tracked capitals, and that value is stated once. */
+  --track-display: -0.025em;
+  --track-heading: -0.018em;
+  --track-body: 0;
+  --track-ui: 0.12em;
+  --track-ui-wide: 0.18em;
+
+  /* Responsive scale. Every size on the site resolves to one of these. */
+  --type-hero: clamp(4.5rem, 12.5vw, 14.5rem); /* the one-word statements */
+  --type-chapter: clamp(3.4rem, 8.4vw, 9.2rem); /* chapter titles */
+  --type-statement: clamp(2.2rem, 4.2vw, 4rem); /* section statements */
+  --type-lead: clamp(1.35rem, 2vw, 2.05rem); /* editorial lead lines */
+  --type-body: 1rem;
+  --type-small: 0.875rem;
+  --type-ui: 0.75rem; /* 12px — labels, buttons, metadata */
+  --type-micro: 0.6875rem; /* 11px — the smallest tracked capitals */
 
   /* Editorial margins, shared by every chapter */
   --gutter: clamp(1.6rem, 6.5vw, 8.5rem);
@@ -22,6 +97,10 @@
   background-color: var(--ink);
 
   font-family: var(--font-sans);
+  font-weight: var(--weight-sans);
+  line-height: var(--lh-body);
+  /* No synthetic bold or oblique: a faux-italic serif is the one thing that
+     would break the "one serif, one italic" rule at render time. */
   font-synthesis: none;
   text-rendering: optimizelegibility;
   -webkit-font-smoothing: antialiased;
@@ -33,6 +112,52 @@
      rAF loop reads as a sudden jump. */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+}
+
+/* ---------------------------------------------------------------------
+   The four typographic roles, as classes. New sections compose from these
+   rather than restating families, weights and tracking.
+   --------------------------------------------------------------------- */
+.t-display {
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  line-height: var(--lh-display);
+  letter-spacing: var(--track-display);
+}
+
+/* The expressive voice — the SAME serif, italic. */
+.t-display em,
+.t-italic {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: var(--weight-display);
+}
+
+.t-lead {
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  font-size: var(--type-lead);
+  line-height: var(--lh-heading);
+  letter-spacing: var(--track-heading);
+}
+
+/* UI, labels, buttons, metadata, navigation, floor numbers. */
+.t-ui {
+  font-family: var(--font-sans);
+  font-weight: var(--weight-sans);
+  font-size: var(--type-ui);
+  line-height: var(--lh-ui);
+  letter-spacing: var(--track-ui);
+  text-transform: uppercase;
+}
+
+.t-micro {
+  font-family: var(--font-sans);
+  font-weight: var(--weight-sans);
+  font-size: var(--type-micro);
+  line-height: var(--lh-ui);
+  letter-spacing: var(--track-ui-wide);
+  text-transform: uppercase;
 }
 
 *,
@@ -93,4 +218,3 @@ html.lenis body {
 ::selection {
   background: rgb(246 244 241 / 18%);
 }
-

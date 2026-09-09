@@ -35,10 +35,15 @@
     />
     <link rel="preload" as="image" href="/assets/opening/branding/saion-logo.png" />
 
-    <!-- Hero fonts — decoded before the first word appears -->
-    <link rel="preload" as="font" type="font/woff2" href="/src/components/repose/assets/fonts/display.woff2" crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href="/src/components/repose/assets/fonts/display-italic.woff2" crossorigin />
-    <link rel="preload" as="font" type="font/woff2" href="/src/components/repose/assets/fonts/sans.woff2" crossorigin />
+    <!-- The site's two faces — decoded before the first word appears.
+         Served from public/ so this path is the one the browser actually
+         resolves in the build too; the previous /src/... href only existed
+         before Vite hashed the files, so in production it warmed nothing. -->
+    <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/repose-display.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/repose-sans.woff2" crossorigin />
+    <!-- The italic follows the upright: it is the expressive voice, wanted a
+         beat later than the first line, and it is the same family. -->
+    <link rel="preload" as="font" type="font/woff2" href="/assets/fonts/repose-display-italic.woff2" crossorigin />
   </head>
   <body>
     <div id="root"></div>

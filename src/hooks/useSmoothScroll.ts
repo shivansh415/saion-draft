@@ -64,6 +64,17 @@ export function useSmoothScroll() {
     const update = () => ScrollTrigger.update()
     lenis.on('scroll', update)
 
+    /*
+     * …and the other direction. A ScrollTrigger refresh is the moment the
+     * document's height is known to have changed — the lifestyle chapter
+     * arriving below the visitor, the amenities mounting at the residence's
+     * handover — and Lenis caches that height as its scroll limit. Told to
+     * re-measure at the same instant, the two can never disagree about where
+     * the bottom of the page is.
+     */
+    const resize = () => lenis.resize()
+    ScrollTrigger.addEventListener('refresh', resize)
+
     const raf = (time: number) => lenis.raf(time * 1000)
     gsap.ticker.add(raf)
     gsap.ticker.lagSmoothing(0)
@@ -72,6 +83,7 @@ export function useSmoothScroll() {
     return () => {
       registerSmoothScroll(null)
       lenis.off('scroll', update)
+      ScrollTrigger.removeEventListener('refresh', resize)
       gsap.ticker.remove(raf)
       gsap.ticker.lagSmoothing(500, 33)
       lenis.destroy()

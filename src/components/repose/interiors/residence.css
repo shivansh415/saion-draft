@@ -1,0 +1,616 @@
+/* =====================================================================
+   Reposé Residence — the residence chapter, and its films
+   Between the reception and the amenities loader.
+
+   Faces and type roles come from the site tokens in `src/index.css`
+   (--font-display / --font-sans and the --type-*, --lh-*, --track-*
+   scale). Nothing here names a family, a weight or a tracking value of
+   its own — that is the point of section 10.
+   ===================================================================== */
+
+.ri {
+  --ri-ivory: #f4f1e8;
+  --ri-ink: #2f3229;
+  --ri-olive: #59614a;
+  --ri-line: rgb(47 50 41 / 20%);
+  --ri-line-soft: rgb(47 50 41 / 11%);
+
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  background: var(--ri-ivory);
+  color: var(--ri-ink);
+  padding: clamp(9vh, 13vh, 15vh) var(--gutter) clamp(6vh, 9vh, 11vh);
+}
+
+/*
+ * The page that is PINNED while the four rooms arrive, and the thing that
+ * recedes behind a film. Nothing outside it may scale or blur: a transform or
+ * filter here would become the containing block for the fixed film layer.
+ *
+ * It is sized to sit comfortably inside the viewport with the section's own
+ * top padding above it, because that is where GSAP fixes it for the length of
+ * the pin.
+ */
+.ri__page {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 74svh;
+  transform-origin: 50% 45%;
+}
+
+/* ---- The corners -------------------------------------------------- */
+.ri-botanical {
+  position: absolute;
+  z-index: 0;
+  width: clamp(230px, 33vw, 470px);
+  color: var(--ri-olive);
+  pointer-events: none;
+}
+
+.ri-botanical__stems {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  opacity: 0.42;
+}
+
+.ri-botanical__leaves {
+  fill: currentColor;
+  opacity: 0.19;
+}
+
+.ri-botanical__buds {
+  fill: currentColor;
+  opacity: 0.34;
+}
+
+.ri-botanical--top-left {
+  top: clamp(-2.4rem, -3vw, -1rem);
+  left: clamp(-3.5rem, -4vw, -1.5rem);
+}
+
+/* The same spray, seen from the other end of the page. */
+.ri-botanical--bottom-right {
+  right: clamp(-3.5rem, -4vw, -1.5rem);
+  bottom: clamp(-2.4rem, -3vw, -1rem);
+  transform: rotate(180deg);
+}
+
+/* ---- The heading -------------------------------------------------- */
+.ri__head {
+  max-width: 60ch;
+  text-align: center;
+}
+
+.ri__eyebrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: var(--ri-olive);
+}
+
+.ri__eyebrow i {
+  display: block;
+  width: 44px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.5;
+}
+
+.ri__title {
+  margin: clamp(1.4rem, 2.6vh, 2.4rem) 0 0;
+  /*
+   * The display face is set at 0.9 line-height, so its box is SHORTER than its
+   * ink, and the italic `y` of "the everyday." carries a long swash well below
+   * that box — far enough to strike the lead line beneath it. The padding is
+   * in `em` so it scales with the type rather than being a pixel value that
+   * only holds at one viewport.
+   */
+  padding-bottom: 0.3em;
+  font-size: var(--type-chapter);
+}
+
+.ri__lead {
+  margin: clamp(2.4rem, 4.5vh, 3.6rem) 0 0;
+  font-size: var(--type-body);
+  line-height: var(--lh-body);
+  color: rgb(47 50 41 / 68%);
+}
+
+/* The two margin marks, as in the reference: small tracked capitals, far
+   from the centre, holding the corners the botanicals do not. */
+.ri__place {
+  position: absolute;
+  top: clamp(2.6rem, 5vh, 4.2rem);
+  right: var(--gutter);
+  z-index: 3;
+  color: rgb(47 50 41 / 55%);
+  text-align: right;
+}
+
+.ri__select {
+  margin-top: clamp(2.4rem, 4vh, 3.6rem);
+  color: rgb(47 50 41 / 45%);
+}
+
+/*
+ * While a film has the frame.
+ *
+ * `isolation: isolate` above makes this section a stacking context, so
+ * `.ri-cinema`'s z-index of 120 is measured against its siblings INSIDE the
+ * section and never against the chapter's fixed chrome (`.rp-ui`, z-index 40)
+ * or the amenity sections that follow. The result was a full-screen film with
+ * the header painted on top of it: a press where "Back" appeared landed on
+ * the brand button behind it and navigated the page away instead of closing.
+ *
+ * The section's own level is what has to win, and only while a film is up.
+ */
+.ri[data-film] {
+  z-index: 200;
+}
+
+/* ---- The four cards ----------------------------------------------- */
+.ri__cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(1.1rem, 2.4vw, 2.6rem);
+  width: min(100%, 1280px);
+  margin: clamp(5vh, 9vh, 11vh) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ri-card {
+  min-width: 0;
+}
+
+/*
+ * The cards' resting state is REVEALED. The motion declares its own `from`,
+ * so nothing here may hide them: a card hidden in CSS and revealed only by
+ * GSAP is a card that never appears if the motion fails to build, and this
+ * chapter is the journey's only way through to the amenities.
+ */
+.ri-card__frame,
+.ri-card__index,
+.ri-card__name,
+.ri-card__cue {
+  opacity: 1;
+  visibility: visible;
+}
+
+.ri-card__button {
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+
+/*
+ * The arch. `aspect-ratio: 3/4` with a vertical radius of 37.5% makes the
+ * head a TRUE SEMICIRCLE: 37.5% of the height is exactly half the width.
+ *
+ * The film reads this radius off the card at the moment of the press rather
+ * than reproducing it, so the ratio and the arch can be changed here — as
+ * the narrow breakpoint below does — without touching the transition.
+ */
+.ri-card__frame {
+  position: relative;
+  display: block;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: 50% 50% 0 0 / 37.5% 37.5% 0 0;
+  /* Transparent: nothing bleeds through the anti-aliased border-radius edge.
+     The image already covers the whole frame via object-fit: cover. */
+  background: transparent;
+  /*
+   * No `translateZ(0)`, no `backface-visibility`, no transparent `outline`.
+   * They were an earlier attempt at an edge artifact and never fixed one;
+   * what they did do was promote this element to its own compositing layer,
+   * and a promoted layer carrying BOTH this rounded clip and the reveal's
+   * rectangular one is what seamed the crown. The reveal now has its own
+   * element, and this one is left on the ordinary paint path where the arch
+   * is anti-aliased properly.
+   */
+}
+
+/*
+ * The reveal — a plain rectangle, and deliberately nothing else. No radius
+ * here, so it can never become a second clip on a rounded layer; the arch
+ * above stays the frame's alone.
+ */
+.ri-card__reveal {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.ri-card__frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.85s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* Just enough to sit the card into the page rather than punch out of it. */
+.ri-card__wash {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgb(47 50 41 / 6%) 0%, rgb(47 50 41 / 0%) 42%);
+  transition: opacity 0.7s ease;
+}
+
+.ri-card__foot {
+  display: block;
+  padding-top: clamp(0.9rem, 1.8vh, 1.4rem);
+  border-top: 1px solid var(--ri-line);
+  margin-top: clamp(0.9rem, 1.8vh, 1.4rem);
+}
+
+.ri-card__index {
+  display: block;
+  color: rgb(47 50 41 / 45%);
+}
+
+.ri-card__name {
+  display: block;
+  margin: 0.35rem 0 0.9rem;
+  font-size: clamp(1.5rem, 2.05vw, 2.15rem);
+  line-height: var(--lh-heading);
+  letter-spacing: var(--track-heading);
+}
+
+.ri-card__cue {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding-bottom: 0.55rem;
+  color: var(--ri-olive);
+}
+
+.ri-card__cue::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0.28);
+  transform-origin: left;
+  transition: transform 0.55s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.ri-card__cue i {
+  font-style: normal;
+  transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@media (hover: hover) {
+  .ri-card__button:hover .ri-card__frame img {
+    transform: scale(1.045);
+  }
+
+  .ri-card__button:hover .ri-card__wash {
+    opacity: 0.4;
+  }
+
+  .ri-card__button:hover .ri-card__cue::after {
+    transform: scaleX(1);
+  }
+
+  .ri-card__button:hover .ri-card__cue i {
+    transform: translateX(5px);
+  }
+}
+
+.ri-card__button:focus-visible {
+  outline: 2px solid var(--ri-olive);
+  outline-offset: 10px;
+}
+
+/* =====================================================================
+   The films
+   ===================================================================== */
+.ri-cinema {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  visibility: hidden;
+  opacity: 0;
+}
+
+.ri-cinema__veil {
+  position: absolute;
+  inset: 0;
+  background: #0c0e0a;
+}
+
+/* Sized and placed entirely by GSAP: it begins as the card's rectangle and
+   ends as the viewport. Nothing here may set top/left/width/height. */
+.ri-cinema__frame {
+  position: absolute;
+  overflow: hidden;
+  background: #0c0e0a;
+}
+
+.ri-cinema__film {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transform-origin: 50% 50%;
+}
+
+.ri-cinema__film[data-shown] {
+  opacity: 1;
+}
+
+.ri-cinema__wash {
+  position: absolute;
+  inset: 0;
+  /*
+   * Ground for the type, on ANY frame. The bottom and top washes alone were
+   * not enough: the kitchen and bathroom films are pale, and the index numeral
+   * and the metadata sat on near-white at their corners. The two side scrims
+   * are what make the overlay legible whatever the film is showing, and they
+   * are shallow enough that the middle of the picture is untouched.
+   */
+  background:
+    linear-gradient(180deg, rgb(12 14 10 / 42%) 0%, rgb(12 14 10 / 0%) 24%),
+    linear-gradient(0deg, rgb(12 14 10 / 64%) 0%, rgb(12 14 10 / 0%) 44%),
+    linear-gradient(90deg, rgb(12 14 10 / 50%) 0%, rgb(12 14 10 / 0%) 46%),
+    linear-gradient(270deg, rgb(12 14 10 / 34%) 0%, rgb(12 14 10 / 0%) 26%);
+  pointer-events: none;
+}
+
+.ri-cinema__type {
+  position: absolute;
+  left: var(--gutter);
+  bottom: clamp(4.5rem, 11vh, 8rem);
+  z-index: 2;
+  max-width: min(46ch, 60vw);
+  color: #f4f1e8;
+  pointer-events: none;
+}
+
+.ri-cinema__index {
+  display: block;
+  color: rgb(244 241 232 / 60%);
+}
+
+.ri-cinema__title {
+  margin: 0.7rem 0 0;
+  font-size: var(--type-chapter);
+}
+
+.ri-cinema__line {
+  margin: 1.1rem 0 0;
+  font-size: var(--type-lead);
+  line-height: var(--lh-heading);
+  color: rgb(244 241 232 / 88%);
+}
+
+.ri-cinema__meta {
+  position: absolute;
+  right: var(--gutter);
+  bottom: clamp(4.5rem, 11vh, 8rem);
+  z-index: 2;
+  max-width: 28ch;
+  text-align: right;
+  color: rgb(244 241 232 / 55%);
+  pointer-events: none;
+}
+
+/*
+ * The way out.
+ *
+ * The class is doubled deliberately. `.repose-experience button` sets
+ * `color: inherit` and, at one class and one element, it OUTWEIGHS a single
+ * class here — so this control was inheriting the residence chapter's dark
+ * ink and rendering near-black on a near-black film. It was in the frame the
+ * whole time; it simply could not be seen.
+ *
+ * Given that, a text shadow was never going to be legibility. The control now
+ * carries its own ground: the film's own darkness, blurred, inside a hairline
+ * of the chapter's ivory. It reads on the palest frame and the darkest one,
+ * and it is a press target rather than a line of type.
+ */
+.ri-cinema__back.ri-cinema__back {
+  position: absolute;
+  top: clamp(1.8rem, 4vh, 3rem);
+  left: var(--gutter);
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.72rem 1.25rem 0.72rem 1.05rem;
+  color: #f4f1e8;
+  background: rgb(12 14 10 / 52%);
+  border: 1px solid rgb(244 241 232 / 26%);
+  border-radius: 100px;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(14px) saturate(115%);
+  backdrop-filter: blur(14px) saturate(115%);
+  text-shadow: 0 1px 10px rgb(12 14 10 / 55%);
+  transition:
+    background 0.45s cubic-bezier(0.2, 0.7, 0.2, 1),
+    border-color 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.ri-cinema__back span {
+  transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@media (hover: hover) {
+  .ri-cinema__back.ri-cinema__back:hover {
+    background: rgb(12 14 10 / 68%);
+    border-color: rgb(244 241 232 / 48%);
+  }
+
+  .ri-cinema__back:hover span {
+    transform: translateX(-5px);
+  }
+}
+
+.ri-cinema__back:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 8px;
+}
+
+.ri-cinema__progress {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 3;
+  height: 1px;
+  background: rgb(244 241 232 / 18%);
+}
+
+.ri-cinema__progress i {
+  display: block;
+  height: 100%;
+  background: rgb(244 241 232 / 85%);
+  transform-origin: left;
+  transition: transform 0.12s linear;
+}
+
+/* A minimal directional mark, and only where a pointer can actually carry
+   one. Nothing depends on it. */
+.ri-cinema__cursor {
+  display: none;
+}
+
+@media (any-hover: hover) and (pointer: fine) {
+  .ri-cinema__cursor {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 4;
+    display: block;
+    width: 0;
+    height: 0;
+    /* Mounted with the layer and moved by hand, so it waits at zero opacity
+       rather than sitting in the top-left corner until the first move. */
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .ri-cinema__cursor i {
+    position: absolute;
+    top: -19px;
+    left: -19px;
+    width: 38px;
+    height: 38px;
+    border: 1px solid rgb(244 241 232 / 45%);
+    border-radius: 50%;
+  }
+
+  .ri-cinema__cursor i::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 3px;
+    height: 3px;
+    margin: -1.5px 0 0 -1.5px;
+    background: rgb(244 241 232 / 85%);
+    border-radius: 50%;
+  }
+}
+
+/* =====================================================================
+   Narrow viewports — the same page, read down a column
+   ===================================================================== */
+@media (max-width: 900px) {
+  .ri {
+    padding-top: 11vh;
+  }
+
+  .ri__cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: clamp(1.4rem, 5vw, 2.2rem);
+  }
+
+  .ri__place {
+    position: static;
+    margin-bottom: 2.4rem;
+    text-align: center;
+  }
+
+  .ri-botanical {
+    width: min(78vw, 420px);
+    opacity: 0.85;
+  }
+
+  .ri-cinema__type,
+  .ri-cinema__meta {
+    bottom: clamp(3.5rem, 8vh, 6rem);
+  }
+
+  .ri-cinema__meta {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .ri__cards {
+    grid-template-columns: 1fr;
+    width: min(100%, 380px);
+  }
+
+  .ri-card__frame {
+    aspect-ratio: 4 / 3.4;
+    border-radius: 50% 50% 0 0 / 22% 22% 0 0;
+  }
+}
+
+/* Everything stays in reading order, and nothing is masked shut, when
+   motion is reduced. */
+@media (prefers-reduced-motion: reduce) {
+  .ri-card,
+  .ri-card__frame img {
+    opacity: 1 !important;
+    visibility: visible !important;
+    clip-path: none !important;
+    transform: none !important;
+  }
+}
+
+/* ---- The handover ------------------------------------------------- */
+.ri__tail {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(1rem, 2vh, 1.6rem);
+  min-height: 62vh;
+  padding-top: clamp(8vh, 14vh, 18vh);
+  text-align: center;
+}
+
+.ri__tail-rule {
+  width: 1px;
+  height: clamp(3rem, 8vh, 6rem);
+  background: linear-gradient(180deg, rgb(47 50 41 / 0%), var(--ri-line));
+}
+
+.ri__tail-word {
+  color: rgb(47 50 41 / 45%);
+}
+
+.ri__tail-next {
+  font-size: clamp(2rem, 3.6vw, 3.4rem);
+  line-height: var(--lh-heading);
+}
+
+.ri__tail-arrow {
+  font-size: 1.15rem;
+  color: var(--ri-olive);
+}

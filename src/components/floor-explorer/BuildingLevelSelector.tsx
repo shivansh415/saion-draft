@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 import gsap from 'gsap'
 
 import type { CoverRect } from './useCoverRect'
 import type { LevelId } from './levelCalibration'
 import { bandPx } from './levelGeometry'
-import { EXPLORER_COPY as COPY } from './floorExplorerCopy'
+import { isTerrace, markerBandPx, terraceBandPx, TERRACE_ENABLED, TERRACE_ID } from './terraceZone'
+import type { Marker } from './terraceZone'
+import { EXPLORER_COPY as COPY, TERRACE_COPY } from './floorExplorerCopy'
 import { formatResidenceTypes } from './floorExplorerData'
 import type { FloorExplorerModel, Level } from './floorExplorerData'
 
@@ -12,10 +15,10 @@ interface Props {
   /** Null until the package JSON has loaded; the shell renders regardless so the hand-off can find it. */
   model: FloorExplorerModel | null
   rect: CoverRect
-  /** The level currently indicated on the building (hovered, focused or selected). */
-  shown: LevelId | null
-  /** The level the visitor has committed to (tap on touch, last opened on desktop). */
-  selected: LevelId | null
+  /** What is currently indicated on the building — a level, or the terrace above them. */
+  shown: Marker | null
+  /** What the visitor has committed to (tap on touch, last opened on desktop). */
+  selected: Marker | null
   /** True while a transition or the floorplate view owns the overlay. */
   frozen: boolean
   /** True once the visitor has asked for the explorer; false = clean building. */
@@ -26,6 +29,14 @@ interface Props {
   onHover: (level: LevelId | null) => void
   onChoose: (level: Level) => void
   onPrefetch: (level: Level) => void
+  /**
+   * The terrace, above Level 15. It is indicated, warmed and opened the same
+   * way a level is, so the rail and the building need no second vocabulary —
+   * only these three, because it is not one of `model.levels`.
+   */
+  onTerraceHover: (hovered: boolean) => void
+  onTerraceChoose: () => void
+  onTerracePrefetch: () => void
   /** Reaching the rail by keyboard asks for the explorer too. */
   onReveal: () => void
 }
@@ -53,6 +64,9 @@ export function BuildingLevelSelector({
   onHover,
   onChoose,
   onPrefetch,
+  onTerraceHover,
+  onTerraceChoose,
+  onTerracePrefetch,
   onReveal,
 }: Props) {
   const lineRef = useRef<HTMLDivElement | null>(null)
@@ -68,11 +82,17 @@ export function BuildingLevelSelector({
 
   // The readout keeps the last level it showed while it fades, so it never
   // empties mid-animation.
-  const [lastShown, setLastShown] = useState<LevelId | null>(null)
+  const [lastShown, setLastShown] = useState<Marker | null>(null)
   if (shown && shown !== lastShown) setLastShown(shown)
   const readoutId = shown ?? lastShown
-  const readoutLevel = readoutId && model ? (model.byId.get(readoutId) ?? null) : null
+  // The guard call is kept whole and separate from the flag: `isTerrace` is a
+  // type predicate, and folding the flag into it turns the result into a plain
+  // boolean, which stops `readoutId` narrowing to a LevelId on the next line.
+  const readoutIsTerrace = isTerrace(readoutId)
+  const terraceReadout = TERRACE_ENABLED && readoutIsTerrace
+  const readoutLevel = readoutId && !readoutIsTerrace && model ? (model.byId.get(readoutId) ?? null) : null
   const levels = model?.levels ?? []
+  const terraceSelected = TERRACE_ENABLED && isTerrace(selected)
 
   /* --------------------------------------------------------------- *
    * Reveal — the explorer arrives, or retires
@@ -153,7 +173,7 @@ export function BuildingLevelSelector({
       return
     }
 
-    const band = bandPx(shown, rect)
+    const band = markerBandPx(shown, rect)
     const scaleX = (band.x1 - band.x0) / rootWidth
     const arriving = !lineShownRef.current
     lineShownRef.current = true
@@ -200,13 +220,33 @@ export function BuildingLevelSelector({
     if (coarse) return
     if (leaveTimer.current) window.clearTimeout(leaveTimer.current)
     leaveTimer.current = null
+    onTerraceHover(false)
     onPrefetch(level)
     onHover(level.id)
   }
   const leave = () => {
     if (coarse) return
     if (leaveTimer.current) window.clearTimeout(leaveTimer.current)
-    leaveTimer.current = window.setTimeout(() => onHover(null), 140)
+    leaveTimer.current = window.setTimeout(() => {
+      onHover(null)
+      onTerraceHover(false)
+    }, 140)
+  }
+
+  // The terrace is indicated exactly as a level is — the same grace period,
+  // the same warming on intent — but it is not one of `model.levels`, so it
+  // travels its own three callbacks rather than a `Level`.
+  const enterTerrace = () => {
+    if (coarse) return
+    if (leaveTimer.current) window.clearTimeout(leaveTimer.current)
+    leaveTimer.current = null
+    onHover(null)
+    onTerracePrefetch()
+    onTerraceHover(true)
+  }
+  const chooseTerrace = () => {
+    if (frozen) return
+    onTerraceChoose()
   }
   useEffect(
     () => () => {
@@ -221,6 +261,21 @@ export function BuildingLevelSelector({
   }
 
   const rootWidth = rect.containerWidth
+
+  // Both anchors the cue can hang from — beside the crown on a wide frame,
+  // above it on a narrow one — as custom properties, so the choice between
+  // them is the stylesheet's. Kept on screen the way the amenities cue is:
+  // a crop that takes the crown off the top must not take the way in with it.
+  const crown = terraceBandPx(rect)
+  const terraceCueStyle = {
+    '--fx-terrace-x': `${crown.x1}px`,
+    '--fx-terrace-cx': `${(crown.x0 + crown.x1) / 2}px`,
+    // The crown can sit at the very top of a tall crop, or off it. Both
+    // anchors are held far enough down for the cue to stay whole and in
+    // reach — the same concession the amenities cue makes at the margins.
+    '--fx-terrace-y': `${Math.max(crown.topY + (crown.lineY - crown.topY) / 2, 56)}px`,
+    '--fx-terrace-top': `${Math.max(crown.topY, 72)}px`,
+  } as CSSProperties
 
   return (
     <>
@@ -255,12 +310,40 @@ export function BuildingLevelSelector({
               />
             )
           })}
+
+        {/* Above Level 15: the crown on the roof slab — the terrace's mark on
+            the building. Same hit-zone as a level band, at the band the
+            terrace owns (see `terraceZone.ts`). */}
+        {TERRACE_ENABLED &&
+          rect.width > 0 &&
+          (() => {
+            const band = terraceBandPx(rect)
+            const pad = rect.width * 0.02
+            return (
+              <button
+                type="button"
+                className="fx-hit"
+                tabIndex={-1}
+                aria-hidden="true"
+                data-level={TERRACE_ID}
+                style={{
+                  top: band.topY,
+                  height: Math.max(0, band.lineY - band.topY),
+                  left: band.x0 - pad,
+                  width: band.x1 - band.x0 + pad * 2,
+                }}
+                onPointerEnter={enterTerrace}
+                onPointerLeave={leave}
+                onClick={chooseTerrace}
+              />
+            )
+          })()}
       </div>
 
       {/* The calibrated floor line and its level tag. */}
       <div className="fx__line" ref={lineRef} data-fx-line aria-hidden="true" style={{ width: rootWidth || '100%' }} />
       <div className="fx__tag" ref={tagRef} data-fx-tag aria-hidden="true">
-        {readoutLevel?.id ?? ''}
+        {terraceReadout ? TERRACE_COPY.rail : (readoutLevel?.id ?? '')}
       </div>
 
       {/* Everything the reveal brings with it, in one group. Tabbing into the
@@ -284,6 +367,18 @@ export function BuildingLevelSelector({
             </p>
 
             <div className="fx__readout" ref={readoutRef} aria-live="polite">
+              {terraceReadout && (
+                <>
+                  <span className="fx__readout-level">{TERRACE_COPY.label}</span>
+                  <span className="fx__readout-types">{TERRACE_COPY.types}</span>
+                  {coarse && terraceSelected && (
+                    <button type="button" className="fx__open" onClick={chooseTerrace}>
+                      <span className="fx__open-rule" />
+                      {TERRACE_COPY.open}
+                    </button>
+                  )}
+                </>
+              )}
               {readoutLevel && (
                 <>
                   <span className="fx__readout-level">{readoutLevel.label}</span>
@@ -303,6 +398,35 @@ export function BuildingLevelSelector({
         {/* Right: the level list. */}
         <nav className="fx__list" aria-label="Levels">
           <ol data-fx-list>
+            {/* Above the last residential level, and marked as its own kind of
+                destination rather than as a sixteenth floor. Off in production
+                — see `terraceZone.TERRACE_ENABLED`. */}
+            {TERRACE_ENABLED && (
+            <li>
+              <button
+                type="button"
+                className={`fx-level fx-level--terrace${terraceReadout && shown ? ' is-shown' : ''}${
+                  terraceSelected ? ' is-selected' : ''
+                }`}
+                data-fx-reveal-level
+                data-level={TERRACE_ID}
+                aria-pressed={terraceSelected}
+                aria-label={`${TERRACE_COPY.label} — ${TERRACE_COPY.types}`}
+                onPointerEnter={enterTerrace}
+                onPointerLeave={leave}
+                onFocus={() => {
+                  onHover(null)
+                  onTerracePrefetch()
+                  onTerraceHover(true)
+                }}
+                onBlur={() => onTerraceHover(false)}
+                onClick={chooseTerrace}
+              >
+                <span className="fx-level__rule" />
+                <span className="fx-level__number">{TERRACE_COPY.rail}</span>
+              </button>
+            </li>
+            )}
             {levels.map((level) => {
               const isShown = shown === level.id
               const isSelected = selected === level.id
@@ -333,6 +457,30 @@ export function BuildingLevelSelector({
           </ol>
         </nav>
       </div>
+
+      {/* The terrace's own cue, on the crown it points at. It is the short
+          trip from the highlighted destination to the way in: a level's
+          readout lives in the left margin because a level opens a drawing,
+          but the terrace opens a place, and it is marked where it is. */}
+      {TERRACE_ENABLED && rect.width > 0 && (
+        <div
+          className="fx-terrace-cue"
+          data-fx-terrace-cue
+          data-shown={(terraceReadout && shown !== null) || undefined}
+          style={terraceCueStyle}
+          onPointerEnter={enterTerrace}
+          onPointerLeave={leave}
+        >
+          <span className="fx-terrace-cue__rule" aria-hidden="true" />
+          <span className="fx-terrace-cue__label">{TERRACE_COPY.label}</span>
+          <button type="button" className="fx-terrace-cue__open" onClick={chooseTerrace} tabIndex={-1}>
+            {TERRACE_COPY.open}
+            <span className="fx-terrace-cue__arrow" aria-hidden="true">
+              →
+            </span>
+          </button>
+        </div>
+      )}
     </>
   )
 }

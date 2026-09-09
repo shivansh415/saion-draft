@@ -77,6 +77,58 @@ for (const relative of [
   'assets/reception-entry/reception-final.webp',
   'floor-explorer/repose-floor-explorer-assets/floor-selector.json',
   'floor-explorer/repose-floor-explorer-assets/residences-map.json',
+  // The 3D renders of the unit plans, registered in unit3dViews.ts. The plans
+  // themselves are named by residences-map.json and reached through it; a
+  // render is named in source, so it is checked here by name.
+  'floor-explorer/repose-floor-explorer-assets/units-web/unit-l01-05-07-11-1bhk-a-prime-3d.webp',
+  // The site's two faces. They moved out of src/ so the preload in index.html
+  // and the @font-face in index.css resolve to the same URL in dev and in the
+  // build; a miss here is the whole site falling back to Georgia.
+  'assets/fonts/repose-display.woff2',
+  'assets/fonts/repose-display-italic.woff2',
+  'assets/fonts/repose-sans.woff2',
+
+  // The residence chapter: four films, each with the card poster the selector
+  // paints and the still the film opens on. A missing poster is a black frame
+  // at exactly the moment the transition is supposed to be seamless.
+  'assets/interiors/kitchen.mp4',
+  'assets/interiors/kitchen-card.webp',
+  'assets/interiors/kitchen-still.webp',
+  'assets/interiors/living-room.mp4',
+  'assets/interiors/living-room-card.webp',
+  'assets/interiors/living-room-still.webp',
+  'assets/interiors/bedroom.mp4',
+  'assets/interiors/bedroom-card.webp',
+  'assets/interiors/bedroom-still.webp',
+  'assets/interiors/bathroom.mp4',
+  'assets/interiors/bathroom-card.webp',
+  'assets/interiors/bathroom-still.webp',
+
+  // The amenity films and their posters (data/experience.ts → AMENITY_FILMS,
+  // sections/Story.tsx → the panels), and the supplied amenities map.
+  'assets/amenity-videos/pool.mp4',
+  'assets/amenity-videos/pool.webp',
+  'assets/amenity-videos/gym.mp4',
+  'assets/amenity-videos/gym.webp',
+  'assets/amenity-videos/steam-room.mp4',
+  'assets/amenity-videos/steam-room.webp',
+  'assets/amenities/map.webp',
+
+  // The index plates that are single files rather than the chapter's own
+  // six-candidate photographs (data/amenities.ts → `src`).
+  `${REPOSE}/walking-track-01.webp`,
+
+  // The terrace: the supplied model, and the plates its amenity details
+  // stand on. The chapter is disconnected from the production flow
+  // (floor-explorer/terraceZone.ts → TERRACE_ENABLED) but the amenity index
+  // still shows four of these plates, so they are still shipped.
+  'models/repose-terrace.glb',
+  'assets/terrace/plate-pool.webp',
+  'assets/terrace/plate-sports-court.webp',
+  'assets/terrace/plate-play-area.webp',
+  'assets/terrace/plate-fitness.webp',
+  'assets/terrace/plate-walking-track.webp',
+  'assets/terrace/plate-garden.webp',
 ]) {
   need(relative, 'referenced directly in src/')
 }

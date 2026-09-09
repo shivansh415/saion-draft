@@ -35,8 +35,8 @@ import type { Box, Window } from './imageSpace'
 /** Intrinsic size of `building-final.webp`. */
 export const STILL = { width: 2940, height: 1912 } as const
 
-/** Intrinsic size of `reception-final.webp`. */
-export const RECEPTION = { width: 1672, height: 941 } as const
+/** Intrinsic size of `Reception-done.webp`. */
+export const RECEPTION = { width: 8000, height: 3523 } as const
 
 /** Where the reception's cover-fit crop is anchored. Centred: the lobby reads whole. */
 export const RECEPTION_FOCAL = { x: 0.5, y: 0.5 } as const

@@ -380,6 +380,168 @@
 }
 
 /* ---------------------------------------------------------------------
+   WHY DUBAI? — scroll-driven overlay during the construction sequence
+   --------------------------------------------------------------------- */
+
+.why-dubai {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding-inline: var(--gutter);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 4;
+  /* Soft radial dark field — readable against the bright construction sky,
+     no hard rectangle edge, feels cinematic rather than boxed. */
+  background: radial-gradient(
+    ellipse 70% 55% at 50% 50%,
+    rgb(0 0 0 / 52%) 0%,
+    rgb(0 0 0 / 28%) 55%,
+    rgb(0 0 0 / 0%) 100%
+  );
+}
+
+.why-dubai__heading {
+  font-family: var(--font-display);
+  font-weight: var(--weight-display, 400);
+  font-size: clamp(2.8rem, 7.2vw, 8.5rem);
+  line-height: 0.92;
+  letter-spacing: var(--track-display, -0.025em);
+  color: var(--paper);
+  margin: 0;
+  text-shadow:
+    0 2px 20px rgb(9 12 16 / 60%),
+    0 0 60px rgb(9 12 16 / 40%);
+}
+
+.why-dubai__body {
+  max-width: 38ch;
+  margin-top: clamp(1.2rem, 2.6vh, 2.2rem);
+  font-family: var(--font-sans);
+  font-weight: var(--weight-sans, 400);
+  font-size: clamp(0.82rem, 1.05vw, 1.08rem);
+  line-height: 1.65;
+  letter-spacing: 0.01em;
+  color: rgb(246 244 241 / 82%);
+  text-shadow:
+    0 1px 12px rgb(9 12 16 / 50%),
+    0 0 40px rgb(9 12 16 / 30%);
+}
+
+/* ---------------------------------------------------------------------
+   TALLEST BUILDING IN AL FURJAN — right-side overlay after WHY DUBAI
+   Appears once the building is complete, before the floor explorer.
+   --------------------------------------------------------------------- */
+
+.tallest-building {
+  /* The plate needs room to breathe; the negative margin gives it that
+     without moving a glyph from where the block rests today. */
+  --plate-x: clamp(1.2rem, 2vw, 2rem);
+  --plate-y: clamp(1rem, 2vh, 1.6rem);
+
+  position: absolute;
+  top: 50%;
+  right: clamp(3rem, 6vw, 8rem);
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  padding: var(--plate-y) var(--plate-x);
+  margin: calc(-1 * var(--plate-y)) calc(-1 * var(--plate-x));
+  border-radius: 4px;
+  background: rgb(244 241 232 / 0%);
+  pointer-events: auto;
+  opacity: 0;
+  z-index: 4;
+  transition: background 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/*
+ * The whole block reads as one thing, so it lights as one: hovering the
+ * heading brings the eyebrow, the rule and the sub with it, on the ivory
+ * and ink the residence chapter is built from. The two elements used to
+ * carry pills of their own, which lit separately and never together.
+ */
+@media (hover: hover) {
+  .tallest-building:hover {
+    background: #f4f1e8;
+  }
+
+  .tallest-building:hover .tallest-building__eyebrow,
+  .tallest-building:hover .tallest-building__heading,
+  .tallest-building:hover .tallest-building__sub {
+    color: #2f3229;
+    text-shadow: none;
+  }
+
+  .tallest-building:hover .tallest-building__rule {
+    background: rgb(47 50 41 / 40%);
+  }
+}
+
+.tallest-building__eyebrow {
+  font-family: var(--font-sans);
+  font-weight: var(--weight-sans, 400);
+  font-size: clamp(0.6rem, 0.72vw, 0.82rem);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgb(246 244 241 / 90%);
+  margin-bottom: clamp(0.7rem, 1.4vh, 1.2rem);
+  /* The padding stays: it is what sets this line in from the block's right
+     edge. What goes is the pill's own ground and its own hover — the plate
+     above is the block's now. */
+  padding: 0.45em 1em;
+  transition: color 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+  text-shadow: 0 1px 8px rgb(9 12 16 / 60%);
+}
+
+.tallest-building__rule {
+  display: block;
+  width: clamp(36px, 4vw, 64px);
+  height: 1px;
+  background: rgb(246 244 241 / 40%);
+  margin-left: auto;
+  margin-bottom: clamp(0.9rem, 1.8vh, 1.5rem);
+  transform-origin: right center;
+  transition: background 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.tallest-building__heading {
+  font-family: var(--font-display);
+  font-weight: var(--weight-display, 400);
+  font-size: clamp(1.9rem, 3.8vw, 5.2rem);
+  line-height: 0.94;
+  letter-spacing: var(--track-display, -0.025em);
+  color: var(--paper);
+  margin: 0;
+  text-shadow:
+    0 2px 20px rgb(9 12 16 / 65%),
+    0 0 60px rgb(9 12 16 / 40%);
+}
+
+.tallest-building__heading em {
+  display: block;
+  font-style: italic;
+}
+
+.tallest-building__sub {
+  margin-top: clamp(0.8rem, 1.6vh, 1.4rem);
+  font-family: var(--font-sans);
+  font-weight: var(--weight-sans, 400);
+  font-size: clamp(0.58rem, 0.7vw, 0.76rem);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgb(246 244 241 / 85%);
+  padding: 0.45em 1em;
+  transition: color 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
+  text-shadow: 0 1px 8px rgb(9 12 16 / 55%);
+}
+/* ---------------------------------------------------------------------
    Loading — a hairline, and nothing more.
    --------------------------------------------------------------------- */
 
@@ -440,6 +602,15 @@
 
   .op-hint {
     display: none;
+  }
+
+  .why-dubai__heading {
+    font-size: clamp(2.2rem, 11vw, 4rem);
+  }
+
+  .why-dubai__body {
+    font-size: clamp(0.75rem, 3.2vw, 0.92rem);
+    max-width: 30ch;
   }
 }
 

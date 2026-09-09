@@ -3,16 +3,24 @@ import {gsap} from './motion/gsap';
 import {CRITICAL_PHOTOS} from './data/experience';
 import {photoSources} from './data/photoSources';
 import {warmPhotos} from './data/warmPhotos';
+import {warmVideos} from './data/warmVideos';
 
 /**
  * The chapter's loader — the one the two cues on the building open into.
  * Separate from the opening's preloader and unrelated to it: that one holds
  * the film, this one holds the chapter.
  *
- * What it waits for is `CRITICAL_PHOTOS` — the hero and the first two wellness
- * panels — fetched AND decoded at the exact URLs the page will ask for, plus
- * the display face. Nothing else on the site is loaded again here; the rest of
- * the chapter's imagery follows behind the visitor once they are inside.
+ * Where it sits has changed: it is no longer the arrival from the reception —
+ * the residence chapter is — it is the handover from the residence chapter to
+ * the amenities, which is where the client asked for it and where the wait is
+ * real.
+ *
+ * What it waits for is `CRITICAL_PHOTOS` — its own picture and the amenity
+ * index's first plates — fetched AND decoded at the exact URLs the page will
+ * ask for, the display face, and now the amenity films, which are asked only
+ * for their metadata and can hold nothing up for more than a moment (see
+ * `data/warmVideos`). The rest of the chapter's imagery follows behind the
+ * visitor once they are inside.
  *
  * It used to give up after a flat 5.5 seconds whatever had arrived, which on
  * anything slower than an office line is precisely the reveal-too-early this
@@ -27,7 +35,7 @@ const MAX_MS=20000;
 /** Longest the display face is waited on before the reveal goes ahead without it. */
 const FONT_MS=4000;
 
-export function ReposeLoader({assetBase,onReveal,onComplete}:{assetBase:string;onReveal:()=>void;onComplete:()=>void}) {
+export function ReposeLoader({assetBase,films=[],onReveal,onComplete}:{assetBase:string;films?:readonly string[];onReveal:()=>void;onComplete:()=>void}) {
   const root=useRef<HTMLDivElement>(null);
   useEffect(()=>{
     let cancelled=false; const start=performance.now();
@@ -46,7 +54,7 @@ export function ReposeLoader({assetBase,onReveal,onComplete}:{assetBase:string;o
       }}));
     };
     const finish=()=>{
-      if(cancelled||finished)return;finished=true;clearTimeout(ceiling);warm.cancel();update(100);
+      if(cancelled||finished)return;finished=true;clearTimeout(ceiling);warm.cancel();warmFilms.cancel();update(100);
       delay=setTimeout(()=>{
         if(cancelled)return;
         // `onReveal` fires as the last fade begins, not when it ends. Building
@@ -88,18 +96,24 @@ export function ReposeLoader({assetBase,onReveal,onComplete}:{assetBase:string;o
       else{document.fonts.ready.then(settle,settle);setTimeout(settle,FONT_MS);}
     });
 
-    Promise.all([warm.promise,fonts]).then(finish);
+    // The amenity films, in flight from here rather than from the moment the
+    // first panel scrolls into view. Metadata only, capped — the panels want a
+    // decoder that has seen the header, and their posters are already among
+    // the pictures above.
+    const warmFilms=warmVideos(films);
+
+    Promise.all([warm.promise,fonts,warmFilms.promise]).then(finish);
     const ceiling=setTimeout(finish,MAX_MS);
 
-    return ()=>{cancelled=true;warm.cancel();clearTimeout(delay);clearTimeout(ceiling);end?.kill();tweens.forEach(t=>t.kill());ctx.revert();};
-  },[assetBase,onReveal,onComplete]);
+    return ()=>{cancelled=true;warm.cancel();warmFilms.cancel();clearTimeout(delay);clearTimeout(ceiling);end?.kill();tweens.forEach(t=>t.kill());ctx.revert();};
+  },[assetBase,films,onReveal,onComplete]);
   const pool=photoSources('pool-01',assetBase);
-  return <div className="rp-loader" ref={root} role="status" aria-label="Opening the Reposé lifestyle chapter">
+  return <div className="rp-loader" ref={root} role="status" aria-label="Opening the Reposé amenity collection">
     <div className="rp-loader-meta"><span>SAION PROPERTIES</span><span>A DIFFERENT RHYTHM</span></div>
     {/* The same candidate set the hero behind it will use, so the loader's own
         picture and the chapter's first screen are one fetch, not two. */}
     <div className="rp-loader-window"><picture><source type="image/avif" srcSet={pool.avifSet} sizes="100vw"/><source type="image/webp" srcSet={pool.webpSet} sizes="100vw"/><img src={pool.jpgSrc} sizes="100vw" alt="" fetchPriority="high" decoding="async"/></picture></div>
     <div className="rp-loader-word" aria-hidden="true">{'REPOSÉ'.split('').map((c,i)=><span key={i}>{c}</span>)}</div>
-    <div className="rp-loader-line"><span>THE ART OF LIVING</span><i/><span data-loader-count>00</span></div>
+    <div className="rp-loader-line"><span>THE AMENITY COLLECTION</span><i/><span data-loader-count>00</span></div>
   </div>;
 }

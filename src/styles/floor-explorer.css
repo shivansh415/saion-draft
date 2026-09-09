@@ -28,7 +28,8 @@
    must not keep taking clicks or showing a pointer through the plan. */
 .fx:not([data-mode='selector']) .fx-hit,
 .fx:not([data-mode='selector']) .fx__list,
-.fx:not([data-mode='selector']) .fx__readout {
+.fx:not([data-mode='selector']) .fx__readout,
+.fx:not([data-mode='selector']) .fx-terrace-cue {
   pointer-events: none;
 }
 
@@ -76,7 +77,8 @@
 /* Nothing on the building answers the pointer until the explorer is up. */
 .fx:not([data-revealed]) .fx-hit,
 .fx:not([data-revealed]) .fx__list,
-.fx:not([data-revealed]) .fx__readout {
+.fx:not([data-revealed]) .fx__readout,
+.fx:not([data-revealed]) .fx-terrace-cue {
   pointer-events: none;
 }
 
@@ -473,6 +475,113 @@
 }
 
 /* ---------------------------------------------------------------------
+   Above Level 15 — the terrace
+
+   Not a sixteenth floor and not styled as one: the rail marks it apart
+   with a rule under it, and the cue that opens it sits on the crown it
+   points at rather than in the left margin, because what it opens is a
+   place rather than a drawing.
+   --------------------------------------------------------------------- */
+
+.fx-level--terrace {
+  position: relative;
+  margin-bottom: clamp(0.35rem, 1vh, 0.7rem);
+  padding-bottom: clamp(0.35rem, 1vh, 0.7rem);
+}
+
+.fx-level--terrace::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 26px;
+  height: 1px;
+  background: currentcolor;
+  opacity: 0.24;
+}
+
+.fx-level--terrace .fx-level__number {
+  letter-spacing: 0.2em;
+}
+
+/* The cue, hung off the crown. Both anchors travel with the render (see
+   `terraceZone.ts`); the stylesheet picks which one is used. */
+.fx-terrace-cue {
+  position: absolute;
+  left: var(--fx-terrace-x);
+  top: var(--fx-terrace-y);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+  margin-left: 1.1rem;
+  transform: translateY(-50%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 420ms ease,
+    visibility 0s linear 420ms;
+}
+
+.fx-terrace-cue[data-shown] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    opacity 560ms ease 60ms,
+    visibility 0s linear;
+}
+
+.fx-terrace-cue__rule {
+  display: block;
+  width: 34px;
+  height: 1px;
+  background: currentcolor;
+  opacity: 0.5;
+}
+
+.fx-terrace-cue__label {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(1rem, 1.35vw, 1.5rem);
+  letter-spacing: 0.07em;
+  line-height: 1.05;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.fx-terrace-cue__open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.1rem 0 0;
+  padding: 0.3rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--paper);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.55rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.fx-terrace-cue__arrow {
+  font-size: 0.7rem;
+  letter-spacing: 0;
+  opacity: 0.72;
+  transition: transform 480ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.fx-terrace-cue__open:hover .fx-terrace-cue__arrow {
+  transform: translateX(5px);
+}
+
+/* ---------------------------------------------------------------------
    The floorplate view
    --------------------------------------------------------------------- */
 
@@ -534,6 +643,15 @@
 
 .fx-plate__head > * {
   pointer-events: auto;
+}
+
+/* …but only while the plate is the thing on screen.
+   `pointer-events: none` on `.fx-plate` does not reach a child that turns it
+   back on, so the head above kept hit-testing at the frame's top-left corner
+   even when it was faded out — swallowing presses on whatever the clean
+   building has in that corner. On a phone that is the terrace cue. */
+.fx:not([data-mode='floorplate']) .fx-plate__head > * {
+  pointer-events: none;
 }
 
 .fx-plate__back {
@@ -989,6 +1107,13 @@
   transform: translateX(4px);
 }
 
+/* The rare press that lands before the render has arrived: the arrow rests
+   until it has. The control is not disabled — it is waiting — so nothing
+   else about it changes. */
+.fx-res__cta[data-busy] .fx-res__cta-arrow {
+  opacity: 0.4;
+}
+
 /* The plan's room: right of the copy, as large as the frame allows. It does
    not clip — the sheet inside it does — so the reset control can sit just
    below it, off the paper. */
@@ -1029,6 +1154,69 @@
 
 .fx-res__image {
   background: #fff;
+}
+
+/* ---------------------------------------------------------------------
+   The plan standing up — the flat drawing becoming the supplied 3D render
+   of the same apartment, in the same frame (see PlanMorph.tsx, and
+   unit3dViews.ts for where one is registered over the other).
+
+   Nothing here reaches a residence without a supplied render: that unit
+   renders the drawing alone, in the DOM it always had.
+   --------------------------------------------------------------------- */
+
+/* The stage — the box the two layers share. It sits inside the viewer's
+   own wrapper, so the frame's push in composes with whatever the visitor
+   has zoomed rather than fighting it, and it carries the perspective the
+   two layers tip in. */
+.fx-morph {
+  position: absolute;
+  inset: 0;
+  perspective: 1600px;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+/* The drawing, filling the sheet exactly as it does without any of this. */
+.fx-morph__flat {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+}
+
+/* The render, laid over exactly the part of the sheet the apartment
+   occupies — its box is written from the unit's own `align`, in per cent
+   of the sheet, which is what registers the two apartments wall for wall.
+
+   `--fx-build` is the soft edge that sweeps up the apartment from its
+   floor: at 0 the band's clear end sits on the render's own bottom edge and
+   nothing of it is seen, at 1 its solid end has passed the top and all of it
+   is. The travel is the render's own height, not the frame's, and the band
+   is deep enough that no edge is ever a line — which is the difference
+   between walls rising and a wipe crossing a picture. */
+.fx-morph__solid {
+  --fx-build: 0;
+  position: absolute;
+  display: block;
+  object-fit: contain;
+  object-position: 50% 50%;
+  opacity: 0;
+  transform-origin: 50% 50%;
+  -webkit-mask-image: linear-gradient(
+    to top,
+    #000 calc(var(--fx-build) * 142% - 40%),
+    rgb(0 0 0 / 0) calc(var(--fx-build) * 142%)
+  );
+  mask-image: linear-gradient(
+    to top,
+    #000 calc(var(--fx-build) * 142% - 40%),
+    rgb(0 0 0 / 0) calc(var(--fx-build) * 142%)
+  );
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+  will-change: transform, opacity, filter;
 }
 
 .fx-res .fx-viewport__reset {
@@ -1090,6 +1278,13 @@
   }
 
   .fx__tag {
+    display: none;
+  }
+
+  /* The crown sits within a few dozen pixels of the top of a narrow frame:
+     there is no room beside it and none above it. The terrace is opened from
+     the readout here instead — where touch already goes for a level. */
+  .fx-terrace-cue {
     display: none;
   }
 
@@ -1167,7 +1362,8 @@
   .fx-level__rule,
   .fx-level__number,
   .fx__open-rule,
-  .fx-plate__back-rule {
+  .fx-plate__back-rule,
+  .fx-terrace-cue__arrow {
     transition: none;
   }
 }

@@ -1,31 +1,33 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 import { OpeningExperience } from './components/opening/OpeningExperience'
-import { getLifestyle, loadLifestyle } from './components/repose/lazy'
-import type { ReturnReason } from './components/repose/ReposeLifestyle'
+import { getLifestyle, loadLifestyle, prefetchLifestyle } from './components/repose/lazy'
+import { getTerrace, loadTerrace } from './components/terrace/lazy'
+import { ARCH_RETURN_AT, unitFraction } from './data/opening'
 import { useSmoothScroll } from './hooks/useSmoothScroll'
+import { glideTo, jumpTo, pageTop } from './lib/pageScroll'
 import { getSmoothScroll, unlockScroll } from './lib/scrollLock'
-
-/**
- * Which chapter holds the page.
- *
- *   building   the opening — the approach, the completed building, the floor
- *              explorer and the reception all live in its one sticky frame
- *   lifestyle  the lifestyle chapter, mounted after the opening and entered
- *              from the reception; at its end the arch becomes the building
- *              and the page is handed back here
- */
-type Stage = 'building' | 'lifestyle'
 
 /**
  * Reposé Residence — SAION Properties.
  *
- * The experience is assembled chapter by chapter, in one document, on one
- * smooth-scroll instance. The opening carries the approach, the building,
- * the floor explorer and the reception in a single sticky frame; the
- * lifestyle chapter follows it in the flow and returns to it, so the whole
- * reads as one continuous loop.
+ * ONE document, ONE scroll, in this order and with nothing to press between
+ * any two of them:
+ *
+ *   approach film → construction → completed building / floor explorer
+ *   → reception → the residence and its four interiors
+ *   → the amenities loader → the amenity collection → the arch, and back
+ *
+ * The opening section carries the film, the explorer and the reception in a
+ * single sticky viewport; the lifestyle bundle carries everything after them.
+ * The two are simply one after the other in the document, so the journey is
+ * travelled by scrolling and by nothing else.
+ *
+ * What the controls do here is TRAVEL that document — "Enter inside",
+ * "Explore Reposé", the amenities cue on the podium all glide the page to a
+ * position. None of them switches to a state the scroll does not know about,
+ * which is what used to make the building a dead end.
  */
 function App() {
   // A reload part-way down should not drop the visitor into the middle of the
@@ -39,57 +41,128 @@ function App() {
 
   useSmoothScroll()
 
-  const [stage, setStage] = useState<Stage>('building')
-  /** True when the chapter has left the page held still for the hand-back. */
-  const heldRef = useRef(false)
-
   /**
-   * The chapter's own bundle, once it has arrived. It is prefetched the moment
-   * the building completes — long before either cue can be pressed — so in
-   * practice this is already filled in and the press mounts at once.
+   * The lifestyle chapter's own bundle, once it is in the document.
+   *
+   * It is put there by scroll position (`OpeningExperience` →
+   * `onNearLifestyle`), well before the visitor arrives, and BELOW them — so
+   * the document grows downward and the scroll simply continues into it.
    */
   const [Chapter, setChapter] = useState(getLifestyle)
+  const [mounted, setMounted] = useState(false)
+  /** True while the terrace covers the page (off in production — see terraceZone). */
+  const [Terrace, setTerrace] = useState(getTerrace)
+  const [terraceUp, setTerraceUp] = useState(false)
 
-  // Both cues on the building open the chapter the same way: at its beginning.
-  const explore = useCallback(() => {
+  // Both chapters already mark their own root for the stylesheet and for the
+  // scroll machinery; they are found by those marks rather than by threading
+  // refs through two component signatures.
+  const opening = () => document.querySelector<HTMLElement>('[data-opening-root]')
+  const residence = () => document.querySelector<HTMLElement>('[data-repose-root]')
+
+  const putChapterInDocument = useCallback(() => {
+    setMounted(true)
     const ready = getLifestyle()
     if (ready) {
       setChapter(() => ready)
-      setStage('lifestyle')
       return
     }
-    // Only reachable if the press beats the prefetch. The building simply
-    // stays as it is until the chunk lands — which is what was on screen a
-    // moment before, so nothing flashes.
-    void loadLifestyle().then((chapter) => {
-      setChapter(() => chapter)
-      setStage('lifestyle')
+    // Only reachable if the visitor outran the prefetch that started when the
+    // building completed. Nothing is waiting on it: the opening is still on
+    // screen and the chapter lands below them when it arrives.
+    void loadLifestyle().then((chapter) => setChapter(() => chapter))
+  }, [])
+
+  useEffect(() => {
+    prefetchLifestyle()
+  }, [])
+
+  /**
+   * Both cues on the building, and "Explore Reposé" inside the lobby: travel
+   * to the beginning of the residence chapter.
+   *
+   * A glide, never a jump. The chapter is almost always already below the
+   * visitor by the time either can be pressed; if the press somehow beats the
+   * mount, it is put in the document first and travelled to on the next frame,
+   * once the layout knows where it is.
+   */
+  const explore = useCallback(() => {
+    const travel = () => {
+      const element = residence()
+      if (!element) return
+      getSmoothScroll()?.resize()
+      ScrollTrigger.refresh()
+      glideTo(pageTop(element), 1.4)
+    }
+    if (residence()) {
+      travel()
+      return
+    }
+    putChapterInDocument()
+    requestAnimationFrame(() => requestAnimationFrame(travel))
+  }, [putChapterInDocument])
+
+  const openTerrace = useCallback(() => {
+    const ready = getTerrace()
+    if (ready) {
+      setTerrace(() => ready)
+      setTerraceUp(true)
+      return
+    }
+    void loadTerrace().then((chapter) => {
+      setTerrace(() => chapter)
+      setTerraceUp(true)
     })
   }, [])
 
-  const returnToBuilding = useCallback((reason: ReturnReason) => {
-    heldRef.current = reason === 'arch'
-    setStage('building')
-  }, [])
+  const returnFromTerrace = useCallback(() => setTerraceUp(false), [])
 
-  // The chapter has just been taken down: release the page where the chapter
-  // left it (the opening's end — the same building, now the explorer's) and
-  // let the scroll machinery re-measure the shorter document.
-  useEffect(() => {
-    if (stage !== 'building') return
-    if (heldRef.current) {
-      heldRef.current = false
-      unlockScroll()
+  /**
+   * The arch at the end of the chapter has become the building.
+   *
+   * This is the one place the page is moved without being seen to move, and
+   * it is legitimate: the arch is filling the frame at this instant, so the
+   * exchange happens behind it. The chapter comes out of the document, the
+   * page is placed back on the settled building, and the mount threshold is
+   * above the visitor again — scrolling down re-arms the whole journey exactly
+   * as it ran the first time.
+   */
+  const returnToBuilding = useCallback(() => {
+    const section = opening()
+    setMounted(false)
+
+    // Release the arch's hold BEFORE moving the page, not after.
+    //
+    // The arch locks the page as it hands over, so the frame is held still
+    // through the exchange. That lock remembers the position it was taken at
+    // and puts the page back there on the very next scroll event (see
+    // `lib/scrollLock`) — so a jump performed underneath it is undone
+    // immediately, and the chapter is left hidden at the bottom of a document
+    // it has already handed back. Unlock, then travel.
+    unlockScroll()
+    if (section) {
+      jumpTo(pageTop(section) + section.offsetHeight * unitFraction(ARCH_RETURN_AT))
     }
-    getSmoothScroll()?.resize()
-    ScrollTrigger.refresh()
-  }, [stage])
+    requestAnimationFrame(() => {
+      getSmoothScroll()?.resize()
+      ScrollTrigger.refresh()
+    })
+  }, [])
 
   return (
     <main>
-      <OpeningExperience lifestyleActive={stage === 'lifestyle'} onExplore={explore} />
-      {/* The chapter is its own bundle (see components/repose/lazy). */}
-      {stage === 'lifestyle' && Chapter && <Chapter onReturn={returnToBuilding} />}
+      <OpeningExperience
+        terraceActive={terraceUp}
+        onExplore={explore}
+        onTerrace={openTerrace}
+        onNearLifestyle={putChapterInDocument}
+      />
+      {/* The next chapter, in the document below the opening rather than over
+          it. See components/repose/lazy for why it is not React.lazy. */}
+      {mounted && Chapter && <Chapter onReturn={returnToBuilding} />}
+      {/* The terrace is a fixed layer over everything, and is off in
+          production (floor-explorer/terraceZone → TERRACE_ENABLED). */}
+      {terraceUp && Terrace && <Terrace onReturn={returnFromTerrace} />}
     </main>
   )
 }
