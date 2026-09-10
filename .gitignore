@@ -64,3 +64,11 @@ public/assets/reception-entry/Reception-done.webp
 # The 8000px reception render lives here; public/ carries the 4800px WebP
 # the site actually loads. Out of git so a 48MB blob never enters history.
 /assets-master/
+
+# The supplied 2D/3D unit-plan delivery. What the site serves is the copy in
+# `public/floor-explorer/repose-floor-explorer-assets/units-3d/` (the renders
+# the explorer actually loads) plus the `units-web/` sheets; this is the raw
+# package they were taken from, with both sides of every pair and its manifest.
+# 13MB that nothing at runtime reads — keep it beside the project, off the
+# deployment.
+/public/floor-explorer/repose-unit-plans-2d-3d/

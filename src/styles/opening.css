@@ -388,24 +388,82 @@
   inset: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
+  /* Anchored to the top-left of the frame rather than nudged up from
+     centre: the block sits near the top edge, flush to the same left
+     gutter as both title moments of this chapter, so the type reads
+     against the sky and the tower's crown rather than the middle of the
+     frame, which is where the construction film has most of its
+     movement. Layout only: the tween that brings the words in is
+     untouched. */
+  justify-content: flex-start;
+  align-items: flex-start;
+  text-align: left;
   padding-inline: var(--gutter);
+  padding-block-start: clamp(2.25rem, 8vh, 6rem);
   pointer-events: none;
   opacity: 0;
   z-index: 4;
-  /* Soft radial dark field — readable against the bright construction sky,
-     no hard rectangle edge, feels cinematic rather than boxed. */
-  background: radial-gradient(
-    ellipse 70% 55% at 50% 50%,
-    rgb(0 0 0 / 52%) 0%,
-    rgb(0 0 0 / 28%) 55%,
-    rgb(0 0 0 / 0%) 100%
+  /* Ambient grade only. Legibility is the panel's job now, so this stays
+     light and the construction sky is not flattened behind it. */
+  background: linear-gradient(
+    100deg,
+    rgb(9 12 16 / 40%) 0%,
+    rgb(9 12 16 / 18%) 38%,
+    rgb(9 12 16 / 0%) 66%
   );
 }
 
+/* The type and the colour behind it travel as one block. */
+.why-dubai__block {
+  position: relative;
+  max-width: min(44rem, 54vw);
+  padding: clamp(1.5rem, 3.4vh, 2.8rem) clamp(1.6rem, 2.6vw, 2.9rem);
+}
+
+/* The colour field. Wiped in from the left on the film's own timeline, so it
+   arrives with the words rather than sitting under them from the start; its
+   hidden state is declared here so nothing untweened is ever painted.
+   No blur and no backdrop-filter deliberately: this sits over a canvas that
+   repaints on every scrubbed frame, and a filter would be re-evaluated with
+   it — the cost would land on the film, which is the one thing that must
+   stay smooth. A flat gradient costs nothing. */
+.why-dubai__panel {
+  position: absolute;
+  /* Runs off the left edge of the frame and past the type on the other three
+     sides, so every edge of it falls outside the words. What the eye reads is
+     light gathering on the left of the frame, not a card laid over it. */
+  top: -45%;
+  bottom: -45%;
+  right: -25%;
+  left: calc(-1 * var(--gutter));
+  background: linear-gradient(
+    100deg,
+    rgb(20 27 22 / 90%) 0%,
+    rgb(18 24 20 / 78%) 46%,
+    rgb(16 21 18 / 52%) 100%
+  );
+  /* The dissolve. A mask, deliberately, and never a backdrop-filter: this sits
+     over a canvas that repaints on every scrubbed frame, and a filter would be
+     re-evaluated with it. A masked gradient is composited once and costs the
+     film nothing. */
+  -webkit-mask-image: radial-gradient(
+    74% 50% at 24% 50%,
+    rgb(0 0 0 / 100%) 0%,
+    rgb(0 0 0 / 100%) 34%,
+    rgb(0 0 0 / 0%) 100%
+  );
+  mask-image: radial-gradient(
+    74% 50% at 24% 50%,
+    rgb(0 0 0 / 100%) 0%,
+    rgb(0 0 0 / 100%) 34%,
+    rgb(0 0 0 / 0%) 100%
+  );
+  opacity: 0;
+  clip-path: inset(0% 100% 0% 0%);
+}
+
 .why-dubai__heading {
+  position: relative;
   font-family: var(--font-display);
   font-weight: var(--weight-display, 400);
   font-size: clamp(2.8rem, 7.2vw, 8.5rem);
@@ -419,6 +477,7 @@
 }
 
 .why-dubai__body {
+  position: relative;
   max-width: 38ch;
   margin-top: clamp(1.2rem, 2.6vh, 2.2rem);
   font-family: var(--font-sans);
@@ -602,6 +661,17 @@
 
   .op-hint {
     display: none;
+  }
+
+  .why-dubai {
+    /* Less top padding on a short screen, where the block is a bigger
+       share of the frame and too much would crowd the top edge. */
+    padding-block-start: clamp(1.25rem, 5vh, 3rem);
+  }
+
+  .why-dubai__block {
+    max-width: none;
+    padding: clamp(1.1rem, 2.6vh, 1.6rem) clamp(1.1rem, 4vw, 1.7rem);
   }
 
   .why-dubai__heading {

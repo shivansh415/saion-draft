@@ -101,7 +101,6 @@ export const DEFERRED_PHOTOS: readonly PhotoSpec[] = [
   { name: 'pool-02', sizes: '25vw' },
   { name: 'open-terrace-01', sizes: '100vw' },                // 04 above the everyday
   { name: 'kids-play-01', sizes: '55vw', responsive: false }, // 05 every generation
-  { name: 'family-01', sizes: '22vw', responsive: false },
   { name: 'interior-living-01', sizes: '78vw' },              // 06 the feeling of home
   { name: 'interior-kitchen-01', sizes: '32vw' },
   { name: 'interior-bedroom-01', sizes: '30vw', responsive: false },

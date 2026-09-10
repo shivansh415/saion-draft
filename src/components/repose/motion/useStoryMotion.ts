@@ -107,6 +107,10 @@ export function useStoryMotion(root:RefObject<HTMLDivElement|null>,active:boolea
      .fromTo('.rp-curve-bottom',{y:60,opacity:0},{y:0,opacity:1,duration:.6,ease:'none'},2.7)
      .to({}, {duration:.4});
     gsap.fromTo('.rp-family-main',{y:100},{y:-40,ease:'none',scrollTrigger:{trigger:'.rp-family',start:'top bottom',end:'bottom top',scrub:.8}});
+    // The card holds its place; only the picture inside it drifts. It is
+    // over-tall for the card by exactly the travel below, so the drift never
+    // pulls an edge into the frame.
+    gsap.fromTo('.rp-family-inset__image',{yPercent:-4},{yPercent:4,ease:'none',scrollTrigger:{trigger:'.rp-family-inset',start:'top bottom',end:'bottom top',scrub:.65}});
     gsap.to('.rp-family-word',{xPercent:-12,ease:'none',scrollTrigger:{trigger:'.rp-family',start:'top bottom',end:'bottom top',scrub:.7}});
     const interior=gsap.timeline({scrollTrigger:{trigger:'.rp-interiors',start:'top top',end:()=>`+=${window.innerHeight*1.5}`,pin:'.rp-interior-stage',scrub:.75,invalidateOnRefresh:true,anticipatePin:1,refreshPriority:10}});
     interior.fromTo('.rp-interior-wide',{y:90,scale:1.07},{y:-70,scale:1,duration:2,ease:'none'},0)

@@ -512,7 +512,9 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onNearL
       /* ----------------------------------------------------------- *
        * WHY DUBAI? — during the construction, when the building is
        * half-built. The text fades in and slides up, then retires
-       * before the tower completes.
+       * before the tower completes. It sits on the left gutter, on a
+       * colour panel that wipes in under it, so it stays readable over
+       * the bright construction frames.
        *
        * Film units: 0.58 → 0.76. The chapter break ends at 0.512,
        * so the building is well into construction by the time this
@@ -523,6 +525,15 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onNearL
         { opacity: 0 },
         { opacity: 1, duration: 0.06, ease: 'power2.out' },
         0.58,
+      )
+      // The colour field, wiped in from the left a beat ahead of the type so the
+      // words land on it rather than arriving with it. A clip on one flat
+      // gradient — nothing here filters the canvas underneath.
+      timeline.fromTo(
+        '[data-why-panel]',
+        { clipPath: 'inset(0% 100% 0% 0%)', opacity: 0 },
+        { clipPath: 'inset(0% 0% 0% 0%)', opacity: 1, duration: 0.09, ease: 'power3.out' },
+        0.575,
       )
       timeline.fromTo(
         '[data-why-heading]',
@@ -682,13 +693,16 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onNearL
         {/* WHY DUBAI? — appears during the construction sequence (seq 02),
             scrubbed by the same timeline as the chapter break. */}
         <div className="why-dubai" data-why-dubai aria-hidden="true">
-          <h2 className="why-dubai__heading" data-why-heading>WHY DUBAI?</h2>
-          <p className="why-dubai__body" data-why-body>
-            From global trade and innovation to luxury living and world-class
-            experiences, Dubai has become a magnet for ambition. It's where
-            opportunity meets security—drawing millions who want more
-            than just a place to live.
-          </p>
+          <div className="why-dubai__block">
+            <span className="why-dubai__panel" data-why-panel />
+            <h2 className="why-dubai__heading" data-why-heading>WHY DUBAI?</h2>
+            <p className="why-dubai__body" data-why-body>
+              From global trade and innovation to luxury living and world-class
+              experiences, Dubai has become a magnet for ambition. It's where
+              opportunity meets security—drawing millions who want more
+              than just a place to live.
+            </p>
+          </div>
         </div>
 
         {/* TALLEST BUILDING IN AL FURJAN — after construction completes, right-side */}

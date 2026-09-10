@@ -347,9 +347,22 @@ export const PRIME_COUNT = 24
  * being able to tell; it can do nothing at all about a gap of two hundred.
  *
  * The head is `PRIME_COUNT` frames in order, because the opening seconds are
- * watched closely and at a slow scroll and must be every frame. The two
- * coarsest passes then lay one frame in four across the rest, which is what
- * this figure counts.
+ * watched closely and at a slow scroll and must be every frame. The coarsest
+ * pass then lays one frame in eight across the rest, which is what this
+ * figure counts.
+ *
+ * One in eight rather than one in four, and the reason is `NEAREST_RADIUS`.
+ * A stride-8 lattice leaves a longest run of seven missing frames; the radius
+ * is fourteen, so every one of those gaps is already covered by a frame within
+ * a few hundredths of a second of motion — the same measurement that justified
+ * the lattice in the first place recorded a longest gap of 7 on a slow line
+ * and nothing visibly held. Waiting for the stride-4 pass on top of it doubles
+ * the bytes the visitor waits through to buy coverage that `getNearest` was
+ * already providing. Measured on the production build at 40ms RTT, that pass
+ * was costing 1.4s of loader on a fast line and 2.6s on a slow one, for a film
+ * that scrubbed the same either way. The stride-4, stride-2 and stride-1
+ * passes still run — they now refine the film behind the reveal instead of in
+ * front of it.
  *
  * Encoding cannot help make this cheaper, and it was measured rather than
  * assumed: these frames re-encode LARGER as WebP at every quality tried, and
@@ -358,7 +371,7 @@ export const PRIME_COUNT = 24
  * real compression left is inter-frame — a video — which is a different
  * renderer and a different set of risks.
  */
-export const CRITICAL_FRAMES = PRIME_COUNT + Math.round((FRAME_COUNT - PRIME_COUNT) / 4)
+export const CRITICAL_FRAMES = PRIME_COUNT + Math.round((FRAME_COUNT - PRIME_COUNT) / 8)
 
 /**
  * The shortest the preloader is on screen. Long enough for its own line
@@ -379,11 +392,20 @@ export const LOADER_MIN_MS = 1700
  * the first frame and the fonts are still required — and the queue keeps
  * reaching forward of the playhead from a far deeper start than before.
  *
- * Six seconds, not the fifteen it takes to guarantee the whole film on an
- * average line. A loader is a held breath, and fifteen seconds of one is a
- * worse first impression than an occasional held frame late in a hard scrub.
+ * Four and a half seconds, not the fifteen it takes to guarantee the whole
+ * film on an average line. A loader is a held breath, and fifteen seconds of
+ * one is a worse first impression than an occasional held frame late in a hard
+ * scrub.
+ *
+ * It was six. The ceiling only ever binds on a slow line, and on a slow line
+ * it was landing at the same moment the gate did — the visitor waited the full
+ * six seconds AND got no more film for it. Measured at 8 Mbps / 40ms RTT,
+ * cutting it to 4.5s costs about fifteen frames of coverage and leaves the
+ * longest run of missing frames still inside `NEAREST_RADIUS`, which is the
+ * only thing that decides whether a scrub holds. The seconds are the visitor's;
+ * the frames keep arriving either way.
  */
-export const LOADER_MAX_MS = 6000
+export const LOADER_MAX_MS = 4500
 
 /** Longest the fonts are waited on before the reveal goes ahead without them. */
 export const FONT_WAIT_MS = 4000

@@ -41,6 +41,22 @@ export const PLATE_SIZES = '42vw'
 
 const REPOSE = '/assets/repose-experience'
 const TERRACE = '/assets/terrace'
+/**
+ * The amenity photographs supplied at the final review — the client's own
+ * pictures of the jacuzzi, the outdoor gym, the play area and the cricket
+ * simulator, which until now were standing on the podium drawing or on a
+ * neighbouring amenity's photograph.
+ *
+ * `web/` holds what the site loads: the same pictures re-encoded at 1100w,
+ * because the supplied files are 1122 × 1402 at ~2.5 MB each and a 42vw plate
+ * can use a tenth of that. They are in a subfolder rather than beside the
+ * originals deliberately — a lower-case derivative sitting next to a
+ * capitalised original ("jacuzzi.webp" beside "Jacuzzi.webp") is the same file
+ * on a Mac and two different files on the Linux box that serves the site, so
+ * it works locally and 404s in production. The subfolder makes that
+ * impossible; `tools/check-assets.mjs` now matches case exactly as well.
+ */
+const AMENITY_PLATES = '/assets/amenities/web'
 /** The supplied top-down amenities map, and the fallback for the two courts. */
 export const AMENITIES_MAP = '/assets/amenities/map.webp'
 
@@ -52,17 +68,17 @@ export const AMENITIES: readonly Amenity[] = [
   { id: 'adults-pool', name: 'Adults Swimming Pool', group: 'Water', note: 'An all-weather pool on the podium level.', photo: 'pool-01', alt: 'The all-weather swimming pool' },
   { id: 'steam-room', name: 'Steam Room With Personal Lockers', group: 'Stillness', note: 'Warmth, quiet, and somewhere to leave the day.', photo: 'steam-room-01', alt: 'The steam room and personal lockers' },
   { id: 'open-terrace', name: 'Open Terrace for Socials', group: 'Together', note: 'A table for friends, and an afternoon that lingers.', photo: 'open-terrace-01', alt: 'The open terrace, set for company' },
-  { id: 'jacuzzi', name: 'Jacuzzi', group: 'Water', note: 'A warm corner of the podium.', src: `${TERRACE}/plate-pool.webp`, alt: 'The pool and jacuzzi on the project drawing' },
-  { id: 'adults-outdoor-gym', name: 'Adults Outdoor Gym', group: 'Movement', note: 'Open-air exercise, in the shade of the planting.', photo: 'gym-01', alt: 'The outdoor gym at Reposé' },
-  { id: 'kids-play', name: 'Kids Play Area', group: 'Together', note: 'Room for their adventures.', photo: 'kids-play-01', alt: 'The children’s play area' },
+  { id: 'jacuzzi', name: 'Jacuzzi', group: 'Water', note: 'A warm corner of the podium.', src: `${AMENITY_PLATES}/jacuzzi.webp`, alt: 'The jacuzzi on the podium level' },
+  { id: 'adults-outdoor-gym', name: 'Adults Outdoor Gym', group: 'Movement', note: 'Open-air exercise, in the shade of the planting.', src: `${AMENITY_PLATES}/adults-outdoor-gym.webp`, alt: 'The outdoor gym at Reposé' },
+  { id: 'kids-play', name: 'Kids Play Area', group: 'Together', note: 'Room for their adventures.', src: `${AMENITY_PLATES}/kids-play-area.webp`, alt: 'The children’s play area' },
   { id: 'padel-court', name: 'Padel Court', group: 'Movement', note: 'The marked court on the podium.', src: `${TERRACE}/plate-sports-court.webp`, alt: 'The marked court on the project drawing' },
-  { id: 'cricket-simulator', name: 'Cricket Simulator', group: 'Movement', note: 'A net and a game, without leaving home.', src: AMENITIES_MAP, alt: 'The podium level drawing, where the cricket net sits' },
+  { id: 'cricket-simulator', name: 'Cricket Simulator', group: 'Movement', note: 'A net and a game, without leaving home.', src: `${AMENITY_PLATES}/cricket-simulator.webp`, alt: 'The cricket simulator' },
 ]
 
 /** The plates the index shows first, and so the ones the loader waits on. */
 export const INDEX_CRITICAL = ['zen-garden-01', 'yoga-01'] as const
 /** The rest, in the order the index reaches them. */
-export const INDEX_DEFERRED = ['gym-01', 'pool-01', 'steam-room-01', 'open-terrace-01', 'kids-play-01'] as const
+export const INDEX_DEFERRED = ['gym-01', 'pool-01', 'steam-room-01', 'open-terrace-01'] as const
 
 /** The index's own words. */
 export const INDEX_COPY = {
@@ -93,8 +109,17 @@ export const MAP_COPY = {
  */
 export const MAP_MARKS: readonly { id: string; label: string; x: number; y: number }[] = [
   { id: 'adults-pool', label: 'Adults Swimming Pool', x: 22, y: 42 },
-  { id: 'jacuzzi', label: 'Jacuzzi', x: 36.5, y: 16 },
+  // Corrected at the client's review. The water beside the adults' pool was
+  // labelled Jacuzzi; it is the KIDS' SWIMMING POOL. The mark keeps its dot
+  // exactly where it was — only the name changed, and `x` moves with it
+  // because a mark is centred on the whole dot-and-label row, so a longer
+  // label would otherwise drag the dot off the water.
+  { id: 'kids-pool', label: 'Kids Swimming Pool', x: 40.4, y: 16 },
   { id: 'padel-court', label: 'Padel Court', x: 54, y: 13 },
   { id: 'kids-play', label: 'Kids Play Area', x: 86, y: 62 },
   { id: 'walking-track', label: 'Walking Track', x: 60, y: 84 },
+  // The actual jacuzzi: the round tub on the deck at the south-west corner,
+  // which the client marked. Its dot sits at 20% / 88% of the drawing; `x`
+  // carries the same row-centring allowance as the marks above.
+  { id: 'jacuzzi', label: 'Jacuzzi', x: 23.6, y: 88 },
 ]

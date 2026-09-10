@@ -32,7 +32,7 @@ export function AmenitiesIndex({assetBase,onDiscover}:{assetBase:string;onDiscov
        element: a single <img> whose src changes shows the browser's own
        blank frame between two decodes. */}
    <figure className="rp-index-stage" aria-hidden="true">
-    {AMENITIES.map((amenity,i)=><span className="rp-index-plate" key={amenity.id} data-plate={i} data-shown={i===0||undefined}>
+    {AMENITIES.map((amenity,i)=><span className="rp-index-plate" key={amenity.id} data-plate={i} data-amenity={amenity.id} data-shown={i===0||undefined}>
       {amenity.photo
         ? <Photo name={amenity.photo} alt="" assetBase={assetBase} sizes={PLATE_SIZES} eager={i<2}/>
         : <img src={amenity.src} alt="" loading="lazy" decoding="async"/>}
@@ -120,7 +120,22 @@ export function FamilyExperience({assetBase}:{assetBase:string}){
  return <section id="family" data-chapter="05" className="rp-family">
   <ChapterLabel number="05">SPACE TO GROW</ChapterLabel><h2 className="rp-reveal">For every<br/><em>generation.</em></h2>
   <figure className="rp-family-main rp-mask-reveal"><Photo name="kids-play-01" alt="The project’s children’s play area as pictured in the brochure" assetBase={assetBase} sizes="55vw" responsive={false}/><figcaption>THE KIDS’ PLAY AREA</figcaption></figure>
-  <figure className="rp-family-inset rp-parallax"><Photo name="family-01" alt="A child enjoying a swing, from the brochure’s family lifestyle imagery" assetBase={assetBase} sizes="22vw" responsive={false}/></figure>
+  {/* The brochure’s montage set a generic stock photograph of a child on a swing
+      beside the project’s own play-area render. That was replaced first by a
+      drawn plate, and now — at the client’s review — by their own supplied
+      picture for this chapter. The card keeps its place, its size and its
+      reveal; only what it holds has changed. The photograph is 4:5, which is
+      the card’s own proportion, so it is shown whole rather than cropped into. */}
+  <figure className="rp-family-inset rp-mask-reveal">
+   <img
+    className="rp-family-inset__image"
+    src="/assets/amenities/web/for-every-generation.webp"
+    alt="Family life at Reposé — the podium level"
+    loading="lazy"
+    decoding="async"
+    draggable={false}
+   />
+  </figure>
   <div className="rp-family-copy"><span className="rp-small">LITTLE MOMENTS. LASTING MEMORIES.</span><p>Room for their adventures.<br/>A little time for yours.</p><span className="rp-micro">KIDS’ PLAY AREA · KIDS’ SWIMMING POOL</span></div>
   <span className="rp-family-word" aria-hidden="true">together.</span>
  </section>;

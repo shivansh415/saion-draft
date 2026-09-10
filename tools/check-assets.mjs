@@ -26,9 +26,32 @@ const PUBLIC = join(root, 'public')
 const missing = []
 const checked = { files: 0, groups: 0 }
 
+/**
+ * Present AND spelled the way the source asks for it.
+ *
+ * `existsSync` alone is not enough here. Development is on macOS, whose
+ * filesystem is case-insensitive, and the site is served from Linux, whose
+ * filesystem is not: `assets/amenities/jacuzzi.webp` resolves happily against
+ * a file called `Jacuzzi.webp` on the machine the build runs on and 404s on
+ * the one that serves it. So the last segment is matched against the
+ * directory listing exactly, which is the only check that can tell the
+ * difference. (It also catches the reverse: a file whose name a later edit
+ * re-cased without the source following it.)
+ */
+const listings = new Map()
 const need = (relative, why) => {
   checked.files++
-  if (!existsSync(join(PUBLIC, relative))) missing.push({ relative, why })
+  const full = join(PUBLIC, relative)
+  if (!existsSync(full)) {
+    missing.push({ relative, why })
+    return
+  }
+  const folder = dirname(full)
+  if (!listings.has(folder)) listings.set(folder, new Set(readdirSync(folder)))
+  const name = relative.split('/').pop()
+  if (!listings.get(folder).has(name)) {
+    missing.push({ relative, why: `${why} — present but spelled differently on disk (case mismatch)` })
+  }
 }
 
 /* ------------------------------------------------------------------ *
@@ -77,10 +100,6 @@ for (const relative of [
   'assets/reception-entry/reception-final.webp',
   'floor-explorer/repose-floor-explorer-assets/floor-selector.json',
   'floor-explorer/repose-floor-explorer-assets/residences-map.json',
-  // The 3D renders of the unit plans, registered in unit3dViews.ts. The plans
-  // themselves are named by residences-map.json and reached through it; a
-  // render is named in source, so it is checked here by name.
-  'floor-explorer/repose-floor-explorer-assets/units-web/unit-l01-05-07-11-1bhk-a-prime-3d.webp',
   // The site's two faces. They moved out of src/ so the preload in index.html
   // and the @font-face in index.css resolve to the same URL in dev and in the
   // build; a miss here is the whole site falling back to Georgia.
@@ -114,6 +133,14 @@ for (const relative of [
   'assets/amenity-videos/steam-room.webp',
   'assets/amenities/map.webp',
 
+  // The amenity plates supplied at the final review (data/amenities.ts →
+  // AMENITY_PLATES), and the picture the family chapter's card holds.
+  'assets/amenities/web/jacuzzi.webp',
+  'assets/amenities/web/adults-outdoor-gym.webp',
+  'assets/amenities/web/kids-play-area.webp',
+  'assets/amenities/web/cricket-simulator.webp',
+  'assets/amenities/web/for-every-generation.webp',
+
   // The index plates that are single files rather than the chapter's own
   // six-candidate photographs (data/amenities.ts → `src`).
   `${REPOSE}/walking-track-01.webp`,
@@ -131,6 +158,25 @@ for (const relative of [
   'assets/terrace/plate-garden.webp',
 ]) {
   need(relative, 'referenced directly in src/')
+}
+
+/* ------------------------------------------------------------------ *
+ * 2b. The 3D unit renders, read out of `unit3dViews.ts` rather than
+ *     listed here — so adding a residence to that map brings its render
+ *     under this check with it, and removing one stops the check asking
+ *     for a file nothing loads. A residence whose render is missing gets
+ *     a "View in 3D" that opens onto nothing, which is worse than the
+ *     control never being offered.
+ * ------------------------------------------------------------------ */
+const views = readFileSync(join(root, 'src/components/floor-explorer/unit3dViews.ts'), 'utf8')
+let renders = 0
+for (const match of views.matchAll(/assetUrl\('(units-3d\/[^']+)'\)/g)) {
+  renders++
+  need(`floor-explorer/repose-floor-explorer-assets/${match[1]}`, 'a 3D unit render registered in unit3dViews.ts')
+}
+if (renders === 0) {
+  console.error('✗ check-assets could not read any 3D renders out of unit3dViews.ts')
+  process.exit(1)
 }
 
 /* ------------------------------------------------------------------ *

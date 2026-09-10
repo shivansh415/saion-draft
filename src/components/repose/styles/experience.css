@@ -169,7 +169,12 @@
 .rp-family h2 em{margin-left:11vw}
 .rp-family-main{position:absolute;top:24%;right:8vw;width:43vw;height:48%;border-radius:48% 48% 0 0;overflow:hidden}
 .rp-family-main figcaption{position:absolute;bottom:20px;right:20px;font-size:10px;letter-spacing:.15em;color:white;text-shadow:0 1px 8px #000}
-.rp-family-inset{position:absolute;left:17vw;top:52%;width:18vw;height:29%;z-index:4;overflow:hidden}
+.rp-family-inset{position:absolute;left:17vw;top:52%;width:18vw;height:29%;z-index:4;overflow:hidden;border-radius:2px;background:var(--rp-olive);box-shadow:inset 0 0 0 1px rgb(240 238 230 / 9%)}
+/* The picture is laid in over-tall — 110% of the card — so the internal
+   parallax in `useStoryMotion` has something to travel through without ever
+   pulling an edge into the frame. `object-position` keeps the middle of the
+   composition on the card's centre line at every viewport. */
+.rp-family-inset__image{position:absolute;left:0;top:-5%;width:100%;height:110%;object-fit:cover;object-position:50% 50%}
 .rp-family-copy{position:absolute;left:43vw;top:76%;max-width:440px;z-index:3}
 .rp-family-copy .rp-small{font-size:11px;letter-spacing:.1em}
 .rp-family-copy p{font-family:var(--rp-display);font-size:36px;line-height:1.1;margin:18px 0 24px}
@@ -360,6 +365,21 @@
 .rp-index-plate{position:absolute;inset:0;opacity:0;transition:opacity .75s cubic-bezier(.4,0,.2,1)}
 .rp-index-plate[data-shown]{opacity:1}
 .rp-index-plate img{object-position:50% 55%}
+/* Steam Room With Personal Lockers. The supplied photograph is a wide
+   landscape (1165 × 624) and the index stage is 4/5 portrait, so filling the
+   stage showed only the middle 43% of it — the steam cabin alone, with the
+   lockers the amenity is named for cropped away entirely. This one plate is
+   matted instead: the picture is laid into a band across the stage rather
+   than filled to its full height, which widens the visible field to about
+   two thirds of the photograph and brings the bench and the lockers back.
+   The band sits on the stage's own ground, so it reads as a mounted plate
+   rather than as a picture that failed to fill. Every other plate is
+   untouched and still fills the stage. */
+.rp-index-plate[data-amenity='steam-room']{background:#e4e1d6}
+/* Positioned rather than flex-centred: a photograph goes through <Photo>, so
+   the flex item would be the <picture> and the image would sit at the top of
+   it. Placing the image itself against the plate keeps the mat even. */
+.rp-index-plate[data-amenity='steam-room'] img{position:absolute;left:0;top:13%;width:100%;height:74%;object-position:38% 50%}
 .rp-index-list{margin:0;padding:0;list-style:none}
 .rp-index-row{display:grid;grid-template-columns:56px minmax(0,1fr) auto;align-items:baseline;column-gap:clamp(14px,1.6vw,28px);padding:clamp(18px,2.4vh,30px) 0;border-top:1px solid var(--rp-line);transition:opacity .55s cubic-bezier(.4,0,.2,1)}
 /* Dimming the rows that are not being read is the hook's doing, and only once
@@ -408,6 +428,9 @@
  .rp-index{padding:11vh 9vw 9vh}
  .rp-index-body{grid-template-columns:1fr;gap:2.4rem}
  .rp-index-stage{top:9vh;aspect-ratio:16/10;z-index:2}
+ /* The stage is landscape here, so the photograph very nearly fits it and the
+    mat is only just needed. */
+ .rp-index-plate[data-amenity='steam-room'] img{top:0;height:100%;object-position:40% 50%}
  .rp-index-row{grid-template-columns:44px minmax(0,1fr);opacity:.55}
  .rp-index-group{grid-column:2;justify-self:start;margin-top:6px}
  .rp-index-note{grid-column:2}
