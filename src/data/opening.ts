@@ -347,22 +347,32 @@ export const PRIME_COUNT = 24
  * being able to tell; it can do nothing at all about a gap of two hundred.
  *
  * The head is `PRIME_COUNT` frames in order, because the opening seconds are
- * watched closely and at a slow scroll and must be every frame. The coarsest
- * pass then lays one frame in eight across the rest, which is what this
- * figure counts.
+ * watched closely and at a slow scroll and must be every frame. The two
+ * coarsest passes then lay one frame in four across the rest, which is what
+ * this figure counts.
  *
- * One in eight rather than one in four, and the reason is `NEAREST_RADIUS`.
- * A stride-8 lattice leaves a longest run of seven missing frames; the radius
- * is fourteen, so every one of those gaps is already covered by a frame within
- * a few hundredths of a second of motion — the same measurement that justified
- * the lattice in the first place recorded a longest gap of 7 on a slow line
- * and nothing visibly held. Waiting for the stride-4 pass on top of it doubles
- * the bytes the visitor waits through to buy coverage that `getNearest` was
- * already providing. Measured on the production build at 40ms RTT, that pass
- * was costing 1.4s of loader on a fast line and 2.6s on a slow one, for a film
- * that scrubbed the same either way. The stride-4, stride-2 and stride-1
- * passes still run — they now refine the film behind the reveal instead of in
- * front of it.
+ * One in four, and one in eight was tried and rejected — the difference is
+ * what a held frame costs at a SLOW scroll, which is where the film is
+ * actually looked at. `getNearest` covering a gap is not the same as the gap
+ * being invisible: the film spans 620vh, so on a 900px viewport one frame is
+ * about 13px of scroll, and a run of seven missing frames is ~89px of scrolling
+ * with the picture standing still. A run of three is ~38px, which reads as
+ * motion. Measured on the production build at 40ms RTT:
+ *
+ * | line | gate 1-in-8 | gate 1-in-4 |
+ * | --- | --- | --- |
+ * | 100 Mbps | 3.3s, longest run 1 | 3.5s, longest run 1 |
+ * | 25 Mbps | 3.9s, longest run 7 | 5.4s, longest run 3 |
+ * | 8 Mbps | 6.8s, longest run 7 | 6.8s, longest run 7 |
+ *
+ * So it buys a visibly steadier scrub on a middling line for about a second
+ * and a half, and costs nothing at either end. Steadiness is the thing being
+ * bought: a loader is understood as loading, whereas a film that jerks reads
+ * as a broken film.
+ *
+ * Neither setting is a fix. Both are ways of dividing 35.5 MB of WebP frames
+ * that no visitor can have in hand quickly. The measured way out is inter-frame
+ * coding — see `claude/vercel-performance.md` — not a different gate.
  *
  * Encoding cannot help make this cheaper, and it was measured rather than
  * assumed: these frames re-encode LARGER as WebP at every quality tried, and
@@ -371,7 +381,7 @@ export const PRIME_COUNT = 24
  * real compression left is inter-frame — a video — which is a different
  * renderer and a different set of risks.
  */
-export const CRITICAL_FRAMES = PRIME_COUNT + Math.round((FRAME_COUNT - PRIME_COUNT) / 8)
+export const CRITICAL_FRAMES = PRIME_COUNT + Math.round((FRAME_COUNT - PRIME_COUNT) / 4)
 
 /**
  * The shortest the preloader is on screen. Long enough for its own line

@@ -53,6 +53,19 @@ export interface SequenceController {
    * wanting the same pipe.
    */
   setEager(eager: boolean): void
+  /**
+   * Whether to keep fetching at all.
+   *
+   * The queue used to run to completion no matter where the visitor was: it
+   * kept twelve requests in flight until all four hundred frames had arrived,
+   * including while the lifestyle chapter was covering this one entirely. A
+   * visitor reading the amenities was still downloading tens of megabytes of a
+   * film that was not on screen, and the chapter's own photographs and
+   * cinemagraphs were queued behind it. Suspending is not abandoning: the
+   * frames already in hand stay, in-flight requests finish, and scrolling back
+   * resumes the queue exactly where it stopped.
+   */
+  setSuspended(suspended: boolean): void
   readonly loadedCount: number
   readonly total: number
 }
@@ -104,6 +117,7 @@ export function useImageSequence(sources: readonly string[], options: Options = 
     let criticalSettled = 0
     let priority = 0
     let eager = true
+    let suspended = false
     let disposed = false
     const pending = new Set<HTMLImageElement>()
 
@@ -220,7 +234,7 @@ export function useImageSequence(sources: readonly string[], options: Options = 
     }
 
     const pump = () => {
-      if (disposed) return
+      if (disposed || suspended) return
       while (inflight < MAX_CONCURRENT_LOADS) {
         const index = nextIndex()
         if (index < 0) return
@@ -248,6 +262,15 @@ export function useImageSequence(sources: readonly string[], options: Options = 
 
       setEager: (next) => {
         eager = next
+      },
+
+      setSuspended: (next) => {
+        if (next === suspended) return
+        suspended = next
+        // Resuming picks the queue up from the playhead's current position, so
+        // a visitor who comes back to the film gets the frames around where
+        // they land first rather than where they left.
+        if (!suspended) pump()
       },
 
       setPriority: (index) => {

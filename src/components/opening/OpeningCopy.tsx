@@ -34,8 +34,8 @@ export function OpeningCopy() {
           className="op-brand__mark"
           src={OPENING_COPY.logoSrc}
           alt={OPENING_COPY.logoAlt}
-          width={442}
-          height={234}
+          width={355}
+          height={164}
           decoding="async"
         />
       </div>

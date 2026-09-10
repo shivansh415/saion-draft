@@ -143,31 +143,49 @@
 /* Developer branding: present, deliberately quiet, and never in
    competition with the project name. */
 .op-brand {
+  /* One width for the whole lockup, so the label and the mark are the same
+     size as each other and sit on the same two edges.
+     
+     They did not before, and the reason was in the file rather than the CSS:
+     the supplied logo carried about 10% transparent padding down its right
+     side, so flushing the image to the gutter left its ink standing inside
+     the label's right edge — the logo read as bigger and set further out at
+     the same time. The PNG is now cropped to its own ink (355x164, was
+     442x234), which is what makes a shared width mean anything here. */
+  --lockup: clamp(118px, 10.4vw, 176px);
+
   position: absolute;
   right: var(--gutter);
   bottom: var(--gutter-block);
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.7rem;
+  gap: 0.62rem;
   opacity: 0;
   transform: translateY(12px);
 }
 
 .op-brand__label {
+  /* Sized so its tracked width lands on the lockup's, and flushed to the same
+     right edge as the mark — not stretched to it. Justifying a two-word label
+     would spread its single word-space into a gap and read as a mistake; the
+     type is scaled to fit instead, which is what makes the two lines look like
+     one lockup. The trailing letter-space is pulled back off the right edge,
+     or the tracking of the last character sets the text a fraction wide. */
   font-family: var(--font-sans);
   font-weight: 300;
-  font-size: 0.55rem;
-  letter-spacing: 0.36em;
+  font-size: clamp(0.72rem, 1.02vw, 0.98rem);
+  letter-spacing: 0.28em;
+  margin-right: -0.28em;
   text-transform: uppercase;
-  color: rgb(255 255 255 / 46%);
+  color: rgb(255 255 255 / 58%);
 }
 
 .op-brand__mark {
   display: block;
-  width: clamp(84px, 7.4vw, 126px);
+  width: var(--lockup);
   height: auto;
-  opacity: 0.78;
+  opacity: 0.86;
 }
 
 /* ---------------------------------------------------------------------
@@ -346,8 +364,11 @@
 
 /* The trailing letter-space is padded back in so the tracked lines sit on the
    same optical centre as the title. */
+/* Larger than it was, and still well under the title: the card reads
+   "READY TO RISE." first and the project name second, which is the order
+   the sentence is in. */
 .cb__project {
-  font-size: clamp(0.6rem, 0.78vw, 0.8rem);
+  font-size: clamp(0.78rem, 1.02vw, 1.06rem);
   letter-spacing: 0.4em;
   color: rgb(255 255 255 / 90%);
   padding-inline-start: 0.4em;
@@ -416,7 +437,9 @@
 /* The type and the colour behind it travel as one block. */
 .why-dubai__block {
   position: relative;
-  max-width: min(44rem, 54vw);
+  /* Wide enough for the paragraph below to break in three rather than four —
+     the block is what was capping the measure. */
+  max-width: min(52rem, 62vw);
   padding: clamp(1.5rem, 3.4vh, 2.8rem) clamp(1.6rem, 2.6vw, 2.9rem);
 }
 
@@ -478,7 +501,12 @@
 
 .why-dubai__body {
   position: relative;
-  max-width: 38ch;
+  /* Three lines rather than four. The copy is unchanged — the measure is what
+     decides the break, so it is the measure that moved: the paragraph now fills
+     the block, and the block sets the width. A narrow screen has no room for a
+     line this long and will still take more; this is a desktop shape, not a
+     promise. */
+  max-width: 100%;
   margin-top: clamp(1.2rem, 2.6vh, 2.2rem);
   font-family: var(--font-sans);
   font-weight: var(--weight-sans, 400);

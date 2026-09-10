@@ -104,7 +104,10 @@ export function WaterExperience({assetBase,onDetail}:{assetBase:string;onDetail:
    <div className="rp-curve-sheet">
     <span className="rp-curve-top">THE PLEASURE OF PAUSING</span>
     <h2>Less rush.<br/><em>More Reposé.</em></h2>
-    <div className="rp-curve-bottom"><span className="rp-serif-mark">R.</span><p>A yoga studio. A zen garden. A moment by the pool.<br/>Sometimes, the best part of your day<br/>is the space between everything else.</p><figure><Photo name="pool-02" alt="Poolside lifestyle image presented in the Reposé brochure" assetBase={assetBase} sizes="25vw"/></figure></div>
+    {/* The paragraph that sat between the mark and the photograph is gone at
+       the client's request; the mark and the image carry the foot of the
+       spread on their own. */}
+   <div className="rp-curve-bottom"><span className="rp-serif-mark">R.</span><figure><Photo name="pool-02" alt="Poolside lifestyle image presented in the Reposé brochure" assetBase={assetBase} sizes="25vw"/></figure></div>
    </div>
   </div>
  </section>;
@@ -116,10 +119,20 @@ export function TerraceExperience({assetBase}:{assetBase:string}){
   <div className="rp-terrace-bottom"><p>A table for friends.<br/>An afternoon that lingers.</p><span>SPACE TO GATHER.<br/>TIME TO CONNECT.</span></div>
  </section>;
 }
-export function FamilyExperience({assetBase}:{assetBase:string}){
+// Both of this chapter's pictures are now supplied files addressed directly,
+// so it no longer needs the photograph base the brochure-derived <Photo>
+// components resolve against.
+export function FamilyExperience(){
  return <section id="family" data-chapter="05" className="rp-family">
   <ChapterLabel number="05">SPACE TO GROW</ChapterLabel><h2 className="rp-reveal">For every<br/><em>generation.</em></h2>
-  <figure className="rp-family-main rp-mask-reveal"><Photo name="kids-play-01" alt="The project’s children’s play area as pictured in the brochure" assetBase={assetBase} sizes="55vw" responsive={false}/><figcaption>THE KIDS’ PLAY AREA</figcaption></figure>
+  {/* The brochure crop this used to show was 560x329 — a piece lifted out of a
+      PDF page — shown 43vw wide, so it was being scaled up about three times and
+      looked it. The client supplied a full render of the same play area, and it
+      is both sharper and a better picture: the same deck, planting and ceiling,
+      with the play structures and children actually in it. It is 4:5 where the
+      arch is landscape, so it is covered from the centre — the band that holds
+      the playground. */}
+  <figure className="rp-family-main rp-mask-reveal"><img className="rp-family-main__image" src="/assets/amenities/web/kids-play-area.webp" alt="The children’s play area on the podium level" loading="lazy" decoding="async" draggable={false}/><figcaption>THE KIDS’ PLAY AREA</figcaption></figure>
   {/* The brochure’s montage set a generic stock photograph of a child on a swing
       beside the project’s own play-area render. That was replaced first by a
       drawn plate, and now — at the client’s review — by their own supplied
@@ -194,6 +207,10 @@ export function FinalRepose({assetBase,onEnquire,onRestart,portal}:{assetBase:st
   <figure className="rp-final-image"><img src={`${assetBase}/tower-original.png`} alt="The supplied completed Reposé Residence tower image" loading="lazy" decoding="async"/></figure>
   {portal}
   <div className="rp-final-call"><p>Make room for<br/><em>a different rhythm.</em></p><ArrowLink onClick={onEnquire}>ENQUIRE ABOUT REPOSÉ</ArrowLink></div>
-  <div className="rp-final-base"><img src={BRAND_LOGO} alt="SAION Properties — Engineered Excellence" loading="lazy"/><span>REPOSÉ RESIDENCE<br/>AL FURJAN · DUBAI</span><ArrowLink onClick={onRestart}>BACK TO RECEPTION</ArrowLink></div>
+  {/* The two marks close the film facing each other: the residence on the left
+      set as type — the same wordmark the rest of the site uses, there being no
+      logo file for it — and the developer's logo on the right. The way back
+      sits between them. */}
+  <div className="rp-final-base"><span className="rp-final-mark"><strong>REPOSÉ RESIDENCE</strong>AL FURJAN · DUBAI</span><ArrowLink onClick={onRestart}>BACK TO RECEPTION</ArrowLink><img src={BRAND_LOGO} alt="SAION Properties — Engineered Excellence" loading="lazy"/></div>
  </section>;
 }

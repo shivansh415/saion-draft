@@ -167,7 +167,7 @@
 .rp-family{position:relative;min-height:1150px;height:140svh;overflow:hidden;padding:14vh 12vw 0;background:var(--rp-paper)}
 .rp-family h2{position:relative;z-index:3;font-family:var(--rp-display);font-size:clamp(95px,11.5vw,195px);line-height:.87;letter-spacing:-.03em;margin-top:5vh}
 .rp-family h2 em{margin-left:11vw}
-.rp-family-main{position:absolute;top:24%;right:8vw;width:43vw;height:48%;border-radius:48% 48% 0 0;overflow:hidden}
+.rp-family-main{position:absolute;top:24%;right:8vw;width:43vw;height:48%;border-radius:48% 48% 0 0;overflow:hidden}.rp-family-main__image{width:100%;height:100%;object-fit:cover;object-position:50% 52%}
 .rp-family-main figcaption{position:absolute;bottom:20px;right:20px;font-size:10px;letter-spacing:.15em;color:white;text-shadow:0 1px 8px #000}
 .rp-family-inset{position:absolute;left:17vw;top:52%;width:18vw;height:29%;z-index:4;overflow:hidden;border-radius:2px;background:var(--rp-olive);box-shadow:inset 0 0 0 1px rgb(240 238 230 / 9%)}
 /* The picture is laid in over-tall — 110% of the card — so the internal
@@ -230,8 +230,8 @@
 .rp-final-call p{font-family:var(--rp-display);font-size:clamp(40px,4.2vw,65px);line-height:1.05;margin-bottom:25px}
 .rp-final-call .rp-text-link{gap:70px}
 .rp-final-base{width:100%;display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto;gap:30px}
-.rp-final-base>img{width:125px;height:auto;object-fit:contain}
-.rp-final-base>span{font-size:10px;line-height:1.8;letter-spacing:.12em;text-align:center}
+.rp-final-base>img{width:clamp(118px,10vw,152px);height:auto;object-fit:contain;justify-self:end}
+.rp-final-mark{display:flex;flex-direction:column;gap:6px;font-size:10px;line-height:1.6;letter-spacing:.12em;text-align:left}.rp-final-mark strong{font-family:var(--rp-display);font-weight:var(--weight-display);font-size:clamp(19px,1.5vw,26px);line-height:1;letter-spacing:var(--track-heading)}
 .rp-final-base>.rp-text-link{font-size:10px!important;gap:22px}
 /* Dialog composition uses the installed accessible Radix / Shadcn primitive. */
 .rp-modal-open [data-slot=dialog-overlay]{position:fixed;inset:0;background:#182118a8;backdrop-filter:blur(8px);z-index:110}
@@ -276,13 +276,13 @@
  .rp-panel-exhale{height:95svh;min-height:710px}.rp-steam-photo{left:0;right:0;top:8%;height:80%}.rp-panel-exhale .rp-layer-title{left:12vw;top:17%;font-size:25vw!important}.rp-panel-exhale .rp-panel-copy{left:12vw;right:10vw;bottom:20%}.rp-panel-exhale .rp-panel-copy p{font-size:30px}.rp-panel-exhale .rp-small{font-size:12px}
  .rp-panel-be{height:95svh;min-height:700px}.rp-be-note{left:12vw;top:8%;font-size:10px}.rp-panel-be .rp-layer-title{left:9vw;top:24%;font-size:27vw!important;white-space:normal;z-index:4}.rp-be-photo{left:36vw;top:31%;width:54vw;height:48%}.rp-panel-be .rp-panel-copy{left:12vw;bottom:10%;font-size:15px}.rp-scene-nav,.rp-scene-line{display:none}
  .rp-water-stage{height:auto;min-height:0;overflow:hidden}.rp-water-visual{position:relative;inset:auto;height:100svh;min-height:650px}.rp-water-title{left:9vw;right:9vw;top:29%;font-size:17vw;line-height:.98}.rp-water-title em{padding-left:0}.rp-water-visual>.rp-eyebrow{left:9vw;top:16%}.rp-water-caption{left:9vw;bottom:12vh;font-size:10px}.rp-hotspot{top:68%;left:45%;gap:15px}.rp-hotspot-label{font-size:9px}
- .rp-curve-sheet{position:relative;inset:auto;clip-path:none;min-height:800px;padding:13vh 9vw 12vh;border-radius:50% 50% 0 0 / 9% 9% 0 0;margin-top:-60px}.rp-curve-top{font-size:9px;letter-spacing:.12em;margin-bottom:6vh}.rp-curve-sheet h2{font-size:20vw;line-height:.92}.rp-curve-bottom{display:grid;grid-template-columns:1fr 3fr;gap:35px;margin-top:7vh;align-items:center}.rp-serif-mark{font-size:55px}.rp-curve-bottom p{font-size:12px;text-align:left;line-height:1.6}.rp-curve-bottom p br:first-child{display:none}.rp-curve-bottom figure{grid-column:1/-1;width:62vw;height:20vh;justify-self:center}
+ .rp-curve-sheet{position:relative;inset:auto;clip-path:none;min-height:800px;padding:13vh 9vw 12vh;border-radius:50% 50% 0 0 / 9% 9% 0 0;margin-top:-60px}.rp-curve-top{font-size:9px;letter-spacing:.12em;margin-bottom:6vh}.rp-curve-sheet h2{font-size:20vw;line-height:.92}.rp-curve-bottom{display:grid;grid-template-columns:auto 1fr;gap:35px;margin-top:7vh;align-items:center}.rp-curve-bottom figure{justify-self:end}.rp-serif-mark{font-size:55px}.rp-curve-bottom p{font-size:12px;text-align:left;line-height:1.6}.rp-curve-bottom p br:first-child{display:none}.rp-curve-bottom figure{grid-column:1/-1;width:62vw;height:20vh;justify-self:center}
  .rp-terrace{height:100svh;min-height:730px}.rp-terrace-photo img{object-position:45% 50%}.rp-terrace-heading{left:9vw;right:9vw;top:17%}.rp-terrace-heading h2{font-size:22vw;margin-top:6vh;line-height:.9}.rp-terrace-heading h2 em{margin-left:0}.rp-terrace-bottom{left:9vw;right:9vw;bottom:12vh;align-items:flex-start;gap:25px}.rp-terrace-bottom p{font-size:27px}.rp-terrace-bottom>span{font-size:9px;letter-spacing:.08em;max-width:32%}
  .rp-family{padding:12vh 9vw 0;height:135svh;min-height:1000px}.rp-family h2{font-size:22vw;line-height:.9;margin-top:5vh}.rp-family h2 em{margin-left:3vw}.rp-family-main{top:28%;right:6vw;width:64vw;height:38%}.rp-family-inset{left:8vw;top:53%;width:33vw;height:24%}.rp-family-copy{left:45vw;top:71%;right:6vw}.rp-family-copy .rp-small{font-size:9px}.rp-family-copy p{font-size:25px;margin:14px 0}.rp-family-copy .rp-micro{font-size:8px}.rp-family-word{font-size:32vw;bottom:3%;left:6vw}.rp-family-main figcaption{font-size:8px;bottom:15px;right:15px}
  .rp-interior-stage{height:135svh;min-height:1050px}.rp-interior-stage>.rp-eyebrow{top:10%;left:9vw}.rp-interior-wide{left:9vw;width:91vw;top:20%;height:26%}.rp-interior-stage h2{left:9vw;top:43%;font-size:18vw;line-height:.95;z-index:5}.rp-interior-stage h2 em{padding-left:4vw}.rp-interior-tall{width:40vw;right:5vw;top:60%;height:28%}.rp-interior-bedroom{width:36vw;left:9vw;top:63%;height:20%}.rp-interior-caption{left:9vw;right:9vw;bottom:6%;justify-content:space-between;gap:25px}.rp-interior-caption>span{font-size:9px}.rp-interior-caption p{font-size:12px}
  .rp-essentials{display:block;padding:12vh 9vw}.rp-essentials-intro h2{font-size:24vw;margin:5vh 0 7vh}.rp-essentials-intro figure{height:53vw;width:100%}.rp-essentials-intro>p{font-size:27px;margin-top:25px}.rp-essential-facts{width:100%;padding-top:9vh}.rp-essential-fact{padding:30px 0;gap:20px}.rp-essential-fact h3{font-size:65px;margin:14px 0}.rp-essential-fact p{font-size:14px;max-width:90%}.rp-essential-fact .rp-micro{font-size:10px}
  .rp-connected{height:auto;min-height:1050px;padding:12vh 9vw}.rp-connected h2{font-size:22vw;margin:7vh 0;line-height:.95}.rp-connected h2 em{margin-left:0}.rp-place-line{gap:13px;font-size:9px;letter-spacing:.1em;margin-bottom:4vh}.rp-connections{display:grid;grid-template-columns:1fr 1fr;gap:32px 20px;padding-top:30px}.rp-connections article{width:auto}.rp-time{font-size:75px;gap:12px}.rp-time small{font-size:9px}.rp-connections h3{font-size:14px}.rp-connections article>span:last-child{font-size:11px}.rp-connected-bottom{padding-top:7vh;display:block}.rp-connected-bottom p{font-size:28px;margin-bottom:30px}.rp-connected-bottom>span{display:block;font-size:8px;text-align:left}
- .rp-finale{height:125svh;min-height:950px;padding:12vh 7vw 10vh}.rp-final-intro{font-size:9px}.rp-final-word{top:22%;font-size:29vw}.rp-final-image{top:29%;left:28%;width:44%;height:34%}.rp-final-call{top:68%}.rp-final-call p{font-size:38px;margin-bottom:23px}.rp-final-call .rp-text-link{font-size:10px!important;gap:30px}.rp-final-base{display:grid;grid-template-columns:1fr 1fr;gap:25px;align-items:center}.rp-final-base>img{width:100px}.rp-final-base>span{font-size:8px;text-align:right}.rp-final-base>.rp-text-link{grid-column:1/-1;justify-self:center;font-size:9px!important}
+ .rp-finale{height:125svh;min-height:950px;padding:12vh 7vw 10vh}.rp-final-intro{font-size:9px}.rp-final-word{top:22%;font-size:29vw}.rp-final-image{top:29%;left:28%;width:44%;height:34%}.rp-final-call{top:68%}.rp-final-call p{font-size:38px;margin-bottom:23px}.rp-final-call .rp-text-link{font-size:10px!important;gap:30px}.rp-final-base{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center}.rp-final-base>img{width:104px}.rp-final-mark{font-size:8px;text-align:left}.rp-final-mark strong{font-size:17px}.rp-final-base>.rp-text-link{grid-column:1/-1;justify-self:center;font-size:9px!important}
  .rp-dialog[data-slot=dialog-content]{padding:65px 25px 30px}.rp-dialog .rp-dialog-title{font-size:49px}.rp-dialog-menu[data-slot=dialog-content]{padding:60px 25px 25px}.rp-dialog-menu nav button{gap:12px;padding:10px 0}.rp-dialog-menu nav button>span:nth-child(2){font-size:25px}.rp-dialog-menu .rp-dialog-title{font-size:48px}.rp-dialog .rp-dialog-description{font-size:14px}.rp-dialog>img{height:200px}.rp-contact-links a{font-size:15px}
 }
 /* All content remains visible in reading order, without long pins, when motion is reduced. */
@@ -354,10 +354,16 @@
    them that follows whichever row is being read.
    ===================================================================== */
 .rp-index{position:relative;background:var(--rp-paper);color:var(--rp-ink);padding:clamp(12vh,16vh,18vh) 12vw clamp(9vh,12vh,14vh);min-height:100svh}
-.rp-index-head{max-width:52ch}
-.rp-index-title{margin-top:clamp(1.6rem,3vh,2.6rem);font-family:var(--rp-display);font-weight:var(--weight-display);font-size:clamp(58px,7.6vw,132px);line-height:.88;letter-spacing:var(--track-display)}
+.rp-index-head{max-width:min(92vw,1180px)}/* The head no longer sets the measure for everything under it: the lead
+   keeps its reading width below, and the title is free to take the width
+   its own two lines need. It was inheriting 52ch of BODY text, which at a
+   132px display face is about a third of what one line of it wants — which
+   is why a two-line title was breaking into four. */
+.rp-index-title{margin-top:clamp(1.6rem,3vh,2.6rem);max-width:17ch;font-family:var(--rp-display);font-weight:var(--weight-display);font-size:clamp(44px,7vw,124px);line-height:.9;letter-spacing:var(--track-display)}/* 17ch is measured in the TITLE's own font, so the cap scales with the type
+   and the longer of the two lines — "to spend a day." — fits on one line at
+   every size rather than only at the one it was checked at. */
 .rp-index-title:focus{outline:none}
-.rp-index-lead{margin-top:clamp(1.6rem,3vh,2.4rem);max-width:44ch;font-size:var(--type-body);line-height:var(--lh-body);color:#454a3d}
+.rp-index-lead{margin-top:clamp(1.6rem,3vh,2.4rem);max-width:52ch;font-size:var(--type-body);line-height:var(--lh-body);color:#454a3d}
 .rp-index-body{display:grid;grid-template-columns:minmax(0,42%) minmax(0,1fr);gap:clamp(2.5rem,5vw,6rem);align-items:start;margin-top:clamp(6vh,10vh,12vh)}
 /* Sticky rather than pinned: no ScrollTrigger, no extra pin spacer, nothing
    for the chapter's existing pins to be sorted against. */
@@ -409,7 +415,13 @@
    only motion is the reveal and a slow scale, and the only marks are the
    five the drawing puts beyond doubt.
    ===================================================================== */
-.rp-map{position:relative;background:var(--rp-paper);color:var(--rp-ink);padding:clamp(11vh,14vh,16vh) 8vw clamp(9vh,13vh,15vh)}
+.rp-map{position:relative;min-height:100svh;display:flex;flex-direction:column;justify-content:center;background:var(--rp-paper);color:var(--rp-ink);padding:clamp(11vh,14vh,16vh) 8vw clamp(9vh,13vh,15vh)}/* A page of its own, like every other chapter here.
+   It was the one section in the journey shorter than the viewport — 635px
+   against 900 — so the map could never hold the screen by itself: the dark
+   finale was always already pushing up into the frame beneath it, and the
+   two chapters were read at once. That is the seam that was reported as a
+   jerk. Given the height, the map is a page, and the finale arrives after
+   it rather than under it. */
 .rp-map-head{max-width:56ch;margin:0 auto;text-align:center}
 .rp-map-head .rp-eyebrow{justify-content:center}
 .rp-map-title{margin-top:clamp(1.4rem,2.8vh,2.4rem);font-family:var(--rp-display);font-weight:var(--weight-display);font-size:clamp(56px,7.4vw,128px);line-height:.9;letter-spacing:var(--track-display)}
@@ -435,7 +447,7 @@
  .rp-index-group{grid-column:2;justify-self:start;margin-top:6px}
  .rp-index-note{grid-column:2}
  .rp-index-foot{flex-direction:column;align-items:flex-start;gap:18px}
- .rp-map{padding:10vh 5vw}
+ .rp-map{min-height:auto;padding:10vh 5vw}
  /* Labels on a drawing this size stop being legible and start being clutter. */
  .rp-map-mark__label{display:none}
 }

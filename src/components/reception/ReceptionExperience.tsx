@@ -49,7 +49,11 @@ interface Props {
 const CLOCK = {
   walk: 2.8,
   doorsAt: 1.7,
-  doors: 0.75,
+  // The swing takes half again as long as it did. Everything here is scrubbed
+  // rather than played, so a longer beat is a longer stretch of scroll — the
+  // doors part under the visitor's own hand instead of snapping open while the
+  // camera is still walking in.
+  doors: 1.15,
   thresholdAt: 2.4,
   threshold: 0.45,
   arrive: 2.8,

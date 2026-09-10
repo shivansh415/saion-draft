@@ -301,7 +301,7 @@ export function ReposeLifestyle({ onReturn }: Props) {
         <HorizontalAmenities assetBase={ASSET_BASE} onScene={scene} onDetail={showModal} />
         <WaterExperience assetBase={ASSET_BASE} onDetail={showModal} />
         <TerraceExperience assetBase={ASSET_BASE} />
-        <FamilyExperience assetBase={ASSET_BASE} />
+        <FamilyExperience />
         <InteriorExperience assetBase={ASSET_BASE} />
         <ConvenienceExperience assetBase={ASSET_BASE} />
         <ConnectednessExperience assetBase={ASSET_BASE} />

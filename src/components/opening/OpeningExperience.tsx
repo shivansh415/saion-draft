@@ -274,11 +274,27 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onNearL
   // key it left behind.
   useEffect(() => {
     dormantRef.current = covered
+    // Stop fetching film while the film is not on screen.
+    //
+    // The queue is not tied to the playhead's needs, it runs until the whole
+    // film is in hand — so a visitor who scrolled on to the lifestyle chapter
+    // was still pulling whatever was left of thirty-five megabytes of frames,
+    // twelve requests at a time, for a canvas the lifestyle chapter had
+    // completely covered. The amenity photographs and the cinemagraphs of that
+    // chapter were competing with it for the same connection, which is exactly
+    // the section that was reported as slow to fill in.
+    //
+    // `covered` is the honest signal for this and already exists: it is set
+    // when the chapters below have scrolled this one out, or the terrace has
+    // taken the screen. Suspending keeps every frame already loaded and lets
+    // in-flight requests finish; coming back resumes the queue from wherever
+    // the playhead now is.
+    controllerRef.current?.setSuspended(covered)
     if (!covered) {
       lastKeyRef.current = ''
       approximateRef.current = true
     }
-  }, [covered])
+  }, [covered, controllerRef])
 
   useEffect(() => {
     revealedRef.current = revealed

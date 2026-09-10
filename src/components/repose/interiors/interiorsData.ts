@@ -38,21 +38,8 @@ const BASE = '/assets/interiors'
 
 export const INTERIORS: readonly Interior[] = [
   {
-    id: 'kitchen',
-    index: '01',
-    name: 'The Kitchen',
-    cue: 'Explore the kitchen',
-    title: 'The Kitchen',
-    line: 'Designed around the rhythm of everyday living.',
-    meta: 'Italian modular kitchen · German appliances',
-    video: `${BASE}/kitchen.mp4`,
-    card: `${BASE}/kitchen-card.webp`,
-    still: `${BASE}/kitchen-still.webp`,
-    alt: 'The Reposé kitchen — stone island, integrated appliances and warm timber',
-  },
-  {
     id: 'living-room',
-    index: '02',
+    index: '01',
     name: 'The Living Room',
     cue: 'Step inside',
     title: 'The Living Room',
@@ -62,6 +49,19 @@ export const INTERIORS: readonly Interior[] = [
     card: `${BASE}/living-room-card.webp`,
     still: `${BASE}/living-room-still.webp`,
     alt: 'The Reposé living room, opening onto the balcony',
+  },
+  {
+    id: 'kitchen',
+    index: '02',
+    name: 'The Kitchen',
+    cue: 'Explore the kitchen',
+    title: 'The Kitchen',
+    line: 'Designed around the rhythm of everyday living.',
+    meta: 'Italian modular kitchen · German appliances',
+    video: `${BASE}/kitchen.mp4`,
+    card: `${BASE}/kitchen-card.webp`,
+    still: `${BASE}/kitchen-still.webp`,
+    alt: 'The Reposé kitchen — stone island, integrated appliances and warm timber',
   },
   {
     id: 'bedroom',
