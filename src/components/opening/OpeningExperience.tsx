@@ -5,8 +5,9 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import {
   breakAt,
   breakSpan,
-  CHAPTER_HEIGHT_VH,
+  chapterHeightVh,
   CHAPTER_UNITS,
+  ENDING_UNITS,
   CRITICAL_FRAMES,
   FONT_WAIT_MS,
   FRAME_SOURCES,
@@ -82,6 +83,21 @@ interface Props {
 }
 
 export function OpeningExperience({ returned, terraceActive, onExplore, onTerrace, onNearLifestyle }: Props) {
+  /**
+   * How long this chapter's track is, in film units.
+   *
+   * Full length on the way in. Once the arch has handed the frame back the
+   * track stops at `ENDING_UNITS`: the building holds for a screen and a half
+   * and then the chapter gives out, with the closing call below it and nothing
+   * after that. The unit-to-vh density is the same either way (see
+   * `chapterHeightVh`), so shortening it moves no beat above the landing — it
+   * only removes the tail the journey used to loop through.
+   */
+  const units = returned ? ENDING_UNITS : CHAPTER_UNITS
+  const unitsRef = useRef(units)
+  useEffect(() => {
+    unitsRef.current = units
+  }, [units])
   /**
    * True when this chapter's picture is nobody's business: the visitor has
    * scrolled past it into the chapters below, or the terrace has covered it.
@@ -197,7 +213,7 @@ export function OpeningExperience({ returned, terraceActive, onExplore, onTerrac
     // The explorer becomes interactive only once the hand-off has settled —
     // a single state flip at the threshold, never a per-scroll update.
     const syncExplorer = (progress: number) => {
-      const active = progress * CHAPTER_UNITS >= HANDOFF.activeAt - 1e-6
+      const active = progress * unitsRef.current >= HANDOFF.activeAt - 1e-6
       if (active !== explorerActiveRef.current) {
         explorerActiveRef.current = active
         setExplorerActive(active)
@@ -229,7 +245,7 @@ export function OpeningExperience({ returned, terraceActive, onExplore, onTerrac
       if (!controller || !canvas) return
 
       // Section progress → film units; past 1 the film simply holds its last frame.
-      const { a, b, mix } = resolveFrame(targetRef.current * CHAPTER_UNITS)
+      const { a, b, mix } = resolveFrame(targetRef.current * unitsRef.current)
       const indexA = Math.round(a)
       const indexB = Math.round(b)
 
@@ -336,7 +352,13 @@ export function OpeningExperience({ returned, terraceActive, onExplore, onTerrac
   }, [])
 
   // And: put the next chapter into the document, once, on the way down.
+  //
+  // Not after the arch has handed back: the journey is a round trip and this
+  // threshold is what used to re-arm it, so the visitor who reached the end
+  // found themselves at the beginning of it again. Past the return there is
+  // nothing below the building but the closing call.
   useEffect(() => {
+    if (returned) return
     const section = sectionRef.current
     if (!section) return
     const trigger = ScrollTrigger.create({
@@ -351,7 +373,7 @@ export function OpeningExperience({ returned, terraceActive, onExplore, onTerrac
       // thing that removes it, and it does so behind its own cover.
     })
     return () => trigger.kill()
-  }, [onNearLifestyle])
+  }, [onNearLifestyle, returned])
 
   /* --------------------------------------------------------------- *
    * Scroll → typography
@@ -373,7 +395,7 @@ export function OpeningExperience({ returned, terraceActive, onExplore, onTerrac
 
       // A zero-effect spine so every position below reads in film units: 1 is
       // the end of the film track, and the hand-off beats sit past it.
-      timeline.to({}, { duration: CHAPTER_UNITS }, 0)
+      timeline.to({}, { duration: units }, 0)
 
       timeline.to(
         '[data-opening-hint]',
@@ -637,7 +659,9 @@ export function OpeningExperience({ returned, terraceActive, onExplore, onTerrac
     }, section)
 
     return () => context.revert()
-  }, [])
+  }, [units])   // the spine's length is the track's length, so a shortened
+  //            ending rebuilds the chapter's timeline once, during the
+  //            arch's own masked exchange.
 
   /* --------------------------------------------------------------- *
    * Entrance — plays once the chapter is actually being looked at
@@ -698,7 +722,7 @@ export function OpeningExperience({ returned, terraceActive, onExplore, onTerrac
       ref={sectionRef}
       className="opening"
       data-opening-root
-      style={{ height: `${CHAPTER_HEIGHT_VH}vh` }}
+      style={{ height: `${chapterHeightVh(units)}vh` }}
       aria-label="Reposé Residence — the approach"
       inert={terraceActive || undefined}
     >
@@ -776,7 +800,10 @@ export function OpeningExperience({ returned, terraceActive, onExplore, onTerrac
         {/* The way to the amenities, marked on the storey it belongs to. It is a
             sibling of the explorer so the stylesheet can retire it the moment the
             explorer is revealed and the level bands claim those pixels. */}
-        <AmenitiesHotspot active={explorerActive && !entering && !covered} onExplore={onExplore} />
+        {/* Retired once the journey is over: the amenities have been seen, the
+            chapter they live in is no longer in the document, and this cue
+            would lead nowhere. */}
+        <AmenitiesHotspot active={explorerActive && !entering && !covered && !returned} onExplore={onExplore} />
 
         {/* Chapter 03 rests over the same frame, above the explorer: only the cue at
             the entrance until it is asked for; then the walk into the reception.
@@ -784,6 +811,7 @@ export function OpeningExperience({ returned, terraceActive, onExplore, onTerrac
             after this section and, at its end, hands the frame back here. */}
         <ReceptionExperience
           active={explorerActive}
+          units={units}
           onJourney={setEntering}
           onExplore={onExplore}
           preload={revealed}

@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
+import { ClosingCall } from './components/ending/ClosingCall'
 import { OpeningExperience } from './components/opening/OpeningExperience'
 import { getLifestyle, loadLifestyle, prefetchLifestyle } from './components/repose/lazy'
 import { getTerrace, loadTerrace } from './components/terrace/lazy'
-import { ARCH_RETURN_AT, unitFraction } from './data/opening'
+import { ARCH_LAND_AT, unitOffsetVh } from './data/opening'
 import { useSmoothScroll } from './hooks/useSmoothScroll'
 import { glideTo, jumpTo, pageTop } from './lib/pageScroll'
 import { getSmoothScroll, unlockScroll } from './lib/scrollLock'
@@ -64,6 +65,8 @@ function App() {
    * once, the visitor has arrived.
    */
   const [returned, setReturned] = useState(false)
+  // Read by callbacks that must not be rebuilt when it changes.
+  const returnedRef = useRef(false)
 
   // Both chapters already mark their own root for the stylesheet and for the
   // scroll machinery; they are found by those marks rather than by threading
@@ -72,6 +75,10 @@ function App() {
   const residence = () => document.querySelector<HTMLElement>('[data-repose-root]')
 
   const putChapterInDocument = useCallback(() => {
+    // The journey runs once. After the arch has handed the frame back there is
+    // nothing below the building but the closing call, and this is the call
+    // that used to put the whole of it back under the visitor.
+    if (returnedRef.current) return
     setMounted(true)
     const ready = getLifestyle()
     if (ready) {
@@ -139,8 +146,12 @@ function App() {
    * as it ran the first time.
    */
   const returnToBuilding = useCallback(() => {
-    const section = opening()
     setMounted(false)
+    // Set together with the unmount, so React commits the shortened chapter
+    // and the removal of the lifestyle chapter in one pass and the page is
+    // measured once, not twice.
+    returnedRef.current = true
+    setReturned(true)
 
     // Release the arch's hold BEFORE moving the page, not after.
     //
@@ -151,15 +162,20 @@ function App() {
     // immediately, and the chapter is left hidden at the bottom of a document
     // it has already handed back. Unlock, then travel.
     unlockScroll()
-    if (section) {
-      jumpTo(pageTop(section) + section.offsetHeight * unitFraction(ARCH_RETURN_AT))
-    }
+    // On the next frame, so the landing is measured against the chapter the
+    // commit above has just shortened rather than the one being replaced.
+    //
+    // The offset is taken from the unit itself rather than from a fraction of
+    // the section's height: a unit sits the same distance down the track
+    // whichever length the track has, which is exactly what makes the two
+    // geometries interchangeable here.
     requestAnimationFrame(() => {
+      const section = opening()
+      if (section) {
+        jumpTo(pageTop(section) + (unitOffsetVh(ARCH_LAND_AT) * window.innerHeight) / 100)
+      }
       getSmoothScroll()?.resize()
       ScrollTrigger.refresh()
-      // After the page has been put back and re-measured, not before: the
-      // marks fade up on a settled building rather than during the exchange.
-      setReturned(true)
     })
   }, [])
 
@@ -175,6 +191,11 @@ function App() {
       {/* The next chapter, in the document below the opening rather than over
           it. See components/repose/lazy for why it is not React.lazy. */}
       {mounted && Chapter && <Chapter onReturn={returnToBuilding} />}
+      {/* The end of the scroll. It replaces the journey rather than sitting
+          after it: once the arch has handed back, the lifestyle chapter is
+          gone, the opening's track stops a screen and a half past the landing,
+          and this is the last thing in the document. */}
+      {returned && <ClosingCall />}
       {/* The terrace is a fixed layer over everything, and is off in
           production (floor-explorer/terraceZone → TERRACE_ENABLED). */}
       {terraceUp && Terrace && <Terrace onReturn={returnFromTerrace} />}

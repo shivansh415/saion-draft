@@ -167,6 +167,48 @@ export const LIFESTYLE_MOUNT_AT = afterFilm(HANDOFF_TRACK_VH + 30)
  */
 export const ARCH_RETURN_AT = afterFilm(160)
 
+/**
+ * Where the arch actually sets the page down, in film units.
+ *
+ * Past `HANDOFF.explorerInEnd`, so the building the visitor is handed back to
+ * is the settled one — the explorer in, the type at rest — rather than one
+ * still assembling itself under them.
+ */
+export const ARCH_LAND_AT = afterFilm(220)
+
+/**
+ * Where the chapter's track STOPS once the journey has been completed.
+ *
+ * The journey is a round trip: the arch at the end of the amenities hands the
+ * frame back to the building, and the building used to have the whole of the
+ * rest of this chapter still below it — the lifestyle mount threshold, then
+ * the reception band — so scrolling on from it started the journey again. That
+ * loop is what this removes. Once the arch has returned, the chapter ends a
+ * little under two screens past the landing and the closing call sits after
+ * it; there is nothing else below, and the scroll finishes.
+ *
+ * 330 rather than 220: the landing is at 220, so this leaves about a screen
+ * and a half of held building to scroll through before the chapter gives out.
+ * It is comfortably past the last beat on the chapter's timeline
+ * (`HANDOFF.explorerInEnd`, 1.266) and comfortably short of the reception
+ * band (1.742), which is therefore never entered again.
+ */
+export const ENDING_UNITS = afterFilm(330)
+
+/**
+ * The chapter's height for a track of `units` film units.
+ *
+ * The sticky viewport is the leading 100vh; everything after it is the track,
+ * and the track is exactly `units` film tracks long. Because the height and
+ * the unit count move together, a unit keeps the same absolute position in vh
+ * whichever length the chapter has — which is what lets the ending shorten the
+ * chapter without moving, compressing or re-pacing a single beat above it.
+ */
+export const chapterHeightVh = (units: number): number => 100 + units * FILM_TRACK_VH
+
+/** A unit's distance from the top of the chapter, in vh. Independent of the track's length. */
+export const unitOffsetVh = (unit: number): number => unit * FILM_TRACK_VH
+
 /** A film-unit position as a fraction of the chapter's scroll track. */
 export const unitFraction = (unit: number): number => unit / CHAPTER_UNITS
 
