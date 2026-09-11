@@ -30,6 +30,7 @@ import {
   WaterExperience,
 } from './sections/Story'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from './ui/dialog'
+import { Arrival } from '../ending/Arrival'
 import './styles/experience.css'
 
 interface Props {
@@ -252,10 +253,38 @@ export function ReposeLifestyle({ onReturn }: Props) {
     }
   }, [modal, goTo])
 
+  /**
+   * True while the arrival holds the screen.
+   *
+   * The chapter's own furniture — the header, the progress meter, the chapter
+   * index — belongs to the journey, not to its ending, and the arrival is
+   * inside this chapter so that scrolling back from it retraces the amenities.
+   * Watched rather than latched, so coming back up brings the interface with
+   * it.
+   */
+  const [arrived, setArrived] = useState(false)
+  useEffect(() => {
+    if (!amenities) return
+    const element = document.querySelector('[data-arrival-root]')
+    if (!element || typeof IntersectionObserver === 'undefined') return
+    const observer = new IntersectionObserver(
+      (entries) => setArrived(entries.some((entry) => entry.isIntersecting)),
+      { threshold: 0.12 },
+    )
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [amenities])
+
   const detail = modal === 'pool' || modal === 'wellness' ? amenityDetails[modal] : null
 
   return (
-    <div className="repose-experience" ref={root} data-phase={phase} data-repose-root>
+    <div
+      className="repose-experience"
+      ref={root}
+      data-phase={phase}
+      data-arrived={arrived || undefined}
+      data-repose-root
+    >
       <header className="rp-ui rp-header" aria-label="Experience navigation">
         <button className="rp-brand" onClick={() => navigate('life')} aria-label="Reposé, back to life chapter">
           <span>Reposé</span>
@@ -337,6 +366,12 @@ export function ReposeLifestyle({ onReturn }: Props) {
           hand-back happens as the pin ends, which is before this scrolls up.
         */}
         <div className="rp-after" aria-hidden="true" />
+
+        {/* The last chapter, and the end of the document. It used to be
+            reached by jumping back UP to the opening's building, which is what
+            made the journey a loop; it is placed here instead, so the page only
+            travels forward and scrolling back retraces the way it came. */}
+        <Arrival />
       </div>
       )}
 

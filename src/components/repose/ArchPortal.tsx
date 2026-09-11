@@ -247,16 +247,15 @@ export function ArchPortal({ active, host, towerSrc, sources, triggerRef, onComp
     const handoff = () => {
       if (done) return
       done = true
-      // Everything of the chapter — the fixed nav included — goes in one write,
-      // before the page is moved and before anything can be painted.
-      const root = host.current
-      if (root) root.style.visibility = 'hidden'
-      // Held still until the application has taken the chapter down, and put
-      // the page back. WHERE it goes back to is the application's to decide
-      // (`App` → `ARCH_RETURN_AT`): this used to jump to the end of the
-      // opening section itself, which was the right answer when the chapter
-      // was mounted there — the opening now carries the reception too, so its
-      // end is the arrived lobby rather than the settled building.
+      // The chapter is NOT hidden here any more. The arrival the page is about
+      // to travel to lives inside it — that is what lets scrolling back from
+      // the end retrace the amenities instead of dropping into the film — so
+      // hiding the chapter would take the destination with it. The chapter's
+      // own interface stands down on the arrival instead (`data-arrived`).
+      //
+      // Held still until the application has moved the page. WHERE it goes is
+      // the application's to decide: forward, to the arrival, which opens on
+      // this very still at this very fit, so the exchange shows no seam.
       lockScroll()
       completeRef.current()
     }

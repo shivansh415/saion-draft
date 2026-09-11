@@ -3,6 +3,7 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 import {
+  CHAPTER_UNITS,
   FINAL_FRAME_STILL,
   FOCAL_X,
   FOCAL_Y,
@@ -24,13 +25,6 @@ type Phase = 'idle' | 'entering' | 'inside' | 'leaving'
 interface Props {
   /** True once the film has ended and the clean building is on screen. */
   active: boolean
-  /**
-   * The chapter's track length in film units, so chapter progress can be read
-   * as a unit position. It shortens once the arch has handed the frame back —
-   * the band this walk lives in then sits past the end of the track, and the
-   * walk is simply never entered again.
-   */
-  units: number
   /** Told when the journey takes the frame and when it gives it back. */
   onJourney: (underway: boolean) => void
   /** From inside the lobby: on into the lifestyle chapter. */
@@ -144,7 +138,7 @@ function warm(src: string): Promise<void> {
  * reversed: the visitor steps back out through the doors, which close, and
  * the camera pulls back to the clean building — not to the explorer.
  */
-export function ReceptionExperience({ active, units: chapterUnits, onJourney, onExplore, preload }: Props) {
+export function ReceptionExperience({ active, onJourney, onExplore, preload }: Props) {
   const rootRef = useRef<HTMLDivElement | null>(null)
   const rect = useCoverRect(rootRef, FINAL_FRAME_STILL.width, FINAL_FRAME_STILL.height, FOCAL_X, FOCAL_Y)
   const layout = useMemo(() => layoutEntrance(rect), [rect])
@@ -152,16 +146,6 @@ export function ReceptionExperience({ active, units: chapterUnits, onJourney, on
   useEffect(() => {
     layoutRef.current = layout
   }, [layout])
-
-  // Read per frame rather than closed over, so the track shortening at the end
-  // of the journey does not rebuild the walk's scroll wiring.
-  const unitsRef = useRef(chapterUnits)
-  useEffect(() => {
-    unitsRef.current = chapterUnits
-  }, [chapterUnits])
-
-  /** Whether the walk is still inside the chapter's track at all. */
-  const reachable = chapterUnits >= RECEPTION_BAND.end
 
   const reducedMotion = useReducedMotion()
 
@@ -422,7 +406,7 @@ export function ReceptionExperience({ active, units: chapterUnits, onJourney, on
       if (!timeline) return
 
       // Chapter progress → film units → position within the reception band.
-      const units = progress * unitsRef.current
+      const units = progress * CHAPTER_UNITS
       const t = Math.min(1, Math.max(0, (units - RECEPTION_BAND.start) / RECEPTION_SPAN))
 
       timeline.progress(t)
@@ -538,12 +522,7 @@ export function ReceptionExperience({ active, units: chapterUnits, onJourney, on
         </span>
       </button>
 
-      {/* The way in is only offered while there is a way in: once the arch has
-          handed back, the chapter's track stops short of this band and the walk
-          cannot be travelled to, so the cue would be a control that does
-          nothing. It is derived from the track rather than from a flag — if the
-          band is past the end of it, the reception is not reachable. */}
-      {active && reachable && <EntranceHotspot rect={rect} onEnter={enter} />}
+      {active && <EntranceHotspot rect={rect} onEnter={enter} />}
     </div>
   )
 }

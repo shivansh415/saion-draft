@@ -1,0 +1,107 @@
+/* ---------------------------------------------------------------------
+   THE ARRIVAL — the building, after the amenities
+
+   One screen, filled by the same still the arch's transition ends on and at
+   the same cover fit, so the exchange between them shows no seam. The closing
+   marks sit on the two ends of a row at the foot of it.
+   --------------------------------------------------------------------- */
+
+.arrival {
+  position: relative;
+  width: 100%;
+  height: 100svh;
+  min-height: 560px;
+  overflow: hidden;
+  background: var(--ink);
+}
+
+/* Scoped through `.arrival` deliberately. The chapter this sits inside sets
+   `.repose-experience img { width:100%; height:100%; object-fit:cover }` for
+   every image in it, and a lone class loses to that on specificity — which is
+   what stretched the developer's logo across the middle of the screen. Two
+   classes beat a class and an element. */
+.arrival .arrival__still {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* object-position is set from FOCAL_X / FOCAL_Y on the element itself. */
+}
+
+/* A little ground under the marks, so they hold against a bright sky or a
+   pale road without a panel of their own. */
+.arrival::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 34%;
+  background: linear-gradient(180deg, rgb(9 12 16 / 0%) 0%, rgb(9 12 16 / 42%) 100%);
+  pointer-events: none;
+}
+
+.arrival__brand {
+  position: absolute;
+  left: 6vw;
+  right: 6vw;
+  bottom: 4vh;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  pointer-events: none;
+}
+
+.arrival__mark {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  line-height: 1.6;
+  letter-spacing: 0.12em;
+  text-align: left;
+  color: rgb(255 255 255 / 72%);
+  text-shadow: 0 1px 10px rgb(9 12 16 / 55%);
+}
+
+.arrival__mark strong {
+  white-space: nowrap;
+  font-family: var(--font-display);
+  font-weight: var(--weight-display, 400);
+  font-size: clamp(19px, 1.5vw, 26px);
+  line-height: 1;
+  letter-spacing: var(--track-display, -0.025em);
+  color: var(--paper);
+}
+
+.arrival .arrival__logo {
+  display: block;
+  width: clamp(118px, 10vw, 152px);
+  height: auto;
+  object-fit: contain;
+  opacity: 0.86;
+}
+
+@media (max-width: 900px) {
+  .arrival__brand {
+    left: 5vw;
+    right: 5vw;
+    bottom: 3vh;
+    gap: 18px;
+  }
+
+  .arrival__mark {
+    font-size: 8px;
+  }
+
+  .arrival__mark strong {
+    font-size: 17px;
+  }
+
+  .arrival .arrival__logo {
+    width: 104px;
+  }
+}
