@@ -30,6 +30,13 @@
    last chapter, which lives inside this one so that scrolling back from it
    retraces the amenities — it stands down, and comes back if the visitor
    goes back up. */[data-arrived] .rp-ui,[data-arrived] .rp-header{opacity:0;pointer-events:none;transition:opacity .55s cubic-bezier(.22,.61,.36,1)}
+/* The arrival is pulled up over the arch's last viewport so that scrolling
+   back finds one building rather than two (ending/Arrival). While the arch is
+   pinned it is fixed over those same pixels and travelling, so the arrival
+   stands aside; below the pin's end the two agree exactly and it takes over.
+   Visibility, not stacking: the pinned section's spacer makes z-index a
+   question, and there is nothing here worth asking it about. */
+[data-arch-pinned] [data-arrival-root]{visibility:hidden}
 .rp-ui button{pointer-events:auto}
 .rp-header{top:0;left:0;width:100%;padding:28px 3.3vw 0;display:flex;justify-content:space-between;align-items:flex-start}
 .rp-brand{display:flex;flex-direction:column;align-items:center;line-height:1}
@@ -363,7 +370,6 @@
 
 /* Slack past the end of the arch's pin — see the note at its markup. The
    finale's own ground, so there is nothing to see even if it is reached. */
-.rp-after{height:40vh;background:var(--rp-olive)}
 
 /* =====================================================================
    01 — THE AMENITY COLLECTION (the index)

@@ -53,6 +53,13 @@ interface Geometry {
   layer: Box
 }
 
+/**
+ * Past this much of the pin the still is already on the arrival's pixels — it
+ * lands there at `BEATS.open`, and everything after is the arch's own curve
+ * leaving the frame — so the arrival may come forward behind it.
+ */
+const SETTLED = 0.99
+
 const REDUCED = '(prefers-reduced-motion: reduce)'
 const NARROW = '(max-width: 900px)'
 
@@ -243,6 +250,37 @@ export function ArchPortal({ active, host, towerSrc, sources, triggerRef, onComp
     /* ------------------------------------------------------------- *
      * The hand-off
      * ------------------------------------------------------------- */
+    /**
+     * Who owns the frame.
+     *
+     * The arrival is pulled up over the arch's last viewport (see
+     * ending/Arrival), which puts the two of them on the same pixels for the
+     * whole of that viewport. Below the pin's end they agree exactly — the
+     * arrival's still and this one land on the identical document rectangle at
+     * the identical cover fit — but WHILE the arch is pinned this one is fixed
+     * and travelling, so the arrival sitting over it would cut the screen in
+     * two: the arch's building above its top edge, its own below. So the
+     * arrival stands down for as long as the arch is still TRAVELLING, and
+     * takes the frame back as soon as it has arrived.
+     *
+     * Arrived, not un-pinned: the still reaches its final rectangle at
+     * `BEATS.open`, and from there to the end of the pin it is already sitting
+     * on exactly the arrival's pixels, so the exchange between them is
+     * invisible. Waiting for the pin to release instead would hold the
+     * arrival's closing marks down through the last of the scroll — and a
+     * smoothed scroll settling a fraction short of the end would hold them
+     * down for good.
+     */
+    const chapter = host.current
+    let owns: boolean | null = null
+    const setOwner = (pinned: boolean) => {
+      if (pinned === owns) return
+      owns = pinned
+      if (!chapter) return
+      if (pinned) chapter.setAttribute('data-arch-pinned', '')
+      else chapter.removeAttribute('data-arch-pinned')
+    }
+
     let done = false
     const handoff = () => {
       if (done) return
@@ -257,6 +295,12 @@ export function ArchPortal({ active, host, towerSrc, sources, triggerRef, onComp
       // the application's to decide: forward, to the arrival, which opens on
       // this very still at this very fit, so the exchange shows no seam.
       lockScroll()
+      // The arch is finished with the frame whatever the pin still thinks: the
+      // page is about to rest on the arrival's first pixel, and a smoothed
+      // scroll settling a fraction short of the end would otherwise leave the
+      // pin nominally engaged and the arrival — with the journey's closing
+      // marks on it — held down behind it.
+      setOwner(false)
       completeRef.current()
     }
 
@@ -319,6 +363,9 @@ export function ArchPortal({ active, host, towerSrc, sources, triggerRef, onComp
         timeline.to(present(word), { opacity: 0, duration: 0.25, ease: 'sine.in' }, 0.55)
       }
 
+      /** The arch has the frame while it is pinned and still on its way. */
+      const travelling = (self: ScrollTrigger) => self.isActive && self.progress < SETTLED
+
       const trigger = ScrollTrigger.create({
         trigger: finale,
         start: 'bottom bottom',
@@ -329,12 +376,19 @@ export function ArchPortal({ active, host, towerSrc, sources, triggerRef, onComp
         scrub: true,
         animation: timeline,
         onRefreshInit: measure,
-        onRefresh: apply,
+        onRefresh: (self) => {
+          setOwner(travelling(self))
+          apply()
+        },
         // The pin's own styles land after the timeline has rendered, so the
         // placement is checked again here, at the end of the update, before
         // the frame is painted.
-        onToggle: apply,
+        onToggle: (self) => {
+          setOwner(travelling(self))
+          apply()
+        },
         onUpdate: (self) => {
+          setOwner(travelling(self))
           if (viewportTop() !== placedAt) apply()
           if (self.progress >= 0.999) handoff()
         },
@@ -351,6 +405,7 @@ export function ArchPortal({ active, host, towerSrc, sources, triggerRef, onComp
 
     return () => {
       triggerRef.current = null
+      chapter?.removeAttribute('data-arch-pinned')
       context.revert()
     }
   }, [active, host, triggerRef])

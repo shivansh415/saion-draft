@@ -352,20 +352,24 @@ export function ReposeLifestyle({ onReturn }: Props) {
           }
         />
         {/*
-          Slack after the arch, and nothing else.
+          Nothing between the arch and the arrival — deliberately.
 
-          The arch is pinned for `innerHeight * distance` and its pin spacer
-          used to end on the document's LAST PIXEL, so reaching the progress
-          that hands the page back to the building meant landing exactly on
-          that pixel — which a smoothed scroll settling asymptotically does not
-          reliably do. The journey's only way back was a rounding error away
-          from never firing.
+          There used to be 40vh of the finale's own ground here, scroll room
+          past the end of the pin so the hand-back could not be missed by a
+          rounding error. That was written when the pin spacer ended on the
+          document's last pixel; the arrival and the closing call now follow
+          it, so the margin is already there and the band only did harm.
 
-          This is scroll room past the end of the pin, in the finale's own
-          ground, so the arch completes with margin. It is never seen: the
-          hand-back happens as the pin ends, which is before this scrolls up.
+          Going down it was skipped — the hand-back jumps to the arrival — but
+          going back UP it was scrolled through, and it cut the one continuous
+          picture in two: the arrival's building leaving the top of the frame,
+          a bare olive strip, then the arch's building entering the bottom. The
+          same render twice, with a gap between.
+
+          With it gone the pin ends exactly where the arrival begins, on the
+          same still at the same fit, so the exchange is seamless whichever way
+          the visitor is travelling.
         */}
-        <div className="rp-after" aria-hidden="true" />
 
         {/* The last chapter, and the end of the document. It used to be
             reached by jumping back UP to the opening's building, which is what

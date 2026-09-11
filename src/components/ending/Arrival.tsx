@@ -1,4 +1,7 @@
+import { useLayoutEffect, useRef } from 'react'
+
 import { FINAL_FRAME_STILL, FOCAL_X, FOCAL_Y, OPENING_COPY } from '../../data/opening'
+import { ScrollTrigger } from '../repose/motion/gsap'
 import { ClosingCall } from './ClosingCall'
 
 import './arrival.css'
@@ -18,10 +21,40 @@ import './arrival.css'
  * exchange it always was — the page simply travels forward to it rather than
  * back. Everything above stays where it was read, and there is nothing below
  * but the closing call.
+ *
+ * It is pulled up over the arch by exactly one viewport. A pinned section is
+ * still covering the frame at the moment its pin ends — the pin holds it with
+ * its bottom on the viewport's bottom — so whatever follows in the document
+ * begins one viewport further down, and that viewport is spent scrolling the
+ * arch's own last frame away. Going down that was never seen, because the
+ * hand-over jumps across it; going back UP it was scrolled through, and it put
+ * the building on the screen twice: the arch's render leaving the top of the
+ * frame above this one entering the bottom.
+ *
+ * Closing the gap costs one number, and it has to be the SAME number
+ * ScrollTrigger lays the pin out with — `window.innerHeight`, read on its own
+ * refresh rather than on every resize, so the two can never disagree. The
+ * arrival then begins on the pin's last pixel: one building, continuous, in
+ * both directions.
  */
 export function Arrival() {
+  const root = useRef<HTMLDivElement | null>(null)
+
+  useLayoutEffect(() => {
+    const el = root.current
+    if (!el) return
+    const fit = () => el.style.setProperty('--arrival-h', `${window.innerHeight}px`)
+    fit()
+    // ScrollTrigger's own cadence, not the window's: on a phone the toolbar
+    // sliding away resizes the window mid-scroll, and ScrollTrigger ignores
+    // that deliberately. Following it here keeps this measurement in step with
+    // the pin it has to meet.
+    ScrollTrigger.addEventListener('refreshInit', fit)
+    return () => ScrollTrigger.removeEventListener('refreshInit', fit)
+  }, [])
+
   return (
-    <div data-arrival-root>
+    <div data-arrival-root ref={root}>
       <section className="arrival" aria-label="Reposé Residence">
         {/* Framed exactly as the arch's transition leaves it, and as the
             explorer holds it: the same cover fit about the same focal point.
