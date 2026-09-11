@@ -177,7 +177,12 @@
    parallax in `useStoryMotion` has something to travel through without ever
    pulling an edge into the frame. `object-position` keeps the middle of the
    composition on the card's centre line at every viewport. */
-.rp-family-inset__image{position:absolute;left:0;top:-5%;width:100%;height:110%;object-fit:cover;object-position:50% 50%}
+/* Two classes, to beat `.repose-experience img` (a class AND a type, so it
+   outranks a lone class). Without this the picture was laid out 100% tall
+   while still offset -5%, leaving a strip of the card's olive ground along
+   its bottom edge — and the parallax below swung that strip open and shut
+   as the visitor scrolled. */
+.rp-family-inset .rp-family-inset__image{position:absolute;left:0;top:-5%;width:100%;height:110%;object-fit:cover;object-position:50% 50%}
 .rp-family-copy{position:absolute;left:43vw;top:76%;max-width:440px;z-index:3}
 .rp-family-copy .rp-small{font-size:11px;letter-spacing:.1em}
 .rp-family-copy p{font-family:var(--rp-display);font-size:36px;line-height:1.1;margin:18px 0 24px}
@@ -281,9 +286,19 @@
  .rp-water-stage{height:auto;min-height:0;overflow:hidden}.rp-water-visual{position:relative;inset:auto;height:100svh;min-height:650px}.rp-water-title{left:9vw;right:9vw;top:29%;font-size:17vw;line-height:.98}.rp-water-title em{padding-left:0}.rp-water-visual>.rp-eyebrow{left:9vw;top:16%}.rp-water-caption{left:9vw;bottom:12vh;font-size:10px}.rp-hotspot{top:68%;left:45%;gap:15px}.rp-hotspot-label{font-size:9px}
  .rp-curve-sheet{position:relative;inset:auto;clip-path:none;min-height:800px;padding:13vh 9vw 12vh;border-radius:50% 50% 0 0 / 9% 9% 0 0;margin-top:-60px}.rp-curve-top{font-size:9px;letter-spacing:.12em;margin-bottom:6vh}.rp-curve-sheet h2{font-size:20vw;line-height:.92}.rp-curve-bottom{display:grid;grid-template-columns:auto 1fr;gap:35px;margin-top:7vh;align-items:center}.rp-curve-bottom figure{justify-self:end}.rp-serif-mark{font-size:55px}.rp-curve-bottom p{font-size:12px;text-align:left;line-height:1.6}.rp-curve-bottom p br:first-child{display:none}.rp-curve-bottom figure{grid-column:1/-1;width:62vw;height:20vh;justify-self:center}
  .rp-terrace{height:100svh;min-height:730px}.rp-terrace-photo img{object-position:45% 50%}.rp-terrace-heading{left:9vw;right:9vw;top:17%}.rp-terrace-heading h2{font-size:22vw;margin-top:6vh;line-height:.9}.rp-terrace-heading h2 em{margin-left:0}.rp-terrace-bottom{left:9vw;right:9vw;bottom:12vh;align-items:flex-start;gap:25px}.rp-terrace-bottom p{font-size:27px}.rp-terrace-bottom>span{font-size:9px;letter-spacing:.08em;max-width:32%}
- .rp-family{padding:12vh 9vw 0;height:135svh;min-height:1000px}.rp-family h2{font-size:22vw;line-height:.9;margin-top:5vh}.rp-family h2 em{margin-left:3vw}.rp-family-main{top:28%;right:6vw;width:64vw;height:38%}.rp-family-inset{left:8vw;top:53%;width:33vw;height:24%}.rp-family-copy{left:45vw;top:71%;right:6vw}.rp-family-copy .rp-small{font-size:9px}.rp-family-copy p{font-size:25px;margin:14px 0}.rp-family-copy .rp-micro{font-size:8px}.rp-family-word{font-size:32vw;bottom:3%;left:6vw}.rp-family-main figcaption{font-size:8px;bottom:15px;right:15px}
- .rp-interior-stage{height:135svh;min-height:1050px}.rp-interior-stage>.rp-eyebrow{top:10%;left:9vw}.rp-interior-wide{left:9vw;width:91vw;top:20%;height:26%}.rp-interior-stage h2{left:9vw;top:43%;font-size:18vw;line-height:.95;z-index:5}.rp-interior-stage h2 em{padding-left:4vw}.rp-interior-tall{width:40vw;right:5vw;top:60%;height:28%}.rp-interior-bedroom{width:36vw;left:9vw;top:63%;height:20%}.rp-interior-caption{left:9vw;right:9vw;bottom:6%;justify-content:space-between;gap:25px}.rp-interior-caption>span{font-size:9px}.rp-interior-caption p{font-size:12px}
- .rp-essentials{display:block;padding:12vh 9vw}.rp-essentials-intro h2{font-size:24vw;margin:5vh 0 7vh}.rp-essentials-intro figure{height:53vw;width:100%}.rp-essentials-intro>p{font-size:27px;margin-top:25px}.rp-essential-facts{width:100%;padding-top:9vh}.rp-essential-fact{padding:30px 0;gap:20px}.rp-essential-fact h3{font-size:65px;margin:14px 0}.rp-essential-fact p{font-size:14px;max-width:90%}.rp-essential-fact .rp-micro{font-size:10px}
+ .rp-family{padding:12vh 9vw 0;height:135svh;min-height:1000px}/* Same arithmetic as the essentials heading above: "generation." is 3.84em,
+   which at 22vw wants 84.6vw of a 79vw measure, and `.rp-family` clips. */
+.rp-family h2{font-size:19vw;line-height:.9;margin-top:5vh}.rp-family h2 em{margin-left:3vw}.rp-family-main{top:28%;right:6vw;width:64vw;height:38%}.rp-family-inset{left:8vw;top:53%;width:33vw;height:24%}.rp-family-copy{left:45vw;top:71%;right:6vw}.rp-family-copy .rp-small{font-size:9px}.rp-family-copy p{font-size:25px;margin:14px 0}.rp-family-copy .rp-micro{font-size:8px}.rp-family-word{font-size:32vw;bottom:3%;left:6vw}.rp-family-main figcaption{font-size:8px;bottom:15px;right:15px}
+ .rp-interior-stage{height:135svh;min-height:1050px}.rp-interior-stage>.rp-eyebrow{top:10%;left:9vw}.rp-interior-wide{left:9vw;width:91vw;top:20%;height:26%}/* "coming home." needs 86vw at 18vw against a 78vw measure, so it took a
+   third line — and the third line reached down onto the top of the kitchen
+   photograph below it. At 16vw the two lines it was drawn as are the two
+   lines it sets in. */
+.rp-interior-stage h2{left:9vw;top:43%;font-size:16vw;line-height:.95;z-index:5}.rp-interior-stage h2 em{padding-left:4vw}.rp-interior-tall{width:40vw;right:5vw;top:60%;height:28%}.rp-interior-bedroom{width:36vw;left:9vw;top:63%;height:20%}.rp-interior-caption{left:9vw;right:9vw;bottom:6%;justify-content:space-between;gap:25px}.rp-interior-caption>span{font-size:9px}.rp-interior-caption p{font-size:12px}
+ .rp-essentials{display:block;padding:12vh 9vw}/* 20vw, not 24. The section is padded 9vw a side, so a phone has 82vw of
+   measure; "considered." sets 3.83em wide in this face, which at 24vw asks
+   for 92vw. It has no space in it, so it cannot wrap — the chapter's
+   overflow-x:clip simply cut the last letters off the right edge. */
+.rp-essentials-intro h2{font-size:20vw;margin:5vh 0 7vh}.rp-essentials-intro figure{height:53vw;width:100%}.rp-essentials-intro>p{font-size:27px;margin-top:25px}.rp-essential-facts{width:100%;padding-top:9vh}.rp-essential-fact{padding:30px 0;gap:20px}.rp-essential-fact h3{font-size:65px;margin:14px 0}.rp-essential-fact p{font-size:14px;max-width:90%}.rp-essential-fact .rp-micro{font-size:10px}
  .rp-connected{height:auto;min-height:1050px;padding:12vh 9vw}.rp-connected h2{font-size:22vw;margin:7vh 0;line-height:.95}.rp-connected h2 em{margin-left:0}.rp-place-line{gap:13px;font-size:9px;letter-spacing:.1em;margin-bottom:4vh}.rp-connections{display:grid;grid-template-columns:1fr 1fr;gap:32px 20px;padding-top:30px}.rp-connections article{width:auto}.rp-time{font-size:75px;gap:12px}.rp-time small{font-size:9px}.rp-connections h3{font-size:14px}.rp-connections article>span:last-child{font-size:11px}.rp-connected-bottom{padding-top:7vh;display:block}.rp-connected-bottom p{font-size:28px;margin-bottom:30px}.rp-connected-bottom>span{display:block;font-size:8px;text-align:left}
  .rp-finale{height:125svh;min-height:950px;padding:12vh 7vw 10vh}.rp-final-intro{font-size:9px}.rp-final-word{top:22%;font-size:29vw}.rp-final-image{top:29%;left:28%;width:44%;height:34%}.rp-final-call{top:68%}.rp-final-call p{font-size:38px;margin-bottom:23px}.rp-final-call .rp-text-link{font-size:10px!important;gap:30px}.rp-final-base{display:flex;justify-content:center}.rp-final-base>.rp-text-link{font-size:9px!important}
  .rp-dialog[data-slot=dialog-content]{padding:65px 25px 30px}.rp-dialog .rp-dialog-title{font-size:49px}.rp-dialog-menu[data-slot=dialog-content]{padding:60px 25px 25px}.rp-dialog-menu nav button{gap:12px;padding:10px 0}.rp-dialog-menu nav button>span:nth-child(2){font-size:25px}.rp-dialog-menu .rp-dialog-title{font-size:48px}.rp-dialog .rp-dialog-description{font-size:14px}.rp-dialog>img{height:200px}.rp-contact-links a{font-size:15px}
@@ -370,7 +385,11 @@
 .rp-index-body{display:grid;grid-template-columns:minmax(0,42%) minmax(0,1fr);gap:clamp(2.5rem,5vw,6rem);align-items:start;margin-top:clamp(6vh,10vh,12vh)}
 /* Sticky rather than pinned: no ScrollTrigger, no extra pin spacer, nothing
    for the chapter's existing pins to be sorted against. */
-.rp-index-stage{position:sticky;top:18vh;aspect-ratio:4/5;overflow:hidden;background:#e4e1d6}
+/* Capped to what the viewport can actually show. At 4:5 in a 42% column the
+   plate is ~40vw tall, so on anything wider than about 2:1 — an ultrawide,
+   or an ordinary 1920x900 laptop — its foot sat below the fold for the whole
+   length of the index and part of every photograph was never seen. */
+.rp-index-stage{position:sticky;top:18vh;aspect-ratio:4/5;max-height:calc(100svh - 22vh);overflow:hidden;background:#e4e1d6}
 .rp-index-plate{position:absolute;inset:0;opacity:0;transition:opacity .75s cubic-bezier(.4,0,.2,1)}
 .rp-index-plate[data-shown]{opacity:1}
 .rp-index-plate img{object-position:50% 55%}

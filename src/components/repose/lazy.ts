@@ -28,13 +28,27 @@ export function getLifestyle(): Chapter | null {
   return loaded
 }
 
-/** Fetches the chunk once and remembers it. Safe to call repeatedly. */
+/**
+ * Fetches the chunk once and remembers it. Safe to call repeatedly.
+ *
+ * A FAILED fetch is deliberately not remembered. The promise used to be cached
+ * whatever happened to it, so one 404 — routine on a tab left open across a
+ * deploy — was permanent: every later call handed back the same rejected
+ * promise, the chapter could never arrive, and the two cues that lead to it
+ * did nothing for the rest of the session. Forgetting a failure lets the next
+ * press try again.
+ */
 export function loadLifestyle(): Promise<Chapter> {
   if (!inflight) {
-    inflight = import('./ReposeLifestyle').then((module) => {
-      loaded = module.ReposeLifestyle
-      return loaded
-    })
+    inflight = import('./ReposeLifestyle')
+      .then((module) => {
+        loaded = module.ReposeLifestyle
+        return loaded
+      })
+      .catch((error) => {
+        inflight = null
+        throw error
+      })
   }
   return inflight
 }

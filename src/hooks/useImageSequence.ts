@@ -131,12 +131,20 @@ export function useImageSequence(sources: readonly string[], options: Options = 
         status[index] = LOADED
         loadedCount++
 
-        if (index === 0) setFirstFrameReady(true)
         if (loadedCount === PRIME_COUNT || loadedCount === total) setPrimed(true)
         optionsRef.current.onProgress?.(loadedCount / total)
       } else {
         status[index] = FAILED
       }
+
+      // Settled, not loaded — the same rule the gate below is built on, and for
+      // the same reason. `firstFrameReady` is one of the two conditions the
+      // preloader's reveal waits on AND one of the two its timeout waits on, so
+      // while it was set only on success a single failed request for frame one
+      // left the loader on screen at 100% for ever, with the page's scroll
+      // still locked behind it. One transient error on one file took the whole
+      // site down, and there was no ceiling to escape through.
+      if (index === 0) setFirstFrameReady(true)
 
       // The gate the preloader waits on: HOW MANY frames are in hand, not
       // which. It used to test `index < criticalCount`, which was right when
@@ -313,6 +321,10 @@ export function useImageSequence(sources: readonly string[], options: Options = 
       pending.forEach((image) => {
         image.onload = null
         image.onerror = null
+        // And stop the transfer. Clearing the handlers alone leaves up to
+        // MAX_CONCURRENT_LOADS full-size frames still coming down the one
+        // connection after the chapter has gone.
+        image.src = ''
       })
       pending.clear()
     }

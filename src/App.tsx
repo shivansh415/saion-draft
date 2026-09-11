@@ -80,24 +80,41 @@ function App() {
    * to the beginning of the residence chapter.
    *
    * A glide, never a jump. The chapter is almost always already below the
-   * visitor by the time either can be pressed; if the press somehow beats the
-   * mount, it is put in the document first and travelled to on the next frame,
-   * once the layout knows where it is.
+   * visitor by the time either can be pressed.
+   *
+   * If the press beats it, waiting two frames is not enough and never was:
+   * putting the chapter in the document only STARTS a dynamic import, and two
+   * frames later the element is still not there — `travel` found nothing,
+   * returned silently, and the cue did nothing at all with no way to tell.
+   * The travel now waits for the chunk itself and then for the frame that
+   * paints it, and gives up quietly only if the chunk cannot be had.
    */
   const explore = useCallback(() => {
     const travel = () => {
       const element = residence()
-      if (!element) return
+      if (!element) return false
       getSmoothScroll()?.resize()
       ScrollTrigger.refresh()
       glideTo(pageTop(element), 1.4)
+      return true
     }
-    if (residence()) {
-      travel()
-      return
-    }
+    if (travel()) return
+
     putChapterInDocument()
-    requestAnimationFrame(() => requestAnimationFrame(travel))
+    void loadLifestyle()
+      .then(
+        () =>
+          new Promise<void>((resolve) => {
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+          }),
+      )
+      .then(() => {
+        travel()
+      })
+      .catch(() => {
+        /* the chunk could not be fetched; `loadLifestyle` has forgotten it, so
+           a second press will try again */
+      })
   }, [putChapterInDocument])
 
   const openTerrace = useCallback(() => {
@@ -146,10 +163,14 @@ function App() {
     // Release the arch's hold before moving the page, not after: the lock puts
     // the page back where it was taken on the next scroll event, so a move made
     // underneath it is undone immediately.
+    // Release the hold, then move, in the same tick — nothing about the
+    // document changes across this hand-over, so there is nothing to wait a
+    // frame for, and waiting one put the move outside the hold the arch takes
+    // to keep the frame still through it.
     unlockScroll()
+    const arrival = document.querySelector<HTMLElement>('[data-arrival-root]')
+    if (arrival) jumpTo(pageTop(arrival))
     requestAnimationFrame(() => {
-      const arrival = document.querySelector<HTMLElement>('[data-arrival-root]')
-      if (arrival) jumpTo(pageTop(arrival))
       getSmoothScroll()?.resize()
       ScrollTrigger.refresh()
     })

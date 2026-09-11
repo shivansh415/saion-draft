@@ -1248,7 +1248,7 @@
     top: auto;
     bottom: calc(var(--gutter-block) + 0.5rem);
     transform: none;
-    max-width: calc(100vw - var(--gutter) - 5.5rem);
+    max-width: calc(100% - var(--gutter) - 5.5rem);
   }
 
   .fx__title {
