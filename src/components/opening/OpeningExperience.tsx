@@ -15,6 +15,7 @@ import {
   HERO_EXIT_START,
   HINT_EXIT_END,
   LIFESTYLE_MOUNT_AT,
+  OPENING_COPY,
   resolveFrame,
   unitFraction,
 } from '../../data/opening'
@@ -51,6 +52,13 @@ gsap.registerPlugin(ScrollTrigger)
  */
 interface Props {
   /**
+   * True once the arch has handed the frame back from the amenities.
+   *
+   * The journey's closing marks are shown here rather than on the last screen
+   * of the amenities, so they appear once — at the end, on the building.
+   */
+  returned: boolean
+  /**
    * True while the terrace has the frame. It covers this chapter completely
    * — a fixed layer, not a section after it — so the film has nothing worth
    * painting and nothing here should answer a pointer or a Tab.
@@ -73,7 +81,7 @@ interface Props {
   onNearLifestyle: () => void
 }
 
-export function OpeningExperience({ terraceActive, onExplore, onTerrace, onNearLifestyle }: Props) {
+export function OpeningExperience({ returned, terraceActive, onExplore, onTerrace, onNearLifestyle }: Props) {
   /**
    * True when this chapter's picture is nobody's business: the visitor has
    * scrolled past it into the chapters below, or the terrace has covered it.
@@ -730,6 +738,36 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onNearL
             <em>in Al Furjan.</em>
           </h2>
           <span className="tallest-building__sub" data-tallest-sub>The uptown of Dubai</span>
+        </div>
+
+        {/* The journey's closing marks — the residence on the left, the
+            developer on the right — on the building the arch hands back to.
+            They used to sit at the foot of the amenities' last screen; they
+            belong at the end, and they are in one place only.
+
+            Gated on the same three things the amenity cue is, so they can
+            never paint over the film or over a chapter that has covered this
+            one: the explorer has to be live, the reception must not be
+            entering, and this chapter must still be on screen. */}
+        <div
+          className="op-close-brand"
+          data-shown={(returned && explorerActive && !entering && !covered) || undefined}
+          aria-hidden={returned && explorerActive && !entering && !covered ? undefined : true}
+        >
+          <span className="op-close-brand__mark">
+            <strong>REPOSÉ RESIDENCE</strong>
+            AL FURJAN · DUBAI
+          </span>
+          <img
+            className="op-close-brand__logo"
+            src={OPENING_COPY.logoSrc}
+            alt={OPENING_COPY.logoAlt}
+            width={355}
+            height={164}
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+          />
         </div>
 
         {/* Chapter 02 rests over the held final frame; the hand-off above scrubs it in. */}

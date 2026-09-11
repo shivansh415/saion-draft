@@ -1,5 +1,5 @@
 import {AMENITIES,AMENITIES_MAP,INDEX_COPY,MAP_COPY,MAP_MARKS,PLATE_SIZES} from '../data/amenities';
-import {BRAND_LOGO,connections,essentialFacts,wellnessScenes,type DetailKey} from '../data/experience';
+import {connections,essentialFacts,wellnessScenes,type DetailKey} from '../data/experience';
 import {photoSources} from '../data/photoSources';
 import {Cinemagraph} from './Cinemagraph';
 import type {ReactNode} from 'react';
@@ -192,7 +192,14 @@ export function AmenitiesMap(){
   </div>
   <figure className="rp-map-figure">
    <div className="rp-map-plate">
-    <img src={AMENITIES_MAP} alt="The Reposé Residence podium level seen from above, showing the pool, the courts, the play and exercise zones, the planting and the walking track" loading="lazy" decoding="async"/>
+    {/* The intrinsic size is declared so the browser reserves the plate's box
+        before the file arrives. Without it this figure had no height until the
+        image loaded, and the section grew by 416px underneath a visitor who
+        was already approaching the finale — which moved the finale by the same
+        amount AFTER ScrollTrigger had measured where its pin should start. The
+        pin then engaged 416px early and snapped the section into place. That
+        snap is the jump that was reported between this page and the finale. */}
+    <img src={AMENITIES_MAP} width={1754} height={987} alt="The Reposé Residence podium level seen from above, showing the pool, the courts, the play and exercise zones, the planting and the walking track" loading="lazy" decoding="async"/>
     {/* Only the marks the drawing puts beyond doubt. Positions are per cent
         of the image, so they hold at every crop. */}
     {MAP_MARKS.map(mark=><span className="rp-map-mark" key={mark.id} style={{left:`${mark.x}%`,top:`${mark.y}%`}}><i aria-hidden="true"/><span className="rp-map-mark__label rp-micro">{mark.label}</span></span>)}
@@ -207,10 +214,10 @@ export function FinalRepose({assetBase,onEnquire,onRestart,portal}:{assetBase:st
   <figure className="rp-final-image"><img src={`${assetBase}/tower-original.png`} alt="The supplied completed Reposé Residence tower image" loading="lazy" decoding="async"/></figure>
   {portal}
   <div className="rp-final-call"><p>Make room for<br/><em>a different rhythm.</em></p><ArrowLink onClick={onEnquire}>ENQUIRE ABOUT REPOSÉ</ArrowLink></div>
-  {/* The two marks close the film facing each other: the residence on the left
-      set as type — the same wordmark the rest of the site uses, there being no
-      logo file for it — and the developer's logo on the right. The way back
-      sits between them. */}
-  <div className="rp-final-base"><span className="rp-final-mark"><strong>REPOSÉ RESIDENCE</strong>AL FURJAN · DUBAI</span><ArrowLink onClick={onRestart}>BACK TO RECEPTION</ArrowLink><img src={BRAND_LOGO} alt="SAION Properties — Engineered Excellence" loading="lazy"/></div>
+  {/* The two closing marks are not here. They belong to the end of the
+      journey, and the end of the journey is the building the arch hands back
+      to — see `op-close-brand` in the opening chapter. Only the way back is
+      left on this screen, and it keeps the row. */}
+  <div className="rp-final-base"><ArrowLink onClick={onRestart}>BACK TO RECEPTION</ArrowLink></div>
  </section>;
 }

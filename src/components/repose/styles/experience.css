@@ -229,9 +229,9 @@
 .rp-final-call{position:absolute;top:71%;text-align:center;z-index:2}
 .rp-final-call p{font-family:var(--rp-display);font-size:clamp(40px,4.2vw,65px);line-height:1.05;margin-bottom:25px}
 .rp-final-call .rp-text-link{gap:70px}
-.rp-final-base{width:100%;display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto;gap:30px}
-.rp-final-base>img{width:clamp(118px,10vw,152px);height:auto;object-fit:contain;justify-self:end}
-.rp-final-mark{display:flex;flex-direction:column;gap:6px;font-size:10px;line-height:1.6;letter-spacing:.12em;text-align:left}.rp-final-mark strong{font-family:var(--rp-display);font-weight:var(--weight-display);font-size:clamp(19px,1.5vw,26px);line-height:1;letter-spacing:var(--track-heading)}
+.rp-final-base{width:100%;display:flex;justify-content:center;align-items:flex-end;margin-top:auto;gap:30px}
+
+
 .rp-final-base>.rp-text-link{font-size:10px!important;gap:22px}
 /* Dialog composition uses the installed accessible Radix / Shadcn primitive. */
 .rp-modal-open [data-slot=dialog-overlay]{position:fixed;inset:0;background:#182118a8;backdrop-filter:blur(8px);z-index:110}
@@ -282,7 +282,7 @@
  .rp-interior-stage{height:135svh;min-height:1050px}.rp-interior-stage>.rp-eyebrow{top:10%;left:9vw}.rp-interior-wide{left:9vw;width:91vw;top:20%;height:26%}.rp-interior-stage h2{left:9vw;top:43%;font-size:18vw;line-height:.95;z-index:5}.rp-interior-stage h2 em{padding-left:4vw}.rp-interior-tall{width:40vw;right:5vw;top:60%;height:28%}.rp-interior-bedroom{width:36vw;left:9vw;top:63%;height:20%}.rp-interior-caption{left:9vw;right:9vw;bottom:6%;justify-content:space-between;gap:25px}.rp-interior-caption>span{font-size:9px}.rp-interior-caption p{font-size:12px}
  .rp-essentials{display:block;padding:12vh 9vw}.rp-essentials-intro h2{font-size:24vw;margin:5vh 0 7vh}.rp-essentials-intro figure{height:53vw;width:100%}.rp-essentials-intro>p{font-size:27px;margin-top:25px}.rp-essential-facts{width:100%;padding-top:9vh}.rp-essential-fact{padding:30px 0;gap:20px}.rp-essential-fact h3{font-size:65px;margin:14px 0}.rp-essential-fact p{font-size:14px;max-width:90%}.rp-essential-fact .rp-micro{font-size:10px}
  .rp-connected{height:auto;min-height:1050px;padding:12vh 9vw}.rp-connected h2{font-size:22vw;margin:7vh 0;line-height:.95}.rp-connected h2 em{margin-left:0}.rp-place-line{gap:13px;font-size:9px;letter-spacing:.1em;margin-bottom:4vh}.rp-connections{display:grid;grid-template-columns:1fr 1fr;gap:32px 20px;padding-top:30px}.rp-connections article{width:auto}.rp-time{font-size:75px;gap:12px}.rp-time small{font-size:9px}.rp-connections h3{font-size:14px}.rp-connections article>span:last-child{font-size:11px}.rp-connected-bottom{padding-top:7vh;display:block}.rp-connected-bottom p{font-size:28px;margin-bottom:30px}.rp-connected-bottom>span{display:block;font-size:8px;text-align:left}
- .rp-finale{height:125svh;min-height:950px;padding:12vh 7vw 10vh}.rp-final-intro{font-size:9px}.rp-final-word{top:22%;font-size:29vw}.rp-final-image{top:29%;left:28%;width:44%;height:34%}.rp-final-call{top:68%}.rp-final-call p{font-size:38px;margin-bottom:23px}.rp-final-call .rp-text-link{font-size:10px!important;gap:30px}.rp-final-base{display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center}.rp-final-base>img{width:104px}.rp-final-mark{font-size:8px;text-align:left}.rp-final-mark strong{font-size:17px}.rp-final-base>.rp-text-link{grid-column:1/-1;justify-self:center;font-size:9px!important}
+ .rp-finale{height:125svh;min-height:950px;padding:12vh 7vw 10vh}.rp-final-intro{font-size:9px}.rp-final-word{top:22%;font-size:29vw}.rp-final-image{top:29%;left:28%;width:44%;height:34%}.rp-final-call{top:68%}.rp-final-call p{font-size:38px;margin-bottom:23px}.rp-final-call .rp-text-link{font-size:10px!important;gap:30px}.rp-final-base{display:flex;justify-content:center}.rp-final-base>.rp-text-link{font-size:9px!important}
  .rp-dialog[data-slot=dialog-content]{padding:65px 25px 30px}.rp-dialog .rp-dialog-title{font-size:49px}.rp-dialog-menu[data-slot=dialog-content]{padding:60px 25px 25px}.rp-dialog-menu nav button{gap:12px;padding:10px 0}.rp-dialog-menu nav button>span:nth-child(2){font-size:25px}.rp-dialog-menu .rp-dialog-title{font-size:48px}.rp-dialog .rp-dialog-description{font-size:14px}.rp-dialog>img{height:200px}.rp-contact-links a{font-size:15px}
 }
 /* All content remains visible in reading order, without long pins, when motion is reduced. */
@@ -427,10 +427,12 @@
 .rp-map-title{margin-top:clamp(1.4rem,2.8vh,2.4rem);font-family:var(--rp-display);font-weight:var(--weight-display);font-size:clamp(56px,7.4vw,128px);line-height:.9;letter-spacing:var(--track-display)}
 .rp-map-lead{margin-top:clamp(1.4rem,2.6vh,2.2rem);font-size:var(--type-body);line-height:var(--lh-body);color:#454a3d}
 .rp-map-figure{margin:clamp(5vh,8vh,10vh) auto 0;width:min(100%,1500px)}
-.rp-map-plate{position:relative;width:100%;overflow:hidden;background:#e4e1d6}
+.rp-map-plate{position:relative;width:100%;aspect-ratio:1754/987;overflow:hidden;background:#e4e1d6}/* The same reservation as the img's own width/height attributes, held in
+   CSS as well so the box survives a slow or failed load: the height of
+   this section must never depend on whether the drawing has arrived. */
 /* The chapter's global rule covers every image; the drawing is the one that
    must be shown whole rather than filled to a box. */
-.rp-map-plate img{width:100%;height:auto;object-fit:contain}
+.rp-map-plate img{width:100%;height:100%;object-fit:contain}
 .rp-map-mark{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:11px;pointer-events:none;white-space:nowrap}
 .rp-map-mark i{flex:none;width:9px;height:9px;border:1px solid #303329;border-radius:50%;background:rgb(240 238 230/.9)}
 .rp-map-mark__label{background:rgb(240 238 230/.88);padding:5px 10px;color:#303329}

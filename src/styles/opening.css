@@ -520,6 +520,72 @@
 }
 
 /* ---------------------------------------------------------------------
+   THE CLOSING MARKS — on the building the arch hands back to
+
+   They were at the foot of the amenities' last screen; the journey ends on
+   the building, so they end there too, and in one place only. The geometry is
+   the one they had: the two ends of a full-width row at the bottom of the
+   frame, on the finale's own 6vw / 4vh insets, the residence's name set in the
+   display face on the left and the developer's logo on the right.
+   --------------------------------------------------------------------- */
+
+.op-close-brand {
+  position: absolute;
+  left: 6vw;
+  right: 6vw;
+  bottom: 4vh;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  z-index: 6;
+  /* Nothing here is pressable, and the explorer's own hit areas run under it. */
+  pointer-events: none;
+  /* Revealed by the data attribute, never painted before it: the exchange
+     finishes on a settled building and the marks come up after it. */
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 0.9s cubic-bezier(0.22, 0.61, 0.36, 1) 0.25s,
+    transform 0.9s cubic-bezier(0.22, 0.61, 0.36, 1) 0.25s;
+}
+
+.op-close-brand[data-shown] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.op-close-brand__mark {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  line-height: 1.6;
+  letter-spacing: 0.12em;
+  text-align: left;
+  color: rgb(255 255 255 / 72%);
+  text-shadow: 0 1px 10px rgb(9 12 16 / 55%);
+}
+
+.op-close-brand__mark strong {
+  font-family: var(--font-display);
+  font-weight: var(--weight-display, 400);
+  font-size: clamp(19px, 1.5vw, 26px);
+  line-height: 1;
+  letter-spacing: var(--track-display, -0.025em);
+  color: var(--paper);
+}
+
+.op-close-brand__logo {
+  display: block;
+  width: clamp(118px, 10vw, 152px);
+  height: auto;
+  object-fit: contain;
+  opacity: 0.86;
+}
+
+/* ---------------------------------------------------------------------
    TALLEST BUILDING IN AL FURJAN — right-side overlay after WHY DUBAI
    Appears once the building is complete, before the floor explorer.
    --------------------------------------------------------------------- */
@@ -685,6 +751,25 @@
     left: var(--gutter);
     right: auto;
     align-items: flex-start;
+  }
+
+  .op-close-brand {
+    left: 5vw;
+    right: 5vw;
+    bottom: 3vh;
+    gap: 18px;
+  }
+
+  .op-close-brand__mark {
+    font-size: 8px;
+  }
+
+  .op-close-brand__mark strong {
+    font-size: 17px;
+  }
+
+  .op-close-brand__logo {
+    width: 104px;
   }
 
   .op-hint {

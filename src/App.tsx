@@ -53,6 +53,17 @@ function App() {
   /** True while the terrace covers the page (off in production — see terraceZone). */
   const [Terrace, setTerrace] = useState(getTerrace)
   const [terraceUp, setTerraceUp] = useState(false)
+  /**
+   * True once the arch has handed the frame back to the building.
+   *
+   * The closing marks — the residence's name and the developer's logo —
+   * belong to the end of the journey, and the end of the journey is the
+   * building, not the last screen of the amenities. This is what tells the
+   * opening chapter it has been returned to, so it can bring them up once
+   * the exchange has settled. It is never unset: having arrived at the end
+   * once, the visitor has arrived.
+   */
+  const [returned, setReturned] = useState(false)
 
   // Both chapters already mark their own root for the stylesheet and for the
   // scroll machinery; they are found by those marks rather than by threading
@@ -146,12 +157,16 @@ function App() {
     requestAnimationFrame(() => {
       getSmoothScroll()?.resize()
       ScrollTrigger.refresh()
+      // After the page has been put back and re-measured, not before: the
+      // marks fade up on a settled building rather than during the exchange.
+      setReturned(true)
     })
   }, [])
 
   return (
     <main>
       <OpeningExperience
+        returned={returned}
         terraceActive={terraceUp}
         onExplore={explore}
         onTerrace={openTerrace}
