@@ -401,13 +401,26 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
     const section = document.querySelector<HTMLElement>('[data-opening-root]')
     if (!section) return
 
-    const drive = (progress: number) => {
+    const drive = (progress: number, withinSection: boolean) => {
       const timeline = timelineRef.current
       if (!timeline) return
 
       // Chapter progress → film units → position within the reception band.
-      const units = progress * CHAPTER_UNITS
-      const t = Math.min(1, Math.max(0, (units - RECEPTION_BAND.start) / RECEPTION_SPAN))
+      //
+      // `withinSection` is this trigger's own `isActive` — whether the
+      // section is anywhere near the viewport at all. Once the visitor has
+      // scrolled past it for good (into the lifestyle chapter, the amenities,
+      // the arrival), `progress` stays clamped at 1 forever — GSAP keeps
+      // reporting it on every scroll frame for the rest of the document —
+      // which used to read as permanently "inside" the walk. That left the
+      // Escape-to-leave key bound for the rest of the journey: pressing
+      // Escape to close something else entirely (a floor's plan, opened from
+      // the explorer the arrival now offers) also yanked the page back into
+      // the reception. Outside the section this is forced to the band's own
+      // start regardless of the clamped progress, so leaving it for good
+      // reads as `idle` — the state the walk starts in — and nothing here
+      // answers a key press once the visitor is no longer near it.
+      const t = withinSection ? Math.min(1, Math.max(0, (progress * CHAPTER_UNITS - RECEPTION_BAND.start) / RECEPTION_SPAN)) : 0
 
       timeline.progress(t)
 
@@ -434,8 +447,8 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
       // Not `scrub`: this drives a timeline's progress directly rather than
       // tweening anything of its own, and Lenis has already smoothed the input
       // (see the note in `OpeningExperience` about stacking two filters).
-      onUpdate: (self) => drive(self.progress),
-      onRefresh: (self) => drive(self.progress),
+      onUpdate: (self) => drive(self.progress, self.isActive),
+      onRefresh: (self) => drive(self.progress, self.isActive),
     })
     return () => trigger.kill()
   }, [changePhase, onJourney, resetScene])

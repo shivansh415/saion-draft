@@ -22,18 +22,12 @@
   background: var(--ink);
 }
 
-/* Scoped through `.arrival` deliberately. The chapter this sits inside sets
-   `.repose-experience img { width:100%; height:100%; object-fit:cover }` for
-   every image in it, and a lone class loses to that on specificity — which is
-   what stretched the developer's logo across the middle of the screen. Two
-   classes beat a class and an element. */
-.arrival .arrival__still {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  /* object-position is set from FOCAL_X / FOCAL_Y on the element itself. */
+/* The explorer paints itself at `opacity:0` by default — the opening chapter
+   scrubs it to 1 as the visitor's own scroll hands the film over to it. There
+   is no such scroll here: this screen simply IS the explorer, present the
+   instant the arch hands over, so the gate is lifted permanently instead. */
+.arrival [data-fx-root] {
+  opacity: 1;
 }
 
 /* A little ground under the marks, so they hold against a bright sky or a

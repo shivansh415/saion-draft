@@ -1,10 +1,17 @@
 import { useLayoutEffect, useRef } from 'react'
 
-import { FINAL_FRAME_STILL, FOCAL_X, FOCAL_Y, OPENING_COPY } from '../../data/opening'
+import { OPENING_COPY } from '../../data/opening'
+import { FloorExplorer } from '../floor-explorer/FloorExplorer'
 import { ScrollTrigger } from '../repose/motion/gsap'
 import { ClosingCall } from './ClosingCall'
 
 import './arrival.css'
+
+/** Terrace is off in production (floor-explorer/terraceZone → TERRACE_ENABLED),
+ *  so this is never actually asked for — kept only so the explorer has
+ *  somewhere to hand a click, without pulling the terrace chapter (an App-level
+ *  concern, mounted nowhere near here) into the ending. */
+const NO_TERRACE = () => {}
 
 /**
  * The last chapter: the building you arrive at, and the one thing left to do.
@@ -16,11 +23,13 @@ import './arrival.css'
  * the end went into the construction film instead of back the way they came.
  *
  * This is the same building, placed where it belongs: after the amenities, at
- * the bottom of the document. It opens on the very still the arch's transition
- * ends on, at the same cover fit, so the hand-over is the same pixel-exact
- * exchange it always was — the page simply travels forward to it rather than
- * back. Everything above stays where it was read, and there is nothing below
- * but the closing call.
+ * the bottom of the document. And it is the same EXPLORER, not a still of it:
+ * the floor selector the visitor met at the top of the journey, offered once
+ * more before the one thing left to do. Reaching it is the same pixel-exact
+ * exchange the still hand-over always was — the explorer paints its own copy
+ * of the identical frame at the identical cover fit, so the page simply
+ * travels forward to it rather than back. Everything above stays where it was
+ * read, and there is nothing below but the closing call.
  *
  * It is pulled up over the arch by exactly one viewport. A pinned section is
  * still covering the frame at the moment its pin ends — the pin holds it with
@@ -55,21 +64,12 @@ export function Arrival() {
 
   return (
     <div data-arrival-root ref={root}>
-      <section className="arrival" aria-label="Reposé Residence">
-        {/* Framed exactly as the arch's transition leaves it, and as the
-            explorer holds it: the same cover fit about the same focal point.
-            Taken from the constants rather than written out, so the two can
-            never drift apart and put a seam in the exchange. */}
-        <img
-          className="arrival__still"
-          style={{ objectPosition: `${FOCAL_X * 100}% ${FOCAL_Y * 100}%` }}
-          src={FINAL_FRAME_STILL.src}
-          width={FINAL_FRAME_STILL.width}
-          height={FINAL_FRAME_STILL.height}
-          alt="Reposé Residence, completed — Al Furjan, Dubai"
-          decoding="async"
-          draggable={false}
-        />
+      <section className="arrival" aria-label="Reposé Residence — explore the floors again">
+        {/* The floor explorer, exactly as met at the top of the journey — its
+            own picture is the arch's still at the arch's own cover fit, so the
+            hand-over stays the pixel-exact exchange it always was. It measures
+            and reveals itself; this screen only has to give it the box. */}
+        <FloorExplorer active suspended={false} onTerrace={NO_TERRACE} />
 
         {/* The journey's closing marks, in the places they have always had:
             the residence on the left, the developer on the right, on the two
