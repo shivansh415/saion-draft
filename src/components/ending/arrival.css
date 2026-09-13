@@ -30,6 +30,24 @@
   opacity: 1;
 }
 
+/* The marks belong to the BUILDING screen.
+   
+   The explorer this screen now carries can put a floor plan over that
+   building, and the marks are wrong on one: clutter at best, and on a wide
+   screen the developer's mark lands on the sheet itself, across the caption
+   under the plan. The explorer's own `data-mode` says which screen is up —
+   `selector` is the clean building, anything else is a plan — so the marks
+   follow it, and the ground that carries them goes with them.
+
+   The ground is a pseudo-element of this section rather than a sibling of the
+   explorer, so it takes `:has()` to reach. Where that is not understood the
+   rule is skipped and the gradient simply stays: a shade over the foot of a
+   plan, which is what it was before. */
+.arrival [data-fx-root]:not([data-mode='selector']) ~ .arrival__brand,
+.arrival:has([data-fx-root]:not([data-mode='selector']))::after {
+  opacity: 0;
+}
+
 /* A little ground under the marks, so they hold against a bright sky or a
    pale road without a panel of their own. */
 .arrival::after {
@@ -40,6 +58,7 @@
   height: 34%;
   background: linear-gradient(180deg, rgb(9 12 16 / 0%) 0%, rgb(9 12 16 / 42%) 100%);
   pointer-events: none;
+  transition: opacity 450ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 .arrival__brand {
@@ -53,6 +72,7 @@
   justify-content: space-between;
   gap: 30px;
   pointer-events: none;
+  transition: opacity 450ms cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 .arrival__mark {
@@ -87,6 +107,16 @@
 }
 
 @media (max-width: 900px) {
+  /* Narrow screens are where the two meet. The explorer stops centring its
+     copy panel and anchors it just above the bottom margin instead — fine in
+     the opening chapter, where nothing else lives down there, but here the
+     closing marks hold that same margin and the panel's last line (the level
+     readout) ran under REPOSÉ RESIDENCE. Lifted clear of the marks' own band:
+     their offset from the foot, their height, and a gap. */
+  .arrival [data-fx-root] .fx__copy {
+    bottom: calc(3vh + 4.3rem);
+  }
+
   .arrival__brand {
     left: 5vw;
     right: 5vw;
