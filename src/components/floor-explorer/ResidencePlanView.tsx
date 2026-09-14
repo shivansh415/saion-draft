@@ -17,6 +17,8 @@ interface Props {
   interactive: boolean
   reducedMotion: boolean
   onBack: () => void
+  /** Navigates to the lifestyle chapter’s residence interiors. */
+  onExplore: () => void
 }
 
 /** Until a plan's own dimensions are known; the supplied unit plans sit between 1.0 and 1.5. */
@@ -56,7 +58,7 @@ const settle = (ms: number) => new Promise<void>((resolve) => window.setTimeout(
  * the drawing alone.
  */
 export const ResidencePlanView = forwardRef<HTMLButtonElement, Props>(function ResidencePlanView(
-  { level, hotspot, interactive, reducedMotion, onBack },
+  { level, hotspot, interactive, reducedMotion, onBack, onExplore },
   backRef,
 ) {
   const src = hotspot ? unitPlanImage(hotspot) : null
@@ -179,6 +181,17 @@ export const ResidencePlanView = forwardRef<HTMLButtonElement, Props>(function R
                   </span>
                 </button>
               )}
+              <button
+                type="button"
+                className="fx-res__cta"
+                onClick={onExplore}
+                tabIndex={interactive ? 0 : -1}
+              >
+                {RESIDENCE_COPY.viewInterior}
+                <span className="fx-res__cta-arrow" aria-hidden="true">
+                  →
+                </span>
+              </button>
             </div>
           </>
         )}

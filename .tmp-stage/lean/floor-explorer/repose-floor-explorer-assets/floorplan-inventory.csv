@@ -1,0 +1,79 @@
+Level,Floor Group,Floorplate,Residence Type,Bedroom Configuration,Type / Variant,Unit Plan File,Brochure Page,Notes,Verification Status
+01,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,1 BHK,1,A,units-web/unit-l01-05-07-11-1bhk-a.webp,Floorplate p52; unit p31,,VERIFIED
+01,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,1 BHK,1,A′,units-web/unit-l01-05-07-11-1bhk-a-prime.webp,Floorplate p52; unit p31,,VERIFIED
+01,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,1 BHK + Study,1,B,units-web/unit-l01-05-07-11-1bhk-study-b.webp,Floorplate p52; unit p32,,VERIFIED
+01,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,1 BHK + Study,1,B′,units-web/unit-l01-05-07-11-1bhk-study-b-prime.webp,Floorplate p52; unit p32,,VERIFIED
+01,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,2 BHK + Maid Room,2,A,units-web/unit-l01-05-07-11-2bhk-maidroom-a.webp,Floorplate p52; unit p33,,VERIFIED
+01,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,2 BHK + Maid Room,2,A′,units-web/unit-l01-05-07-11-2bhk-maidroom-a-prime.webp,Floorplate p52; unit p33,,VERIFIED
+02,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,1 BHK,1,A,units-web/unit-l02-04-08-10-1bhk-a.webp,Floorplate p53; unit p34,,VERIFIED
+02,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,1 BHK,1,A′,units-web/unit-l02-04-08-10-1bhk-a-prime.webp,Floorplate p53; unit p34,,VERIFIED
+02,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,1 BHK + Study,1,B,units-web/unit-l02-04-08-10-1bhk-study-b.webp,Floorplate p53; unit p35,,VERIFIED
+02,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,1 BHK + Study,1,B′,units-web/unit-l02-04-08-10-1bhk-study-b-prime.webp,Floorplate p53; unit p35,,VERIFIED
+02,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,2 BHK + Maid Room,2,A,units-web/unit-l02-04-08-10-2bhk-maidroom-a.webp,Floorplate p53; unit p36,,VERIFIED
+02,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,2 BHK + Maid Room,2,A′,units-web/unit-l02-04-08-10-2bhk-maidroom-a-prime.webp,Floorplate p53; unit p36,,VERIFIED
+03,Levels 03 and 09,floorplates-web/floorplate-l03-09.webp,1 BHK,1,A,units-web/unit-l03-09-1bhk-a.webp,Floorplate p54; unit p37,,VERIFIED
+03,Levels 03 and 09,floorplates-web/floorplate-l03-09.webp,1 BHK,1,A′,units-web/unit-l03-09-1bhk-a-prime.webp,Floorplate p54; unit p37,,VERIFIED
+03,Levels 03 and 09,floorplates-web/floorplate-l03-09.webp,1 BHK + Study,1,B,units-web/unit-l03-09-1bhk-study-b.webp,Floorplate p54; unit p38,,VERIFIED
+03,Levels 03 and 09,floorplates-web/floorplate-l03-09.webp,1 BHK + Study,1,B′,units-web/unit-l03-09-1bhk-study-b-prime.webp,Floorplate p54; unit p38,,VERIFIED
+03,Levels 03 and 09,floorplates-web/floorplate-l03-09.webp,2 BHK + Maid Room,2,A,units-web/unit-l03-09-2bhk-maidroom-a.webp,Floorplate p54; unit p39,,VERIFIED
+03,Levels 03 and 09,floorplates-web/floorplate-l03-09.webp,2 BHK + Maid Room,2,A′,units-web/unit-l03-09-2bhk-maidroom-a-prime.webp,Floorplate p54; unit p39,,VERIFIED
+04,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,1 BHK,1,A,units-web/unit-l02-04-08-10-1bhk-a.webp,Floorplate p53; unit p34,,VERIFIED
+04,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,1 BHK,1,A′,units-web/unit-l02-04-08-10-1bhk-a-prime.webp,Floorplate p53; unit p34,,VERIFIED
+04,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,1 BHK + Study,1,B,units-web/unit-l02-04-08-10-1bhk-study-b.webp,Floorplate p53; unit p35,,VERIFIED
+04,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,1 BHK + Study,1,B′,units-web/unit-l02-04-08-10-1bhk-study-b-prime.webp,Floorplate p53; unit p35,,VERIFIED
+04,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,2 BHK + Maid Room,2,A,units-web/unit-l02-04-08-10-2bhk-maidroom-a.webp,Floorplate p53; unit p36,,VERIFIED
+04,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,2 BHK + Maid Room,2,A′,units-web/unit-l02-04-08-10-2bhk-maidroom-a-prime.webp,Floorplate p53; unit p36,,VERIFIED
+05,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,1 BHK,1,A,units-web/unit-l01-05-07-11-1bhk-a.webp,Floorplate p52; unit p31,,VERIFIED
+05,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,1 BHK,1,A′,units-web/unit-l01-05-07-11-1bhk-a-prime.webp,Floorplate p52; unit p31,,VERIFIED
+05,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,1 BHK + Study,1,B,units-web/unit-l01-05-07-11-1bhk-study-b.webp,Floorplate p52; unit p32,,VERIFIED
+05,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,1 BHK + Study,1,B′,units-web/unit-l01-05-07-11-1bhk-study-b-prime.webp,Floorplate p52; unit p32,,VERIFIED
+05,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,2 BHK + Maid Room,2,A,units-web/unit-l01-05-07-11-2bhk-maidroom-a.webp,Floorplate p52; unit p33,,VERIFIED
+05,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,2 BHK + Maid Room,2,A′,units-web/unit-l01-05-07-11-2bhk-maidroom-a-prime.webp,Floorplate p52; unit p33,,VERIFIED
+06,Level 06,floorplates-web/floorplate-l06.webp,1 BHK,1,A,units-web/unit-l06-1bhk-a.webp,Floorplate p55; unit p40,,VERIFIED
+06,Level 06,floorplates-web/floorplate-l06.webp,1 BHK,1,A′,units-web/unit-l06-1bhk-a-prime.webp,Floorplate p55; unit p40,,VERIFIED
+06,Level 06,floorplates-web/floorplate-l06.webp,1 BHK + Study,1,B,units-web/unit-l06-1bhk-study-b.webp,Floorplate p55; unit p41,,VERIFIED
+06,Level 06,floorplates-web/floorplate-l06.webp,1 BHK + Study,1,B′,units-web/unit-l06-1bhk-study-b-prime.webp,Floorplate p55; unit p41,,VERIFIED
+06,Level 06,floorplates-web/floorplate-l06.webp,2 BHK + Maid Room,2,A,units-web/unit-l06-2bhk-maidroom-a.webp,Floorplate p55; unit p42,,VERIFIED
+06,Level 06,floorplates-web/floorplate-l06.webp,2 BHK + Maid Room,2,A′,units-web/unit-l06-2bhk-maidroom-a-prime.webp,Floorplate p55; unit p42,,VERIFIED
+07,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,1 BHK,1,A,units-web/unit-l01-05-07-11-1bhk-a.webp,Floorplate p52; unit p31,,VERIFIED
+07,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,1 BHK,1,A′,units-web/unit-l01-05-07-11-1bhk-a-prime.webp,Floorplate p52; unit p31,,VERIFIED
+07,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,1 BHK + Study,1,B,units-web/unit-l01-05-07-11-1bhk-study-b.webp,Floorplate p52; unit p32,,VERIFIED
+07,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,1 BHK + Study,1,B′,units-web/unit-l01-05-07-11-1bhk-study-b-prime.webp,Floorplate p52; unit p32,,VERIFIED
+07,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,2 BHK + Maid Room,2,A,units-web/unit-l01-05-07-11-2bhk-maidroom-a.webp,Floorplate p52; unit p33,,VERIFIED
+07,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,2 BHK + Maid Room,2,A′,units-web/unit-l01-05-07-11-2bhk-maidroom-a-prime.webp,Floorplate p52; unit p33,,VERIFIED
+08,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,1 BHK,1,A,units-web/unit-l02-04-08-10-1bhk-a.webp,Floorplate p53; unit p34,,VERIFIED
+08,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,1 BHK,1,A′,units-web/unit-l02-04-08-10-1bhk-a-prime.webp,Floorplate p53; unit p34,,VERIFIED
+08,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,1 BHK + Study,1,B,units-web/unit-l02-04-08-10-1bhk-study-b.webp,Floorplate p53; unit p35,,VERIFIED
+08,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,1 BHK + Study,1,B′,units-web/unit-l02-04-08-10-1bhk-study-b-prime.webp,Floorplate p53; unit p35,,VERIFIED
+08,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,2 BHK + Maid Room,2,A,units-web/unit-l02-04-08-10-2bhk-maidroom-a.webp,Floorplate p53; unit p36,,VERIFIED
+08,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,2 BHK + Maid Room,2,A′,units-web/unit-l02-04-08-10-2bhk-maidroom-a-prime.webp,Floorplate p53; unit p36,,VERIFIED
+09,Levels 03 and 09,floorplates-web/floorplate-l03-09.webp,1 BHK,1,A,units-web/unit-l03-09-1bhk-a.webp,Floorplate p54; unit p37,,VERIFIED
+09,Levels 03 and 09,floorplates-web/floorplate-l03-09.webp,1 BHK,1,A′,units-web/unit-l03-09-1bhk-a-prime.webp,Floorplate p54; unit p37,,VERIFIED
+09,Levels 03 and 09,floorplates-web/floorplate-l03-09.webp,1 BHK + Study,1,B,units-web/unit-l03-09-1bhk-study-b.webp,Floorplate p54; unit p38,,VERIFIED
+09,Levels 03 and 09,floorplates-web/floorplate-l03-09.webp,1 BHK + Study,1,B′,units-web/unit-l03-09-1bhk-study-b-prime.webp,Floorplate p54; unit p38,,VERIFIED
+09,Levels 03 and 09,floorplates-web/floorplate-l03-09.webp,2 BHK + Maid Room,2,A,units-web/unit-l03-09-2bhk-maidroom-a.webp,Floorplate p54; unit p39,,VERIFIED
+09,Levels 03 and 09,floorplates-web/floorplate-l03-09.webp,2 BHK + Maid Room,2,A′,units-web/unit-l03-09-2bhk-maidroom-a-prime.webp,Floorplate p54; unit p39,,VERIFIED
+10,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,1 BHK,1,A,units-web/unit-l02-04-08-10-1bhk-a.webp,Floorplate p53; unit p34,,VERIFIED
+10,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,1 BHK,1,A′,units-web/unit-l02-04-08-10-1bhk-a-prime.webp,Floorplate p53; unit p34,,VERIFIED
+10,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,1 BHK + Study,1,B,units-web/unit-l02-04-08-10-1bhk-study-b.webp,Floorplate p53; unit p35,,VERIFIED
+10,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,1 BHK + Study,1,B′,units-web/unit-l02-04-08-10-1bhk-study-b-prime.webp,Floorplate p53; unit p35,,VERIFIED
+10,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,2 BHK + Maid Room,2,A,units-web/unit-l02-04-08-10-2bhk-maidroom-a.webp,Floorplate p53; unit p36,,VERIFIED
+10,"Levels 02, 04, 08 and 10",floorplates-web/floorplate-l02-04-08-10.webp,2 BHK + Maid Room,2,A′,units-web/unit-l02-04-08-10-2bhk-maidroom-a-prime.webp,Floorplate p53; unit p36,,VERIFIED
+11,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,1 BHK,1,A,units-web/unit-l01-05-07-11-1bhk-a.webp,Floorplate p52; unit p31,,VERIFIED
+11,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,1 BHK,1,A′,units-web/unit-l01-05-07-11-1bhk-a-prime.webp,Floorplate p52; unit p31,,VERIFIED
+11,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,1 BHK + Study,1,B,units-web/unit-l01-05-07-11-1bhk-study-b.webp,Floorplate p52; unit p32,,VERIFIED
+11,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,1 BHK + Study,1,B′,units-web/unit-l01-05-07-11-1bhk-study-b-prime.webp,Floorplate p52; unit p32,,VERIFIED
+11,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,2 BHK + Maid Room,2,A,units-web/unit-l01-05-07-11-2bhk-maidroom-a.webp,Floorplate p52; unit p33,,VERIFIED
+11,"Levels 01, 05, 07 and 11",floorplates-web/floorplate-l01-05-07-11.webp,2 BHK + Maid Room,2,A′,units-web/unit-l01-05-07-11-2bhk-maidroom-a-prime.webp,Floorplate p52; unit p33,,VERIFIED
+12,Level 12,floorplates-web/floorplate-l12.webp,3 BHK + Maid Room,3,A,,Floorplate p56; unit p44,Candidate only: units-web/unit-l12-3bhk-maidroom-b.webp. Floorplate says A; matching detail-plan geometry/locator is badged B.,NEEDS MANUAL VERIFICATION
+12,Level 12,floorplates-web/floorplate-l12.webp,3 BHK + Maid Room,3,B,,Floorplate p56; unit p43,Candidate only: units-web/unit-l12-3bhk-maidroom-a.webp. Floorplate says B; matching detail-plan geometry/locator is badged A.,NEEDS MANUAL VERIFICATION
+12,Level 12,floorplates-web/floorplate-l12.webp,3 BHK + Maid Room,3,A′,,Floorplate p56; unit p44,Candidate only: units-web/unit-l12-3bhk-maidroom-b-prime.webp. Floorplate says A′; matching detail-plan geometry/locator is badged B′.,NEEDS MANUAL VERIFICATION
+13,Level 13,floorplates-web/floorplate-l13.webp,3 BHK + Maid Room,3,A,,Floorplate p57; unit p46,Candidate only: units-web/unit-l13-3bhk-maidroom-b.webp. Floorplate says A; matching detail-plan geometry/locator is badged B.,NEEDS MANUAL VERIFICATION
+13,Level 13,floorplates-web/floorplate-l13.webp,3 BHK + Maid Room,3,B,,Floorplate p57; unit p45,Candidate only: units-web/unit-l13-3bhk-maidroom-a.webp. Floorplate says B; matching detail-plan geometry/locator is badged A.,NEEDS MANUAL VERIFICATION
+13,Level 13,floorplates-web/floorplate-l13.webp,3 BHK + Maid Room,3,A′,,Floorplate p57; unit pnot supplied,No unambiguous Level 13 mirrored outer-unit detail plan is supplied. Page 46 right is explicitly labelled Level 14 and duplicates page 48 right.,NEEDS MANUAL VERIFICATION
+14,Level 14,floorplates-web/floorplate-l14.webp,3 BHK + Maid Room,3,A,,Floorplate p58; unit p48,Candidate only: units-web/unit-l14-3bhk-maidroom-b.webp. Floorplate says A; matching detail-plan geometry/locator is badged B.,NEEDS MANUAL VERIFICATION
+14,Level 14,floorplates-web/floorplate-l14.webp,3 BHK + Maid Room,3,B,,Floorplate p58; unit p47,Candidate only: units-web/unit-l14-3bhk-maidroom-a.webp. Floorplate says B; matching detail-plan geometry/locator is badged A.,NEEDS MANUAL VERIFICATION
+14,Level 14,floorplates-web/floorplate-l14.webp,3 BHK + Maid Room,3,A′,,"Floorplate p58; unit p46,48",Candidate only: units-web/unit-l14-3bhk-maidroom-b-prime.webp. Floorplate says A′; matching detail-plan geometry/locator is badged B′.,NEEDS MANUAL VERIFICATION
+15,Level 15 - Penthouse,floorplates-web/floorplate-l15-penthouse.webp,4 BHK Penthouse with Jacuzzi,4,A,units-web/unit-l15-4bhk-penthouse-jacuzzi-a.webp,Floorplate p59; unit p49,,VERIFIED
+15,Level 15 - Penthouse,floorplates-web/floorplate-l15-penthouse.webp,2 BHK + Maid Room,2,C,,Floorplate p59; unit p51,Candidate only: units-web/unit-l15-2bhk-maidroom-b.webp. Floorplate says 2-BED C; matching detail-plan page is badged B.,NEEDS MANUAL VERIFICATION
+15,Level 15 - Penthouse,floorplates-web/floorplate-l15-penthouse.webp,3 BHK Penthouse with Jacuzzi,3,not stated on floorplate,units-web/unit-l15-3bhk-penthouse-jacuzzi-a.webp,Floorplate p59; unit p50,Detail-page locator verifies the right residence and badge A; the floorplate does not visibly state its type/variant label.,NEEDS MANUAL VERIFICATION

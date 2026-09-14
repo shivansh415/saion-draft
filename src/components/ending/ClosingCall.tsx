@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { Walkthrough } from './walkthrough/Walkthrough'
+import { WALKTHROUGH_COPY } from './walkthrough/walkthroughData'
 import './closing.css'
 
 /**
@@ -12,7 +14,13 @@ import './closing.css'
  *
  * Deliberately quiet. It follows a held building and it is the last thing
  * anyone sees, so it is the brochure's back cover rather than a banner: the
- * house olive, the display serif, one line, and one way to make contact.
+ * house olive, the display serif, one line, and the two ways on from here —
+ * the films, as the one filled thing on the page, and the way to make
+ * contact beside it.
+ *
+ * The films open over this screen (see ./walkthrough): the SAION ident
+ * plays, then the stage. The page underneath is held still for the whole of
+ * it and is exactly where it was when they close.
  */
 
 const EMAIL = 'info@saionproperties.com'
@@ -25,6 +33,20 @@ export function ClosingCall() {
   // a grace note, never the thing that makes the content readable. Decided at
   // first render rather than in the effect, so there is no cascading re-render.
   const [shown, setShown] = useState(() => typeof IntersectionObserver === 'undefined')
+  /**
+   * The films. Counted rather than toggled: each press mounts a fresh
+   * walkthrough (keyed on the count), so its ident and its stage start
+   * clean every time, and nothing from a previous sitting is carried over.
+   */
+  const [sitting, setSitting] = useState(0)
+  const cueRef = useRef<HTMLButtonElement | null>(null)
+  const openFilms = useCallback(() => setSitting((n) => n + 1), [])
+  // Focus comes back to the cue that opened them, so a keyboard visitor is
+  // returned to the exact place they left.
+  const closeFilms = useCallback(() => {
+    setSitting(0)
+    cueRef.current?.focus({ preventScroll: true })
+  }, [])
 
   /**
    * Revealed on arrival rather than on a scrub.
@@ -67,12 +89,24 @@ export function ClosingCall() {
           <em>about Repos&eacute;.</em>
         </h2>
 
-        <a className="closing__cta" href={`mailto:${EMAIL}`}>
-          <span>Contact us</span>
-          <span className="closing__arrow" aria-hidden="true">
-            &#8599;
-          </span>
-        </a>
+        <div className="closing__actions">
+          <button type="button" className="closing__watch" onClick={openFilms} ref={cueRef}>
+            <span className="closing__watch-halo" aria-hidden="true" />
+            <span className="closing__watch-glyph" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M8 5.5v13l11-6.5z" />
+              </svg>
+            </span>
+            <span className="closing__watch-label">{WALKTHROUGH_COPY.cue}</span>
+          </button>
+
+          <a className="closing__cta" href={`mailto:${EMAIL}`}>
+            <span>Contact us</span>
+            <span className="closing__arrow" aria-hidden="true">
+              &#8599;
+            </span>
+          </a>
+        </div>
 
         <p className="closing__details">
           <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
@@ -82,6 +116,8 @@ export function ClosingCall() {
       </div>
 
       <span className="closing__foot">SAION PROPERTIES &middot; AL FURJAN, DUBAI</span>
+
+      {sitting > 0 && <Walkthrough key={sitting} onClose={closeFilms} />}
     </section>
   )
 }

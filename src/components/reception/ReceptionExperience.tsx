@@ -8,6 +8,7 @@ import {
   FOCAL_X,
   FOCAL_Y,
   RECEPTION_BAND,
+  RECEPTION_EXIT_AT,
   RECEPTION_SPAN,
   unitFraction,
 } from '../../data/opening'
@@ -74,6 +75,10 @@ const SETTLE_SCALE = 0.045
 
 /** Leaving is the same journey in reverse, a touch brisker. */
 const LEAVE_SPEED = 1.35
+
+/** `value`, held inside `[low, high]`. If the range has collapsed, its middle. */
+const within = (value: number, low: number, high: number): number =>
+  low > high ? (low + high) / 2 : value < low ? low : value > high ? high : value
 
 function useReducedMotion(): boolean {
   const [matches, setMatches] = useState(false)
@@ -154,6 +159,15 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
   const timelineRef = useRef<gsap.core.Timeline | null>(null)
   /** Mirrors the `entering` flag last handed up, so scroll never re-renders for nothing. */
   const underwayRef = useRef(false)
+  /**
+   * True while the opening section is anywhere near the viewport.
+   *
+   * Only the Escape key reads it. Once the visitor has scrolled past this
+   * chapter for good the walk stays where it ended — it is off screen, and
+   * winding it back would be work nobody can see — but a key press down there
+   * belongs to whatever they are actually looking at.
+   */
+  const [nearby, setNearby] = useState(true)
 
   const changePhase = useCallback((next: Phase) => {
     phaseRef.current = next
@@ -198,7 +212,7 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
 
   const applyScene = useCallback((camera: HTMLElement, inside: HTMLElement, through: HTMLElement) => {
     const { walk, settle, open } = proxy.current
-    const { target, centre, throughInset } = layoutRef.current
+    const { target, centre, throughInset, film, viewport } = layoutRef.current
 
     // Exponential in the walk: a constant proportion of growth per unit of
     // travel, which is how an approach reads on film. The settle continues it.
@@ -209,10 +223,30 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
     // by the time the leaves begin to turn — so it is looked at, not chased.
     const centring = 1 - Math.pow(1 - walk, 1.6)
 
+    // The camera may never uncover the frame.
+    //
+    // It scales about the DOOR, which sits low and right of centre, and the
+    // exponent above leads the translate ahead of the zoom — near the start of
+    // the walk `centring` is about 1.6x `walk`, so the picture is being moved
+    // half again as fast as it is being grown. Through roughly the first half
+    // of the approach that lifts the film's bottom edge clear of the bottom of
+    // the viewport by up to ~4% of its height, and what shows in the gap is the
+    // canvas underneath, still holding the building exactly where it was: the
+    // road appears to break and jump upward along a hard horizontal seam.
+    //
+    // So the lead is allowed only as far as the frame can pay for it. Each axis
+    // is held inside the range in which the scaled frame still contains the
+    // viewport; by the time the doors begin to turn the frame is large enough
+    // that the clamp no longer binds, and at arrival it is seven times over —
+    // so the choreography past the threshold, and the pixel-exact hand-over to
+    // the full-size lobby, are untouched.
+    const left = target.x + (film.x - target.x) * scale
+    const top = target.y + (film.y - target.y) * scale
+
     gsap.set(camera, {
       transformOrigin: `${target.x}px ${target.y}px`,
-      x: (centre.x - target.x) * centring,
-      y: (centre.y - target.y) * centring,
+      x: within((centre.x - target.x) * centring, viewport.width - (left + film.width * scale), -left),
+      y: within((centre.y - target.y) * centring, viewport.height - (top + film.height * scale), -top),
       scale,
     })
     gsap.set(inside, { scale: drift })
@@ -367,6 +401,9 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
    * with nothing behind it.
    * --------------------------------------------------------------- */
   const ready = useRef(false)
+  /** The scrub itself, so a rebuild can ask it where the page is. */
+  const scrubRef = useRef<ScrollTrigger | null>(null)
+  const driveRef = useRef<(progress: number) => void>(() => {})
 
   useEffect(() => {
     if (!active) return
@@ -379,8 +416,23 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
       timelineRef.current = timeline
       ready.current = true
       // Whatever the band already says — a reload part-way down, or a rebuild
-      // after a resize, must land on the frame the visitor is looking at.
-      ScrollTrigger.refresh()
+      // after a resize — must land on the frame the visitor is looking at.
+      //
+      // This used to be a whole-document `ScrollTrigger.refresh()`, and that
+      // is a synchronous re-measure of every trigger and every pin on the
+      // page. It fires the moment the hand-off settles and the explorer takes
+      // input — which is to say, in the middle of the visitor's scroll, a beat
+      // before the level rail and the floor plans appear — and it cost a frame
+      // long enough to be felt as a single jolt in the scroll, every time,
+      // right there.
+      //
+      // Nothing about the document changed here: a timeline was built. All
+      // that is actually wanted is for the new timeline to be put at the
+      // progress the page is already at, which the scrub can simply be asked
+      // for. Genuine height changes still refresh — the section's own resize
+      // handling, and the chapters below as they mount.
+      const scrub = scrubRef.current
+      if (scrub) driveRef.current(scrub.progress)
     })
     return () => {
       cancelled = true
@@ -401,26 +453,26 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
     const section = document.querySelector<HTMLElement>('[data-opening-root]')
     if (!section) return
 
-    const drive = (progress: number, withinSection: boolean) => {
+    const drive = (progress: number) => {
       const timeline = timelineRef.current
       if (!timeline) return
 
       // Chapter progress → film units → position within the reception band.
+      // The band's own ends are the only thing that decides this: above it the
+      // walk is at rest, past it the visitor is inside.
       //
-      // `withinSection` is this trigger's own `isActive` — whether the
-      // section is anywhere near the viewport at all. Once the visitor has
-      // scrolled past it for good (into the lifestyle chapter, the amenities,
-      // the arrival), `progress` stays clamped at 1 forever — GSAP keeps
-      // reporting it on every scroll frame for the rest of the document —
-      // which used to read as permanently "inside" the walk. That left the
-      // Escape-to-leave key bound for the rest of the journey: pressing
-      // Escape to close something else entirely (a floor's plan, opened from
-      // the explorer the arrival now offers) also yanked the page back into
-      // the reception. Outside the section this is forced to the band's own
-      // start regardless of the clamped progress, so leaving it for good
-      // reads as `idle` — the state the walk starts in — and nothing here
-      // answers a key press once the visitor is no longer near it.
-      const t = withinSection ? Math.min(1, Math.max(0, (progress * CHAPTER_UNITS - RECEPTION_BAND.start) / RECEPTION_SPAN)) : 0
+      // It used to be forced to 0 whenever this trigger reported `isActive`
+      // false, to keep the Escape key from staying bound for the rest of the
+      // document. That trigger ends at `bottom bottom` — the exact scroll
+      // position at which the walk COMPLETES — so the flag went false while
+      // the arrived lobby was still filling the screen, and the whole scene
+      // was reset to rest under the visitor: the lobby vanished, the clean
+      // building snapped back in its place, and the residence chapter then
+      // rose over that. Which is precisely the jump between the reception and
+      // the amenities that this was reported as. Escape is gated on `nearby`
+      // instead, which is measured against the viewport rather than against
+      // the end of the scrub.
+      const t = Math.min(1, Math.max(0, (progress * CHAPTER_UNITS - RECEPTION_BAND.start) / RECEPTION_SPAN))
 
       timeline.progress(t)
 
@@ -447,10 +499,27 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
       // Not `scrub`: this drives a timeline's progress directly rather than
       // tweening anything of its own, and Lenis has already smoothed the input
       // (see the note in `OpeningExperience` about stacking two filters).
-      onUpdate: (self) => drive(self.progress, self.isActive),
-      onRefresh: (self) => drive(self.progress, self.isActive),
+      onUpdate: (self) => drive(self.progress),
+      onRefresh: (self) => drive(self.progress),
     })
-    return () => trigger.kill()
+    scrubRef.current = trigger
+    driveRef.current = drive
+
+    // Is the section on screen at all? Measured separately from the scrub,
+    // because the scrub's own range ends where the walk ends and the section
+    // goes on for the settle and the hand-off after it.
+    const visibility = ScrollTrigger.create({
+      trigger: section,
+      start: 'top bottom',
+      end: 'bottom top',
+      onToggle: (self) => setNearby(self.isActive),
+    })
+
+    return () => {
+      scrubRef.current = null
+      trigger.kill()
+      visibility.kill()
+    }
   }, [changePhase, onJourney, resetScene])
 
   /* --------------------------------------------------------------- *
@@ -463,7 +532,14 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
   const travelTo = useCallback((unit: number, duration: number) => {
     const section = document.querySelector<HTMLElement>('[data-opening-root]')
     if (!section) return
-    glideTo(pageTop(section) + section.offsetHeight * unitFraction(unit), duration)
+    // The TRACK, not the section: the scrub runs `top top` → `bottom bottom`,
+    // so its whole range is the section's height less the sticky viewport that
+    // stays on screen through it. Measuring against the section's full height
+    // overshot every destination by that viewport — which put "Back to
+    // building" a third of the way back INTO the walk instead of out of it,
+    // and sent "Enter inside" past the arrival altogether.
+    const track = section.offsetHeight - window.innerHeight
+    glideTo(pageTop(section) + track * unitFraction(unit), duration)
   }, [])
 
   /** "Enter inside" — the walk, at about the pace it always played at. */
@@ -474,7 +550,7 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
 
   /** "Back to building" — the same walk in reverse, a touch brisker. */
   const leave = useCallback(() => {
-    travelTo(RECEPTION_BAND.start, 2.6 / LEAVE_SPEED)
+    travelTo(RECEPTION_EXIT_AT, 2.6 / LEAVE_SPEED)
   }, [travelTo])
 
   /* --------------------------------------------------------------- *
@@ -486,13 +562,13 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
 
   // Escape steps back out, from anywhere on the way in or inside.
   useEffect(() => {
-    if (phase === 'idle') return
+    if (phase === 'idle' || !nearby) return
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') leave()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [phase, leave])
+  }, [phase, nearby, leave])
 
   return (
     <div

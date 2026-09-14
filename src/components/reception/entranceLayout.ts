@@ -24,6 +24,8 @@ import type { Box, Point } from './imageSpace'
 export interface EntranceLayout {
   /** The film frame's rectangle, as painted. */
   readonly film: Box
+  /** The viewport the frame is painted into — what the camera must never uncover. */
+  readonly viewport: { readonly width: number; readonly height: number }
   /** Where the still is painted so that it lands on the film's pixels. */
   readonly still: Box
   /** Screen pixels per still pixel, at rest. */
@@ -92,6 +94,7 @@ export function layoutEntrance(rect: CoverRect): EntranceLayout {
 
   return {
     film,
+    viewport: { width: rect.containerWidth, height: rect.containerHeight },
     still,
     stillScale,
     portal,

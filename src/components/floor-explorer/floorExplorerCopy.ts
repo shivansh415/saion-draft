@@ -36,6 +36,8 @@ export const RESIDENCE_COPY = {
   view3dNote: 'Coming soon',
   floorplate: 'Floorplate',
   position: 'Position',
+  /** The control that takes the visitor to the residence chapter's interiors. */
+  viewInterior: 'View Interior',
 } as const
 
 /**

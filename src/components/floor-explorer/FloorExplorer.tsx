@@ -46,6 +46,12 @@ interface Props {
    */
   onTerrace: () => void
   /**
+   * On to the lifestyle chapter — the residence interiors. The explorer does
+   * not own that chapter; it hands over, closing whatever plan is open and
+   * unlocking the scroll so the page can travel.
+   */
+  onExplore: () => void
+  /**
    * True while another chapter has the frame (the walk into the reception).
    * The explorer stands down entirely — no pointer, no keyboard, no reveal —
    * and is put back to the clean building, so that when the frame is handed
@@ -90,7 +96,7 @@ const settle = (ms: number) => new Promise<void>((resolve) => window.setTimeout(
 /** The terrace is off in production, so nothing warms its bundle. */
 const NO_PREFETCH = () => {}
 
-export function FloorExplorer({ active, onTerrace, suspended = false }: Props) {
+export function FloorExplorer({ active, onTerrace, onExplore, suspended = false }: Props) {
   const rootRef = useRef<HTMLDivElement | null>(null)
   const backRef = useRef<HTMLButtonElement | null>(null)
   const lastTriggerRef = useRef<HTMLElement | null>(null)
@@ -585,6 +591,53 @@ export function FloorExplorer({ active, onTerrace, suspended = false }: Props) {
       .to(plateHead, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, 0.75)
   }, [reducedMotion, coarse, changeMode])
 
+  /* --------------------------------------------------------------- *
+   * Exit to the residence interiors chapter
+   *
+   * Unlike close / closeUnit, this is not an animation back: it is an
+   * immediate tear-down so the page can travel to the lifestyle chapter
+   * without the explorer's locked scroll or open state fighting it.
+   * --------------------------------------------------------------- */
+  const exitToInteriors = useCallback(() => {
+    const root = rootRef.current
+    if (!root) { onExplore(); return }
+
+    // Kill every tween the explorer may have running.
+    const all = root.querySelectorAll<HTMLElement>(
+      '[data-fx-line],[data-fx-tag],[data-fx-dim],[data-fx-stage],' +
+      '[data-fx-copy],[data-fx-list],[data-fx-hits],' +
+      '[data-fx-plate-area],[data-fx-plate-figure],[data-fx-plate-head],' +
+      '[data-fx-res-figure],[data-fx-res-head]',
+    )
+    all.forEach((el) => gsap.killTweensOf(el))
+
+    // Reset visible elements back to their resting values so a return
+    // to the explorer after the chapter does not find stale transforms.
+    all.forEach((el) => gsap.set(el, { clearProps: 'all' }))
+
+    // Reset plan viewers so the next open starts from the fit.
+    const resArea = root.querySelector<HTMLElement>('[data-fx-res-figure]')
+    if (resArea) resetPlanViewer(resArea)
+    const plateArea = root.querySelector<HTMLElement>('[data-fx-plate-area]')
+    if (plateArea) resetPlanViewer(plateArea)
+
+    // Tear down state.
+    changeMode('selector')
+    setOpenLevel(null)
+    setOpenResidence(null)
+    setUnitHovered(null)
+    setUnitSelected(null)
+    setRevealed(false)
+    setHovered(null)
+    setSelected(null)
+    setTerraceHovered(false)
+    setTerraceSelected(false)
+    unlockScroll()
+
+    // Now navigate.
+    onExplore()
+  }, [onExplore, changeMode])
+
   // Escape steps back one level: residence → floor, floor → building.
   useEffect(() => {
     if (mode !== 'floorplate' && mode !== 'residence') return
@@ -795,6 +848,7 @@ export function FloorExplorer({ active, onTerrace, suspended = false }: Props) {
         interactive={mode === 'residence'}
         reducedMotion={reducedMotion}
         onBack={closeUnit}
+        onExplore={exitToInteriors}
         ref={unitBackRef}
       />
     </div>

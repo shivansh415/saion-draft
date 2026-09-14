@@ -733,7 +733,7 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onNearL
         </div>
 
         {/* Chapter 02 rests over the held final frame; the hand-off above scrubs it in. */}
-        <FloorExplorer active={explorerActive} onTerrace={onTerrace} suspended={entering || covered} />
+        <FloorExplorer active={explorerActive} onTerrace={onTerrace} onExplore={onExplore} suspended={entering || covered} />
 
         {/* The way to the amenities, marked on the storey it belongs to. It is a
             sibling of the explorer so the stylesheet can retire it the moment the

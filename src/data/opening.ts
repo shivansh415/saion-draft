@@ -95,9 +95,31 @@ export const EXPLORER_HOLD_VH = 260
  */
 export const RECEPTION_TRACK_VH = 260
 
+/**
+ * The breath after the walk: the lobby has arrived, and simply stays.
+ *
+ * The reception band used to end on the section's LAST PIXEL, which is the
+ * same class of mistake the arch's pin once made. A smoothed scroll settles
+ * asymptotically, so a progress of exactly 1 is somewhere it arrives at
+ * rather than lands on — the last beats of the walk were only reliably
+ * reachable by overshooting into the hand-off. Worse, the hand-off into the
+ * residence then began in the same frame the lobby finished assembling, so
+ * there was never a moment in which the visitor was simply INSIDE.
+ *
+ * Sixty vh of nothing happening. The walk completes with this much scroll
+ * still in the section, the lobby holds, and only then does the sticky
+ * viewport release and the residence chapter rise into the frame.
+ */
+export const RECEPTION_SETTLE_VH = 60
+
 /** Height of the whole scroll track. The visual viewport stays sticky inside it. */
 export const CHAPTER_HEIGHT_VH =
-  100 + FILM_TRACK_VH + HANDOFF_TRACK_VH + EXPLORER_HOLD_VH + RECEPTION_TRACK_VH
+  100 +
+  FILM_TRACK_VH +
+  HANDOFF_TRACK_VH +
+  EXPLORER_HOLD_VH +
+  RECEPTION_TRACK_VH +
+  RECEPTION_SETTLE_VH
 
 /**
  * Length of the chapter in "film units" (1 = the film track). The scrubbed
@@ -108,7 +130,12 @@ export const CHAPTER_HEIGHT_VH =
  * beat in this file is a fraction of the FILM track, never of the chapter.
  */
 export const CHAPTER_UNITS =
-  (FILM_TRACK_VH + HANDOFF_TRACK_VH + EXPLORER_HOLD_VH + RECEPTION_TRACK_VH) / FILM_TRACK_VH
+  (FILM_TRACK_VH +
+    HANDOFF_TRACK_VH +
+    EXPLORER_HOLD_VH +
+    RECEPTION_TRACK_VH +
+    RECEPTION_SETTLE_VH) /
+  FILM_TRACK_VH
 
 const afterFilm = (vh: number) => 1 + vh / FILM_TRACK_VH
 
@@ -147,6 +174,19 @@ export const RECEPTION_BAND = {
 } as const
 
 export const RECEPTION_SPAN = RECEPTION_BAND.end - RECEPTION_BAND.start
+
+/**
+ * Where "Back to building" puts the visitor: a little ABOVE the band, not on
+ * its first pixel.
+ *
+ * Landing exactly on the start is landing on a boundary, and a smoothed scroll
+ * settles a fraction either side of where it was sent — half the time on the
+ * band's own first hair of progress, which is the walk already under way, with
+ * the cue at the door already retired. The control says back to the building,
+ * so it lands on the building with room around it: forty vh up, inside the
+ * explorer's own hold.
+ */
+export const RECEPTION_EXIT_AT = afterFilm(HANDOFF_TRACK_VH + EXPLORER_HOLD_VH - 40)
 
 /**
  * Where the lifestyle chapter is put into the document.
