@@ -1,15 +1,26 @@
 /**
  * The walkthrough — the films shown after the closing call.
  *
- * Everything the stage needs to know about a film is here, so adding the real
- * footage is a matter of filling in `src` (and, ideally, `poster`): the stage
- * shows a placeholder for any film whose `src` is still null and switches to
- * the real player the moment one is given.
+ * Everything the stage needs to know about a film is here: the stage shows a
+ * placeholder for any film whose `src` is still null and switches to the real
+ * player the moment one is given.
  *
- * `src` should be the delivery URL — Cloudinary with `f_auto:video,q_auto`
- * (and an `sp_auto` streaming profile for anything over ~20 s). `poster` is a
- * frame from the same film (`so_0,f_auto` on Cloudinary) so nothing is fetched
- * until the visitor asks for the film itself.
+ * Both films are now in. They are the supplied unit walkthroughs — the
+ * one-bedroom and the two-bedroom layouts, each opening on the floorplate and
+ * moving through the finished rooms, with the narration and the burnt-in
+ * captions the client delivered.
+ *
+ * `src` is a path under `public/`, so the films are served from the same
+ * origin as the site and nothing depends on a third party staying up. The
+ * 4K HEVC masters the client supplied are 198MB and 275MB and play in almost
+ * no browser; they are kept out of the deployment in `media-src/` (gitignored,
+ * beside the interiors and amenity masters) and what ships here is the 1080p
+ * H.264 encode of each — `-crf 25 -preset slow`, `+faststart` so playback can
+ * begin on the first range request rather than after the whole file.
+ *
+ * `poster` is a still from the film itself, so the frame is composed before a
+ * byte of video is asked for: the stage's player is `preload="metadata"`, so
+ * the poster is all that loads until the visitor presses play.
  */
 
 export interface WalkthroughFilm {
@@ -30,22 +41,22 @@ export interface WalkthroughFilm {
 
 export const WALKTHROUGH_FILMS: readonly WalkthroughFilm[] = [
   {
-    id: 'exterior',
+    id: 'one-bedroom',
     index: '01',
-    title: 'The Approach',
-    subtitle: 'Al Furjan, the street, the arrival',
-    duration: null,
-    src: null,
-    poster: null,
+    title: 'The One-Bedroom',
+    subtitle: 'The plan, the living and dining, the terrace',
+    duration: '0:59',
+    src: '/assets/walkthrough/one-bedroom-walkthrough.mp4',
+    poster: '/assets/walkthrough/one-bedroom-walkthrough-poster.webp',
   },
   {
-    id: 'interior',
+    id: 'two-bedroom',
     index: '02',
-    title: 'Inside Reposé',
-    subtitle: 'The lobby, the residence, the terrace',
-    duration: null,
-    src: null,
-    poster: null,
+    title: 'The Two-Bedroom',
+    subtitle: 'The plan, both bedrooms, the maid’s room',
+    duration: '1:24',
+    src: '/assets/walkthrough/two-bedroom-walkthrough.mp4',
+    poster: '/assets/walkthrough/two-bedroom-walkthrough-poster.webp',
   },
 ]
 
