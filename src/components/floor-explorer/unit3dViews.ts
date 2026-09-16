@@ -84,23 +84,43 @@ export function unit3dCamera({ align, fill }: Unit3dView): Unit3dCamera {
  * By residence id — the package's own id, as `residences-map.json` states it,
  * plus the links `unitPlanVerification.ts` confirms.
  *
- * Every residence the package draws is here — thirty-five of them.
+ * Every residence the package draws is here — all thirty-six of them.
  *
  * `l14-3bed-a-prime` (Level 14, right wing) was the late one. Its first render
  * was a horizontal mirror of its own drawing and was refused; the replacement
  * supplied on 10 Sep matches the drawing on all twelve printed dimension
  * strings and on the entrance side, and is the one registered here.
  *
- * One residence still has no entry, and it is not for want of a render:
- * `l13-3bed-a-prime` (Level 13, right wing) has no DRAWING of its own. The
- * sheet offered for it, `unit-l13-3bhk-maidroom-a-prime.webp`, prints Level
- * 14's right-wing figures exactly — BATH 1.5x1.5, MAID 1.8x2.1, BEDROOM
- * 3.8x4.2, and areas 1691.33 / 660.58 / 2351.91 sq ft — where Level 13's own
- * wing prints 1.5x1.2, 1.8x1.85, 3.8x4.3 and 1691.44 / 645.19 / 2336.63. The
- * two floors demonstrably differ, so that sheet is Level 14's, relabelled, and
- * wiring it would publish one floor's apartment and areas as another's. That
- * residence keeps its placeholder until a genuine Level 13 right-wing drawing
- * exists to render from.
+ * `l13-3bed-a-prime` (Level 13, right wing) was the last one in, and its story
+ * is worth keeping. There was first no Level 13 right-wing DRAWING at all —
+ * page 46's right-hand plan was captioned Level 14. The 2026 brochure revision
+ * captions that page Level 13 and supplies the wing as B', so the drawing began
+ * to ship and the residence opened it (`unitPlanVerification.ts`).
+ *
+ * The RENDER then had to be corrected before it could be registered. The one in
+ * the package was on the supplier's own QA as not approved — an ensuite drawn
+ * with no WC at all, and a duplicated basin in the tall left bath — and it was
+ * shipped under two filenames whose decoded pixels were identical, so renaming
+ * did not get you a second render. The correction pass came back as
+ * `repose-level13-fixture-patch`: four wet rooms fixed (the ensuite's WC, the
+ * duplicated basin, and a WC added to the PWD and to the bottom bath), with the
+ * geometry held still — every 256px tile within 0.3px of the original, canvas
+ * unchanged, labels unchanged. That is the render registered here.
+ *
+ * Its `align` was measured differently from the others and is worth flagging.
+ * Seven automated fits were tried (chamfer on ink, OCR of the dimension
+ * strings, blurred-field and FFT correlation, edge and wall-mask template
+ * matching, per-tile phase-correlation refinement) and every one of them
+ * plateaued around 3-5% of a sheet when checked against the L12, L13-b and L14
+ * entries, whose answers are already known. The chamfer even scored BETTER than
+ * the committed numbers while being visibly wrong, which is the shrink-onto-the
+ * -dense-part bias the note below warns about. So this one was measured the way
+ * the others should be checked: by eye, on a red/blue/magenta overlay of the
+ * two drawings' ink, swept one parameter at a time until every neighbouring
+ * value was visibly worse. `left`, `top` and `width` sit at a clear optimum;
+ * `height` is the midpoint of the range that still read as a single wall rather
+ * than two. If the transition ever looks soft on this residence, `height` is
+ * the number to revisit first.
  *
  * ── How `align` was arrived at ─────────────────────────────────────────
  *
@@ -261,6 +281,11 @@ const VIEWS: Readonly<Record<string, Unit3dView>> = {
   'l13-3bed-b': {
     src: assetUrl('units-3d/unit-l13-3bhk-maidroom-a-3d.webp'),
     align: { left: 0.0817, top: 0.0904, width: 0.7385, height: 0.8531 },
+    fill: 0.98,
+  },
+  'l13-3bed-a-prime': {
+    src: assetUrl('units-3d/unit-l13-3bhk-maidroom-b-prime-3d.webp'),
+    align: { left: -0.2102, top: 0.1297, width: 1.1287, height: 0.8366 },
     fill: 0.98,
   },
   'l14-3bed-a': {

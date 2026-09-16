@@ -75,3 +75,12 @@ public/assets/reception-entry/Reception-done.webp
 
 # Temporary staging directory (build artifacts, tar files)
 .tmp-stage/
+
+# The supplied delivery packages, moved out of public/ by
+# tools/cleanup-deploy-weight.sh. Everything under public/ is copied verbatim
+# into the build, and none of these is reachable at runtime: the floor explorer
+# resolves assets through FLOOR_EXPLORER_BASE and RELIT_BASE only, and what
+# ships from each delivery has already been copied into
+# public/floor-explorer/repose-floor-explorer-assets/. Kept beside the project,
+# off the deployment, like media-src/ and assets-master/.
+/deliveries/
