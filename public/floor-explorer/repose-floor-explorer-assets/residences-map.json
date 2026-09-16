@@ -592,6 +592,22 @@
       "brochureVariant": "B",
       "notes": "Detail page badge is B; locator/geometry corresponds to the left residence labelled 3-BED A on the floorplate."
     },
+    "up-l13-3bhk-maidroom-b-prime": {
+      "id": "up-l13-3bhk-maidroom-b-prime",
+      "file": "units-web/unit-l13-3bhk-maidroom-b-prime.webp",
+      "masterFile": "units-master/unit-l13-3bhk-maidroom-b-prime.png",
+      "brochurePage": 46,
+      "sourcePages": [
+        46
+      ],
+      "levelsClaimedByDetailPage": [
+        "13"
+      ],
+      "residenceType": "3 BHK + Maid Room",
+      "bedrooms": "3",
+      "brochureVariant": "B′",
+      "notes": "Supplied by the 2026 brochure revision: page 46 right, captioned Level 13. The earlier printing captioned this same drawing Level 14. The 2026-09 brochure revision then revised its balcony and total (660.58 / 2351.91 → 670.91 / 2362.24 sq ft) so that they no longer equal Level 14 B′, which still prints 660.58 / 2351.91. The two floors' right wings are therefore stated as different apartments."
+    },
     "up-l14-3bhk-maidroom-a": {
       "id": "up-l14-3bhk-maidroom-a",
       "file": "units-web/unit-l14-3bhk-maidroom-a.webp",
@@ -630,7 +646,6 @@
       "masterFile": "units-master/unit-l14-3bhk-maidroom-b-prime.png",
       "brochurePage": 48,
       "sourcePages": [
-        46,
         48
       ],
       "levelsClaimedByDetailPage": [
@@ -639,7 +654,7 @@
       "residenceType": "3 BHK + Maid Room",
       "bedrooms": "3",
       "brochureVariant": "B′",
-      "notes": "The identical plan is printed on brochure pages 46 and 48 as Level 14 B′; only one asset is retained to avoid duplication."
+      "notes": "Brochure page 48 right. In the earlier printing the same drawing also appeared on page 46 captioned Level 14; the 2026 revision re-captions page 46 as Level 13, so page 48 is now this plan's only source."
     },
     "up-l15-4bhk-penthouse-jacuzzi-a": {
       "id": "up-l15-4bhk-penthouse-jacuzzi-a",
@@ -670,8 +685,8 @@
       ],
       "residenceType": "3 BHK Penthouse with Jacuzzi",
       "bedrooms": "3",
-      "brochureVariant": "A",
-      "notes": "Locator identifies the right residence; the Level 15 floorplate does not visibly state a type/variant label for this residence."
+      "brochureVariant": "C",
+      "notes": "Badged C by the 2026-09 brochure revision (page 50); the earlier printing badged this same sheet A, which collided with the 4-bedroom penthouse A on the same floor. The Level 15 floorplate still prints no type label for this residence, so nothing contradicts the sheet."
     },
     "up-l15-2bhk-maidroom-b": {
       "id": "up-l15-2bhk-maidroom-b",
@@ -1040,7 +1055,9 @@
         "unitPlanId": null,
         "unitPlan": null,
         "mappingStatus": "NEEDS MANUAL VERIFICATION",
-        "notes": "No unambiguous Level 13 mirrored outer-unit detail plan is supplied. Page 46 right is explicitly labelled Level 14 and duplicates page 48 right."
+        "notes": "Floorplate says A′; the matching detail plan (page 46 right) is badged B′. That page previously captioned this drawing Level 14; the 2026-09 brochure revision captions it Level 13 and gives it its own balcony and total, distinct from Level 14 B′.",
+        "candidateUnitPlanId": "up-l13-3bhk-maidroom-b-prime",
+        "candidateUnitPlan": "units-web/unit-l13-3bhk-maidroom-b-prime.webp"
       }
     ],
     "rs-l14": [
@@ -1105,7 +1122,7 @@
         "unitPlanId": null,
         "unitPlan": null,
         "mappingStatus": "NEEDS MANUAL VERIFICATION",
-        "notes": "Floorplate says 2-BED C; matching detail-plan page is badged B.",
+        "notes": "Floorplate says 2-BED C; matching detail-plan page is badged B. Unchanged by the 2026-09 brochure revision, which touched only the right-hand penthouse's badge. The two sources appear to letter by different schemes — the plate by bedroom-count type (4-BED A, 2-BED C), the sheets by position across the floor (A / B / C) — so no letter is asserted for this residence.",
         "candidateUnitPlanId": "up-l15-2bhk-maidroom-b",
         "candidateUnitPlan": "units-web/unit-l15-2bhk-maidroom-b.webp"
       },
@@ -1113,12 +1130,12 @@
         "id": "l15-3bed-variant-unstated",
         "name": "3 BHK Penthouse with Jacuzzi",
         "bedrooms": "3",
-        "variant": null,
+        "variant": "C",
         "floorplatePosition": "outer-right",
         "unitPlanId": "up-l15-3bhk-penthouse-jacuzzi-a",
         "unitPlan": "units-web/unit-l15-3bhk-penthouse-jacuzzi-a.webp",
-        "mappingStatus": "NEEDS MANUAL VERIFICATION",
-        "notes": "Detail-page locator verifies the right residence and badge A; the floorplate does not visibly state its type/variant label."
+        "mappingStatus": "VERIFIED",
+        "notes": "Type letter supplied by the 2026-09 brochure revision: page 50 is now badged C. With the 4-bedroom penthouse A and the centre 2-bedroom B, the three detail sheets read A / B / C from left to right. The floorplate prints no label here."
       }
     ]
   },
@@ -1446,8 +1463,8 @@
       "levels": [
         "13"
       ],
-      "issue": "No unambiguous mirrored outer-right unit detail is supplied for Level 13. Page 46 right is labelled Level 14 and duplicates the Level 14 B′ plan on page 48.",
-      "status": "NEEDS MANUAL VERIFICATION"
+      "issue": "RESOLVED by the 2026 brochure revisions: page 46 right is captioned Level 13, and the 2026-09 revision gives it a balcony and total of its own (670.91 / 2362.24 sq ft) where it previously repeated Level 14 B′ exactly.",
+      "status": "RESOLVED"
     },
     {
       "levels": [
@@ -1460,8 +1477,8 @@
       "levels": [
         "15"
       ],
-      "issue": "The right 3-bedroom penthouse detail page is badged A, while the complete floorplate does not visibly state a type/variant label for that residence.",
-      "status": "NEEDS MANUAL VERIFICATION"
+      "issue": "RESOLVED by the 2026-09 brochure revision: the right 3-bedroom penthouse detail page is now badged C, not A. The floorplate still prints no label for that residence.",
+      "status": "RESOLVED"
     },
     {
       "levels": [

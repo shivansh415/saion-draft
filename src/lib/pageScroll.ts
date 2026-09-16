@@ -34,6 +34,23 @@ export function jumpTo(top: number): void {
 }
 
 /**
+ * Lenis's own default easing for `scrollTo` — `1.001 - 2^(-10t)` — is a sharp
+ * ease-OUT: it spends about ninety percent of the scroll distance in the
+ * first third of the duration and creeps through the rest. For a plain jump
+ * to a section that is invisible. It is not invisible here: several chapters
+ * — the reception's walk to the door chief among them — read scroll position
+ * straight off the page as animation progress, so whatever curve the glide's
+ * distance follows, the picture follows exactly. Under that default curve the
+ * zoom and the doors finish almost the instant the press lands, and the
+ * duration is spent creeping through a scene that has already arrived — which
+ * is the "ek dam se" jump this was written to fix. An ease that spends its
+ * time evenly on the way in and the way out keeps the choreography spread
+ * across the whole of the duration a caller asks for, so a press reads as the
+ * same continuous glide a scroll does, just one that drives itself.
+ */
+const glideEase = (t: number): number => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2)
+
+/**
  * Glides the page to `top`.
  *
  * This is what a pressed control does — "Enter inside", "Explore Reposé",
@@ -44,7 +61,7 @@ export function jumpTo(top: number): void {
 export function glideTo(top: number, duration = 1.15): void {
   const lenis = getSmoothScroll()
   if (lenis && !reduced()) {
-    lenis.scrollTo(top, { duration, force: true })
+    lenis.scrollTo(top, { duration, force: true, easing: glideEase })
     return
   }
   window.scrollTo({ top, behavior: reduced() ? 'instant' : 'smooth' })

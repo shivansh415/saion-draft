@@ -76,6 +76,15 @@ const SETTLE_SCALE = 0.045
 /** Leaving is the same journey in reverse, a touch brisker. */
 const LEAVE_SPEED = 1.35
 
+/**
+ * Longest the walk waits for its two stills before it is built regardless.
+ *
+ * They are 6.6MB together, so on a slow line waiting for both meant the whole
+ * chapter silently did not happen. Three seconds is past any warm cache and
+ * short of the band being scrolled through.
+ */
+const RECEPTION_WARM_CEILING_MS = 3000
+
 /** `value`, held inside `[low, high]`. If the range has collapsed, its middle. */
 const within = (value: number, low: number, high: number): number =>
   low > high ? (low + high) / 2 : value < low ? low : value > high ? high : value
@@ -408,7 +417,20 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
   useEffect(() => {
     if (!active) return
     let cancelled = false
-    void Promise.all([warm(RECEPTION_ASSETS.building), warm(RECEPTION_ASSETS.reception)]).then(() => {
+    // The two stills are 6.6MB between them, and until BOTH have loaded and
+    // decoded the scrub has no timeline to write to — `drive()` returns at
+    // once, `onJourney` is never handed up, and the visitor scrolls the whole
+    // 260vh band with nothing happening, arriving at the residence chapter
+    // having never seen the lobby. On a ~1 Mbps line that is every visitor.
+    //
+    // So the wait has a ceiling. Past it the timeline is built anyway: the
+    // choreography is geometry, not pixels, and it runs correctly over
+    // whichever of the two stills has arrived, with the other filling in as
+    // it lands. A walk through a picture that is still sharpening is a
+    // chapter; no walk at all is not.
+    const stills = Promise.all([warm(RECEPTION_ASSETS.building), warm(RECEPTION_ASSETS.reception)])
+    const ceiling = new Promise<void>((resolve) => window.setTimeout(resolve, RECEPTION_WARM_CEILING_MS))
+    void Promise.race([stills, ceiling]).then(() => {
       if (cancelled) return
       const timeline = build()
       if (!timeline) return

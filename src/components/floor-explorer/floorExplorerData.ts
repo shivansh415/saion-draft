@@ -202,7 +202,15 @@ export interface Floorplate {
   readonly id: string
   /** Both copies of the plate's web drawing. */
   readonly images: PlanImages
-  readonly masterSrc: string
+  /*
+   * There is deliberately no `masterSrc` here. The package's
+   * `floorplates.*.masterFile` names files under `floorplates-master/`, and
+   * that folder is not in the delivery — so the field resolved to eight URLs
+   * that 404. Nothing read it, so nothing broke; it was a loaded gun for the
+   * first component to reach for a "full-resolution plate". Unit plans are
+   * different: `units-master/` does ship, and `resolvePlan` deliberately
+   * returns the web file regardless.
+   */
   readonly brochurePage: number
   /** Every level that uses this plate. */
   readonly levels: readonly LevelId[]
@@ -331,7 +339,6 @@ function build(selector: SelectorFile, residences: ResidencesFile): FloorExplore
     plateById.set(id, {
       id,
       images: planImages(plate.webFile),
-      masterSrc: assetUrl(plate.masterFile),
       brochurePage: plate.brochurePage,
       levels: plate.levels.filter(isLevelId),
       hotspots,

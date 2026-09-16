@@ -3,7 +3,7 @@ import type { Ref } from 'react'
 import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 
-import { LOADER_COPY, LOADER_MAX_MS, LOADER_MIN_MS } from '../../data/opening'
+import { LOADER_COPY, LOADER_HARD_MS, LOADER_MAX_MS, LOADER_MIN_MS } from '../../data/opening'
 import { lockScroll, unlockScroll } from '../../lib/scrollLock'
 
 /**
@@ -229,7 +229,10 @@ export function OpeningLoader({ ref, ready, minimum, onReveal, onDone }: Props) 
     const check = () => {
       const elapsed = performance.now() - mountedAt
       if (elapsed < LOADER_MIN_MS) return
-      if (readyRef.current || (minimumRef.current && elapsed >= LOADER_MAX_MS)) {
+      // The third clause is the one that is not conditional on anything having
+      // arrived. Without it a request that hangs rather than fails leaves the
+      // page locked behind this screen indefinitely.
+      if (readyRef.current || (minimumRef.current && elapsed >= LOADER_MAX_MS) || elapsed >= LOADER_HARD_MS) {
         window.clearInterval(poll)
         leave()
       }

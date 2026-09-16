@@ -198,14 +198,14 @@ export const RECEPTION_EXIT_AT = afterFilm(HANDOFF_TRACK_VH + EXPLORER_HOLD_VH -
  */
 export const LIFESTYLE_MOUNT_AT = afterFilm(HANDOFF_TRACK_VH + 30)
 
-/**
- * Where the arch at the end of the lifestyle chapter puts the page back.
- *
- * Just after the explorer takes input and well before `LIFESTYLE_MOUNT_AT`, so
- * the return lands on the settled building with the mount threshold above the
- * visitor again — scrolling down re-arms it exactly as it did the first time.
+/*
+ * There was an `ARCH_RETURN_AT` here, and it described a journey that no
+ * longer exists: the arch used to put the page back UP onto the building
+ * inside this chapter, which made the whole thing a loop. It now hands over
+ * to the arrival, which is its own chapter at the bottom of the document
+ * (see `App.returnToBuilding`), so nothing consumed this constant and its
+ * doc comment contradicted the code around it.
  */
-export const ARCH_RETURN_AT = afterFilm(160)
 
 /** A film-unit position as a fraction of the chapter's scroll track. */
 export const unitFraction = (unit: number): number => unit / CHAPTER_UNITS
@@ -456,6 +456,23 @@ export const LOADER_MIN_MS = 1700
  * the frames keep arriving either way.
  */
 export const LOADER_MAX_MS = 4500
+
+/**
+ * The hard ceiling: the loader lifts at this point whatever has or has not
+ * arrived.
+ *
+ * `LOADER_MAX_MS` is not one. It is gated on `minimum` — frame one decoded and
+ * the fonts settled — so a request that neither loads NOR errors (a stalled
+ * socket, a hung CDN edge, a captive portal) never reached it, and the loader
+ * stood there holding `lockScroll()` with no timeout, no message and no way to
+ * scroll. A 404 was always handled; silence was not.
+ *
+ * Fifteen seconds is far past any honest slow line and far short of a visitor
+ * deciding the site is broken. Past it the film may open on a held frame or an
+ * empty canvas — the scrub recovers as frames land — which is in every case
+ * better than a page that never gives itself back.
+ */
+export const LOADER_HARD_MS = 15000
 
 /** Longest the fonts are waited on before the reveal goes ahead without them. */
 export const FONT_WAIT_MS = 4000

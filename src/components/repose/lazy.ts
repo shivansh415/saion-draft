@@ -53,7 +53,13 @@ export function loadLifestyle(): Promise<Chapter> {
   return inflight
 }
 
-/** Warms the chunk ahead of the press. */
+/**
+ * Warms the chunk ahead of the press.
+ *
+ * Nothing waits on this, so a failure is swallowed rather than left as an
+ * unhandled rejection — `loadLifestyle` has already forgotten it, and the
+ * mount that actually needs the chapter reports its own failure.
+ */
 export function prefetchLifestyle(): void {
-  void loadLifestyle()
+  void loadLifestyle().catch(() => {})
 }

@@ -37,6 +37,8 @@ export function WalkthroughStage({ live, armed, onClose }: Props) {
   const [current, setCurrent] = useState(0)
   /** The frame is mid-crossfade; a second press waits its turn. */
   const switching = useRef(false)
+  /** That crossfade, so unmounting can kill it rather than let it finish. */
+  const crossfade = useRef<gsap.core.Timeline | null>(null)
   const film = WALKTHROUGH_FILMS[current]
   const count = WALKTHROUGH_FILMS.length
 
@@ -98,6 +100,11 @@ export function WalkthroughStage({ live, armed, onClose }: Props) {
           switching.current = false
         },
       })
+      // Kept so unmounting can kill it. Closing the walkthrough mid-crossfade
+      // otherwise left the timeline running against detached nodes, with a
+      // `setCurrent` still queued on a component that is no longer there.
+      crossfade.current?.kill()
+      crossfade.current = tl
       if (reduced) {
         setCurrent(next)
         tl.to({}, { duration: 0.05 })
@@ -115,6 +122,17 @@ export function WalkthroughStage({ live, armed, onClose }: Props) {
       )
     },
     [count, current],
+  )
+
+  // The crossfade outlives a close otherwise: its tweens go on running against
+  // detached nodes and its `setCurrent` call fires on a component that is no
+  // longer mounted.
+  useEffect(
+    () => () => {
+      crossfade.current?.kill()
+      crossfade.current = null
+    },
+    [],
   )
 
   useEffect(() => {

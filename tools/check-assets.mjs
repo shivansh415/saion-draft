@@ -17,7 +17,7 @@
  *
  * A missing file is not a warning here. It is a failed build.
  */
-import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, join, resolve } from 'node:path'
 
@@ -51,6 +51,14 @@ const need = (relative, why) => {
   const name = relative.split('/').pop()
   if (!listings.get(folder).has(name)) {
     missing.push({ relative, why: `${why} — present but spelled differently on disk (case mismatch)` })
+    return
+  }
+  // Existence is not enough. A script that aborts mid-write leaves a
+  // zero-length file behind, `existsSync` says yes, and the browser gets an
+  // image that fires `error` — which is exactly how a 0-byte relit drawing
+  // shipped. Anything under a kilobyte is not a drawing, a font or a film.
+  if (statSync(full).size < 1024) {
+    missing.push({ relative, why: `${why} — present but only ${statSync(full).size} bytes (truncated or empty)` })
   }
 }
 
@@ -191,9 +199,73 @@ const SEQUENCES = [
 const shortfall = []
 for (const { id, count } of SEQUENCES) {
   const folder = join(PUBLIC, 'assets/opening', id, 'webp')
-  const found = existsSync(folder) ? readdirSync(folder).filter((f) => f.endsWith('.webp')).length : 0
+  const present = existsSync(folder) ? new Set(readdirSync(folder).filter((f) => f.endsWith('.webp'))) : new Set()
   checked.files += count
-  if (found !== count) shortfall.push(`${id}: ${found} frames present, ${count} declared in src/data/opening.ts`)
+  if (present.size !== count) {
+    shortfall.push(`${id}: ${present.size} frames present, ${count} declared in src/data/opening.ts`)
+    continue
+  }
+  // The count alone passes a folder of 200 files named `frame-001.webp`
+  // while every request for `frame-0001.webp` 404s. Check the names the
+  // code actually builds (see `frameSrc` in src/data/opening.ts).
+  const wrong = []
+  for (let i = 1; i <= count; i++) {
+    const name = `frame-${String(i).padStart(4, '0')}.webp`
+    if (!present.has(name)) wrong.push(name)
+  }
+  if (wrong.length) {
+    shortfall.push(
+      `${id}: ${wrong.length} frame(s) are not named as the code requests them ` +
+        `(first missing: ${wrong[0]}) — the folder holds ${count} files under other names`,
+    )
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * 4. The floor-explorer package.
+ *
+ *    The two JSONs were checked for EXISTENCE and then never opened, so
+ *    the 35 unit plans and 8 floorplates they name went unguarded — and
+ *    so did the whole relit tree, which is the copy actually painted for
+ *    floorplates (`PLAN_PRESENTATION.floorplate = 'transparent'`). If the
+ *    relight script had never been run, this script said ✓ and production
+ *    fell back to white paper on a dark ground, on every level.
+ *
+ *    Read from the package itself, so a plan added to the JSON is covered
+ *    without editing this file.
+ * ------------------------------------------------------------------ */
+const FX = 'floor-explorer/repose-floor-explorer-assets'
+const RELIT = 'floor-explorer/relit'
+
+/** The same rewrite `floorExplorerData.relitUrl` performs. */
+const relitOf = (packageRelative) =>
+  `${RELIT}/${packageRelative.replace(/^floorplates-web\//, 'floorplates/').replace(/^units-web\//, 'units/')}`
+
+const residencesPath = join(PUBLIC, FX, 'residences-map.json')
+if (!existsSync(residencesPath)) {
+  missing.push({ relative: `${FX}/residences-map.json`, why: 'the floor explorer loads it at run time' })
+} else {
+  const pkg = JSON.parse(readFileSync(residencesPath, 'utf8'))
+
+  const plates = Object.values(pkg.floorplates ?? {})
+  const plans = Object.values(pkg.unitPlans ?? {})
+  if (plates.length === 0 || plans.length === 0) {
+    console.error('✗ check-assets could not read any drawings out of residences-map.json')
+    process.exit(1)
+  }
+
+  for (const plate of plates) {
+    need(`${FX}/${plate.webFile}`, 'floorplate, as residences-map.json names it')
+    // The relit copy is the one shown, so it is not optional.
+    need(relitOf(plate.webFile), 'relit floorplate — the copy shown on the dark ground')
+  }
+  for (const plan of plans) {
+    need(`${FX}/${plan.file}`, 'unit plan, as residences-map.json names it')
+    // The relit unit copy is only the error fallback, but a 0-byte one is
+    // how a residence ends up with no second chance at all.
+    need(relitOf(plan.file), 'relit unit plan — the fallback if the original fails')
+  }
+  checked.groups += plates.length + plans.length
 }
 
 /* ------------------------------------------------------------------ *

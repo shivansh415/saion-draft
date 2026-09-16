@@ -395,8 +395,11 @@ export function BuildingLevelSelector({
           </div>
         </div>
 
-        {/* Right: the level list. */}
-        <nav className="fx__list" aria-label="Levels">
+        {/* Right: the level list. On a short frame the stylesheet lets this
+            scroll (fifteen rows do not fit a phone on its side); the two
+            attributes hand that scroll to the rail rather than to the page's
+            smooth scroller, which would otherwise swallow the wheel. */}
+        <nav className="fx__list" aria-label="Levels" data-lenis-prevent data-scroll-lock-allow>
           <ol data-fx-list>
             {/* Above the last residential level, and marked as its own kind of
                 destination rather than as a sixteenth floor. Off in production

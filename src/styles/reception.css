@@ -192,6 +192,14 @@
   pointer-events: none;
 }
 
+/* At rest it is not just invisible, it is not there: `opacity: 0` leaves a
+   control in the tab order, `visibility` does not. Only on `idle` — on
+   `leaving` it is still fading out and must keep painting. Matches what
+   `.rc__explore` already does for the same state. */
+.rc[data-phase='idle'] .rc__back {
+  visibility: hidden;
+}
+
 .rc__back-rule {
   display: block;
   width: 26px;
@@ -268,12 +276,22 @@
   opacity: calc(var(--rc-cue) * 0.55);
 }
 
+/* As with the amenities cue: the retire has to name the button as well as its
+   wrapper, because `.rc-cue__button` / `.rc-explore-cue` declare
+   `pointer-events: auto` themselves and a declared value beats an inherited
+   one. An invisible-but-clickable cue over an open plan is what made a press
+   on the drawing travel away from it. */
 .fx:not([data-mode='selector']) ~ .rc[data-active] .rc-cue,
 .fx[data-suspended] ~ .rc[data-active] .rc-cue,
 .fx:not([data-mode='selector']) ~ .rc[data-active] .rc-explore-cue,
-.fx[data-suspended] ~ .rc[data-active] .rc-explore-cue {
+.fx[data-suspended] ~ .rc[data-active] .rc-explore-cue,
+.fx:not([data-mode='selector']) ~ .rc[data-active] .rc-cue .rc-cue__button,
+.fx[data-suspended] ~ .rc[data-active] .rc-cue .rc-cue__button {
   opacity: 0;
   pointer-events: none;
+  /* Out of the tab order too — `opacity` alone leaves it reachable by Tab. */
+  visibility: hidden;
+  transition: opacity 300ms ease, visibility 0s linear 300ms;
 }
 
 /* The words: one small line of tracked capitals, no pill, no border — a

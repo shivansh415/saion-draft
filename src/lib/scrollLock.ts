@@ -75,7 +75,18 @@ function engage(): void {
       target instanceof HTMLInputElement ||
       target instanceof HTMLTextAreaElement ||
       target?.isContentEditable === true
-    if (!editing && SCROLL_KEYS.has(event.key)) event.preventDefault()
+    if (editing || !SCROLL_KEYS.has(event.key)) return
+    // Space scrolls the page, but on a focused control it is also how that
+    // control is pressed — and preventing the default on keydown suppresses
+    // the click the browser would have synthesised. Cancelling it everywhere
+    // meant a keyboard-only visitor could not press "Back to building",
+    // "View in 3D", "View Interior" or the zoom reset at all while a plan was
+    // open, since the lock is held for the whole of it.
+    if (event.key === ' ' || event.key === 'Spacebar') {
+      const control = target?.closest('button, a[href], [role="button"], summary, select')
+      if (control) return
+    }
+    event.preventDefault()
   }
   const onScroll = () => {
     if (window.scrollY !== heldAt) window.scrollTo(0, heldAt)
@@ -95,7 +106,15 @@ function engage(): void {
 }
 
 function release(): void {
-  releaseListeners?.()
+  // Nothing was ever engaged, so there is nothing to release — and `heldAt`
+  // is either 0 or a position from some earlier lock. Restoring it here would
+  // hard-scroll the page to a stale place (to the very top, if nothing has
+  // locked yet) on any unbalanced `unlockScroll()`.
+  if (!releaseListeners) {
+    lenis?.start()
+    return
+  }
+  releaseListeners()
   releaseListeners = null
   document.documentElement.classList.remove('scroll-locked')
   if (window.scrollY !== heldAt) window.scrollTo(0, heldAt)

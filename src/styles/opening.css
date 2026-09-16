@@ -931,11 +931,27 @@
   opacity: 0.55;
 }
 
+/* Retiring the cue has to reach the BUTTON, not only its wrapper: the button
+   declares `pointer-events: auto` of its own a few rules up, and a declared
+   value beats an inherited one. Without the second selector the label is
+   invisible and still hit-testable — and it is painted after the explorer,
+   with no z-index between them, so it sat on top of an open floorplate right
+   where the residence hotspots are. A press there travelled to the lifestyle
+   chapter while the explorer still held the scroll lock, which the visitor
+   read as the plan throwing them back to the building. */
 .fx:not([data-mode='selector']) ~ .am-cue,
-.fx[data-suspended] ~ .am-cue {
+.fx[data-suspended] ~ .am-cue,
+.fx:not([data-mode='selector']) ~ .am-cue .am-cue__button,
+.fx[data-suspended] ~ .am-cue .am-cue__button {
   opacity: 0;
   pointer-events: none;
-  transition: opacity 300ms ease;
+  /* `visibility` also takes it out of the tab order, which `opacity` and
+     `pointer-events` do not — otherwise Tab still reaches an invisible
+     control sitting over the plan. Delayed to the end of the fade so the
+     cue still leaves rather than vanishing. The same pattern as
+     `.fx[data-suspended] .fx__invite`. */
+  visibility: hidden;
+  transition: opacity 300ms ease, visibility 0s linear 300ms;
 }
 
 /* The walk into the reception and the lifestyle chapter both stand the cue

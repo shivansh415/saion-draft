@@ -354,7 +354,12 @@ export function usePlanViewer({ viewportRef, frameRef, contentRef, enabled, read
       // except on something that answers taps itself (a residence hotspot,
       // where the first tap indicates and the second opens): there the pair
       // is the control's own, never the viewer's.
-      const onControl = pressTarget?.closest('button, a, [role="button"]') !== null
+      // `?.` yields undefined when there was no press target, and
+      // `undefined !== null` is true — which read as "this was a control" and
+      // silently killed double-tap zoom. `pressTarget` also survived the press
+      // it belonged to (a two-finger pinch never sets it), so one pinch begun
+      // over a hotspot disabled double-tap for everything after it.
+      const onControl = pressTarget !== null && pressTarget.closest('button, a, [role="button"]') !== null
       if (event.pointerType === 'touch' && event.type === 'pointerup' && !wasDrag && !onControl) {
         const now = performance.now()
         const tap = { at: now, x: event.clientX, y: event.clientY }
@@ -366,6 +371,8 @@ export function usePlanViewer({ viewportRef, frameRef, contentRef, enabled, read
           lastTap = tap
         }
       }
+
+      pressTarget = null
 
       // The click this press produces, if any, follows in the same task; a
       // press released outside the viewport produces none, so do not hold a
@@ -385,6 +392,11 @@ export function usePlanViewer({ viewportRef, frameRef, contentRef, enabled, read
       if (!enabledRef.current) return
       // Touch has its own double-tap above; a synthesised dblclick would undo it.
       if (performance.now() - lastTouchAt < 1000) return
+      // The same exemption the touch path makes: a control answers double
+      // presses itself. Without it, double-clicking "Reset view", or a
+      // residence that does not open, stepped the zoom instead.
+      const target = event.target instanceof Element ? event.target : null
+      if (target?.closest('button, a, [role="button"]')) return
       event.preventDefault()
       toggleStep(event.clientX, event.clientY)
     }

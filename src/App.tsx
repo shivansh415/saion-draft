@@ -9,6 +9,24 @@ import { glideTo, jumpTo, pageTop } from './lib/pageScroll'
 import { getSmoothScroll, unlockScroll } from './lib/scrollLock'
 
 /**
+ * The document's height at the last refresh we asked for.
+ *
+ * `ScrollTrigger.refresh()` is `_refreshAll(true)` — forced, so it does not
+ * wait for the scroll to end. It costs a synchronous re-measure of every
+ * trigger and pin on the page (~68ms here, which the reception's own notes
+ * describe as a single felt jolt), and it is only ever owed when the document
+ * has actually changed size. Everything below asks through this.
+ */
+let measuredHeight = 0
+
+function refreshIfDocumentResized(): void {
+  const height = document.documentElement.scrollHeight
+  if (height === measuredHeight) return
+  measuredHeight = height
+  ScrollTrigger.refresh()
+}
+
+/**
  * Reposé Residence — SAION Properties.
  *
  * ONE document, ONE scroll, in this order and with nothing to press between
@@ -68,10 +86,26 @@ function App() {
     // Only reachable if the visitor outran the prefetch that started when the
     // building completed. Nothing is waiting on it: the opening is still on
     // screen and the chapter lands below them when it arrives.
-    void loadLifestyle().then((chapter) => setChapter(() => chapter))
+    //
+    // The catch matters: an import that fails (a tab held open across a deploy
+    // — the case `lazy.ts` exists to defend against) used to leave `mounted`
+    // true with no chapter, so the document simply ended at the settled lobby
+    // with no residence, no amenities, no arch and nothing said. Standing the
+    // mount back down puts the threshold above the visitor again, so carrying
+    // on past it tries once more.
+    void loadLifestyle()
+      .then((chapter) => setChapter(() => chapter))
+      .catch((error: unknown) => {
+        console.error('Reposé: the lifestyle chapter could not be loaded', error)
+        setMounted(false)
+      })
   }, [])
 
   useEffect(() => {
+    // Warmed, not required: `prefetchLifestyle` swallows its own failure and
+    // the mount above reports one. `OpeningExperience` warms it again once the
+    // building completes, which is where the chapter's own note says the fetch
+    // belongs.
     prefetchLifestyle()
   }, [])
 
@@ -94,7 +128,13 @@ function App() {
       const element = residence()
       if (!element) return false
       getSmoothScroll()?.resize()
-      ScrollTrigger.refresh()
+      // A whole-document refresh reverts and re-measures every pin on the page
+      // — the residence pin, the three amenity pins, the arch — synchronously,
+      // and it is felt as a dropped frame at the very start of the glide. It is
+      // only owed when the document's HEIGHT has actually changed, which here
+      // means the chapter has just been put into it. Pressing a cue on a
+      // document that is already the size it was costs nothing now.
+      refreshIfDocumentResized()
       glideTo(pageTop(element), 1.4)
       return true
     }
@@ -172,7 +212,11 @@ function App() {
     if (arrival) jumpTo(pageTop(arrival))
     requestAnimationFrame(() => {
       getSmoothScroll()?.resize()
-      ScrollTrigger.refresh()
+      // Nothing is added to or taken out of the document across this
+      // hand-over, so the forced refresh that used to run here re-measured
+      // every pin for no change — one frame after the page had just been
+      // moved, which is exactly when it is most visible.
+      refreshIfDocumentResized()
     })
   }, [])
 

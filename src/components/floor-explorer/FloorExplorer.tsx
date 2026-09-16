@@ -18,7 +18,7 @@ import type { Marker } from './terraceZone'
 import { prefetchTerrace } from '../terrace/lazy'
 import { useCoverRect } from './useCoverRect'
 import { resetPlanViewer } from './usePlanViewer'
-import { warmImage } from './warmImage'
+import { prefersLightLoad, warmImage } from './warmImage'
 import '../../styles/floor-explorer.css'
 
 /**
@@ -75,6 +75,18 @@ const useMediaQuery = (query: string): boolean => {
 const settle = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms))
 
 /**
+ * How long a drawing is waited for before the sheet is revealed regardless.
+ *
+ * The relit plates are ~1.1MB, so on a slow line this race is always won by
+ * the clock and the reveal plays over an <img> with no bitmap in it. 900ms was
+ * too short to be worth anything there and too long to notice when the file is
+ * already warm (which it now usually is -- the warm starts when the explorer is
+ * revealed, not when a level is pressed). `warmImage` resolves from its cache
+ * synchronously, so a warm drawing still opens immediately.
+ */
+const DRAWING_WAIT = 2200
+
+/**
  * Chapter 02 — "Explore Residences".
  *
  * Lives inside the opening chapter's sticky viewport, over the film's held
@@ -99,7 +111,17 @@ const NO_PREFETCH = () => {}
 export function FloorExplorer({ active, onTerrace, onExplore, suspended = false }: Props) {
   const rootRef = useRef<HTMLDivElement | null>(null)
   const backRef = useRef<HTMLButtonElement | null>(null)
+  /** What to put focus back on when a LEVEL closes (a tower hit area or a rail row). */
   const lastTriggerRef = useRef<HTMLElement | null>(null)
+  /**
+   * And what to put it back on when a RESIDENCE closes (a hotspot on the plate).
+   *
+   * Its own slot on purpose: one slot shared by both openers meant that
+   * level -> residence -> back -> back restored focus to the residence's
+   * invisible hotspot inside the faded-out floorplate rather than to the
+   * level rail, leaving nothing visibly focused.
+   */
+  const lastUnitTriggerRef = useRef<HTMLElement | null>(null)
 
   const data = useFloorExplorerData()
   const rect = useCoverRect(rootRef, FINAL_FRAME_STILL.width, FINAL_FRAME_STILL.height, FOCAL_X, FOCAL_Y)
@@ -236,6 +258,19 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
   const onRootPointerMove = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       if (coarse || !revealedRef.current || modeRef.current !== 'selector') return
+      // The ground plane is capped at the bottom fifth of the VIEWPORT, and the
+      // level rail is vertically centred — so on a window around 740px tall the
+      // rail's lower rows sit inside it. Reading the raw y there retired the
+      // whole explorer (and cleared the selection) while the visitor was
+      // reaching for Level 01, and `.fx:not([data-revealed]) .fx__list` then
+      // made the row unclickable. The explorer's own controls are never the
+      // ground, whatever their height: asking for the building back means
+      // moving onto the building, not onto the interface.
+      const target = event.target instanceof Element ? event.target : null
+      if (target?.closest('.fx__ui')) {
+        cancelHide()
+        return
+      }
       if (event.clientY >= groundTop) scheduleHide()
       else cancelHide()
     },
@@ -253,12 +288,33 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
    * Readiness
    * --------------------------------------------------------------- */
 
-  // Once the explorer is live, quietly fetch every unique floorplate so a
-  // click never waits on the network. Eight files; they share a cache with
-  // the <img> that eventually shows them.
+  // Once the visitor has actually ASKED for the explorer, quietly fetch the
+  // floorplates so a click never waits on the network.
+  //
+  // Eight files — but not eight small ones. The copy shown is the RELIT one
+  // (`PLAN_PRESENTATION.floorplate`), and those are 1.03–1.14 MB each, 8.73 MB
+  // together, each decoding to ~52 MB of bitmap at 4919×2650. Warming them on
+  // `active` alone meant every visitor who merely scrolled past the finished
+  // building paid seventy seconds of a 1 Mbps line for drawings they never
+  // opened, on top of the film still arriving.
+  //
+  // So: only once `revealed` (the visitor has moved onto the building or
+  // tapped it), never on a connection that has said not to, and the plate the
+  // rail is actually pointing at goes first. A level that is opened before its
+  // turn is warmed by `open()` anyway; this only removes the wait.
   useEffect(() => {
-    if (!active || data.status !== 'ready') return
-    const plates = data.model.floorplates.map(floorplateImage)
+    if (!revealed || data.status !== 'ready') return
+    if (prefersLightLoad()) return
+
+    // Whatever is marked leads, then the rest in the building's own order.
+    const marked = typeof shown === 'string' ? shown : null
+    const ordered = [...data.model.floorplates].sort((a, b) => {
+      const aHas = marked !== null && a.levels.includes(marked as LevelId) ? 0 : 1
+      const bHas = marked !== null && b.levels.includes(marked as LevelId) ? 0 : 1
+      return aHas - bHas
+    })
+    const plates = ordered.map(floorplateImage)
+
     let cancelled = false
     const run = async () => {
       for (const src of plates) {
@@ -273,7 +329,10 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
       if (window.cancelIdleCallback) window.cancelIdleCallback(handle as number)
       else window.clearTimeout(handle as number)
     }
-  }, [active, data])
+    // `shown` only orders the queue; re-running on every hover would restart
+    // it, so it is read once when the warm begins.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revealed, data])
 
   useEffect(() => {
     if (data.status === 'error') console.error('Floor explorer: package data failed to load', data.error)
@@ -372,7 +431,7 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
       }
 
       // The plate must be decoded before it can emerge cleanly; it usually is.
-      const ready = Promise.race([warmImage(floorplateImage(level.floorplate)), settle(900)])
+      const ready = Promise.race([warmImage(floorplateImage(level.floorplate)), settle(DRAWING_WAIT)])
       timeline.addPause(0.55)
       void ready.then(() => {
         reveal()
@@ -463,7 +522,7 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
       const plan = unitPlanImage(hotspot)
       if (!root || modeRef.current !== 'floorplate' || !plan) return
 
-      lastTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+      lastUnitTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
       changeMode('openingResidence')
       setOpenResidence(hotspot)
       setUnitSelected(hotspot.residence.id)
@@ -533,7 +592,7 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
           .fromTo(resHead, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.85, ease: 'power3.out' }, at + 0.15)
       }
 
-      const ready = Promise.race([warmImage(plan), settle(900)])
+      const ready = Promise.race([warmImage(plan), settle(DRAWING_WAIT)])
       timeline.addPause(0.5)
       void ready.then(() => {
         reveal()
@@ -564,10 +623,17 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
     const finish = () => {
       changeMode('floorplate')
       setOpenResidence(null)
+      // The plate is clean again: nothing indicated, nothing committed. Left
+      // set, the readout kept naming the residence just left, and on touch the
+      // two-step commit was gone for that one unit -- a single tap reopened it
+      // while every other unit still needed two.
+      setUnitSelected(null)
+      setUnitHovered(null)
       plateFigure.style.transformOrigin = ''
       // The next residence opens at its fit, not where this one was left.
       resetPlanViewer(resFigure)
-      const trigger = lastTriggerRef.current
+      const trigger = lastUnitTriggerRef.current
+      lastUnitTriggerRef.current = null
       if (trigger && root.contains(trigger)) trigger.focus({ preventScroll: true })
       else backRef.current?.focus({ preventScroll: true })
     }

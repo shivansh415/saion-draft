@@ -265,7 +265,20 @@ export const InteriorCinema = forwardRef<CinemaHandle, Props>(function InteriorC
       .to(chrome, { autoAlpha: 1, duration: 0.5, ease: 'power2.out' }, 0.72)
       .to(type, { autoAlpha: 1, y: 0, duration: 0.9, stagger: 0.09, ease: 'power3.out' }, 0.78)
 
+    // The full-screen size is written as absolute pixels, so a rotation or a
+    // collapsing URL bar leaves the frame at the size the room opened at with
+    // the chapter showing around it. Re-writing the two numbers is enough:
+    // once the timeline has landed the frame is simply at 0,0,vw,vh.
+    const onResize = () => {
+      if (tl.isActive()) return
+      gsap.set(frameEl, { width: window.innerWidth, height: window.innerHeight })
+    }
+    window.addEventListener('resize', onResize)
+    window.addEventListener('orientationchange', onResize)
+
     return () => {
+      window.removeEventListener('resize', onResize)
+      window.removeEventListener('orientationchange', onResize)
       tl.kill()
     }
   }, [open, host, raise])

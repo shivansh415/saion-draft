@@ -218,6 +218,6 @@ export function FinalRepose({assetBase,onEnquire,onRestart,portal}:{assetBase:st
       journey, and the end of the journey is the building the arch hands back
       to — see `op-close-brand` in the opening chapter. Only the way back is
       left on this screen, and it keeps the row. */}
-  <div className="rp-final-base"><ArrowLink onClick={onRestart}>BACK TO RECEPTION</ArrowLink></div>
+  <div className="rp-final-base"><ArrowLink onClick={onRestart}>BACK TO THE BUILDING</ArrowLink></div>
  </section>;
 }

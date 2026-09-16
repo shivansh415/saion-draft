@@ -168,18 +168,20 @@ export const ResidencePlanView = forwardRef<HTMLButtonElement, Props>(function R
                   </span>
                 </button>
               ) : (
-                <button
-                  type="button"
-                  className="fx-res__cta"
-                  data-placeholder
-                  aria-disabled="true"
-                  title={RESIDENCE_COPY.view3dNote}
-                >
-                  {RESIDENCE_COPY.view3d}
-                  <span className="fx-res__cta-arrow" aria-hidden="true">
-                    →
-                  </span>
-                </button>
+                /* No render is supplied for this residence, so the control is
+                   a placeholder and says so. It used to be focusable and
+                   clickable and do nothing at all, which reads as a broken
+                   button; `disabled` takes it out of the tab order and out of
+                   hit-testing. The note sits on the wrapper because a disabled
+                   control shows no title of its own. */
+                <span className="fx-res__cta-wrap" title={RESIDENCE_COPY.view3dNote}>
+                  <button type="button" className="fx-res__cta" data-placeholder disabled>
+                    {RESIDENCE_COPY.view3d}
+                    <span className="fx-res__cta-arrow" aria-hidden="true">
+                      →
+                    </span>
+                  </button>
+                </span>
               )}
               <button
                 type="button"

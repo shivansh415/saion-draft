@@ -118,6 +118,17 @@ export function useImageSequence(sources: readonly string[], options: Options = 
     let priority = 0
     let eager = true
     let suspended = false
+    /**
+     * The tab is in the background.
+     *
+     * Held apart from `suspended`, which is the chapter's own word for "the
+     * film is off screen": that is measured by a ScrollTrigger and is
+     * therefore false in a background tab. rAF stops when a tab is hidden but
+     * this queue is driven by load callbacks, not by rAF, so it went on
+     * pulling all four hundred frames — the whole 37MB — for a visitor who
+     * opened the site in a background tab and never looked at it.
+     */
+    let hidden = typeof document !== 'undefined' && document.visibilityState === 'hidden'
     let disposed = false
     const pending = new Set<HTMLImageElement>()
 
@@ -242,7 +253,7 @@ export function useImageSequence(sources: readonly string[], options: Options = 
     }
 
     const pump = () => {
-      if (disposed || suspended) return
+      if (disposed || suspended || hidden) return
       while (inflight < MAX_CONCURRENT_LOADS) {
         const index = nextIndex()
         if (index < 0) return
@@ -311,12 +322,25 @@ export function useImageSequence(sources: readonly string[], options: Options = 
       },
     }
 
-    // Frame one is the first impression: fetch it on its own, ahead of the pack.
+    const onVisibility = () => {
+      const nowHidden = document.visibilityState === 'hidden'
+      if (nowHidden === hidden) return
+      hidden = nowHidden
+      // Requests already in flight are left to finish — cancelling them wastes
+      // the bytes already spent. Coming back picks up from the playhead.
+      if (!hidden) pump()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+
+    // Frame one is the first impression: fetch it on its own, ahead of the
+    // pack, and even in a background tab — it is one file, and it is what a
+    // visitor who does come back must not wait for.
     load(0)
     pump()
 
     return () => {
       disposed = true
+      document.removeEventListener('visibilitychange', onVisibility)
       controllerRef.current = null
       pending.forEach((image) => {
         image.onload = null

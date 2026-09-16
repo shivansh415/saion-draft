@@ -34,11 +34,22 @@
  * for these residences (see `variantIsInDispute`); it names the position
  * instead, which both sources agree on.
  *
- * Deliberately NOT linked:
- *   - l13-3bed-a-prime (Level 13, right wing). The package supplies no plan
- *     for it: brochure page 46's right-hand plan is captioned Level 14 and is
- *     the same drawing as Level 14 B′ (page 48). Re-using a Level 14 sheet
- *     for Level 13 would be a guess.
+ * l13-3bed-a-prime (Level 13, right wing) used to sit here as the one
+ * residence deliberately NOT linked: page 46's right-hand plan was captioned
+ * Level 14 and was the same drawing as Level 14 B′ on page 48, so wiring it
+ * would have published one floor's apartment as another's. The 2026 brochure
+ * revision settles that caption — page 46 now prints BOTH its plans as Level
+ * 13, and supplies the mirrored right wing as B′ — so the link below follows
+ * the brochure like every other.
+ *
+ * The one residual tension there has since been settled. That drawing's areas
+ * used to equal Level 14 B′ exactly (1691.33 / 660.58 / 2351.91 sq ft), which
+ * left open whether the floors genuinely share a right wing or the revision had
+ * merely re-captioned Level 14's sheet. The 2026-09 revision re-prints page 46
+ * right with a balcony and total of its own — 670.91 / 2362.24 sq ft — while
+ * page 48 still prints 660.58 / 2351.91. The two floors' right wings are now
+ * stated as different apartments, and the link below rests on the figures as
+ * well as the caption.
  *
  * `residences-map.json` is left exactly as delivered; this file is the
  * audit trail for the promotions and is easy to revoke line by line.
@@ -49,6 +60,15 @@ export interface ConfirmedLink {
   readonly unitPlanId: string
   /** What settled it. */
   readonly evidence: string
+  /**
+   * The residence's type letter, where the brochure has since settled it.
+   *
+   * Present only when the two sources no longer contradict each other. While
+   * it is absent the link still opens the drawing, but the explorer names the
+   * residence by its position rather than asserting a letter neither source
+   * agrees on — see `variantIsInDispute`.
+   */
+  readonly variant?: string
 }
 
 export const confirmedUnitPlans: Readonly<Record<string, ConfirmedLink>> = {
@@ -74,6 +94,11 @@ export const confirmedUnitPlans: Readonly<Record<string, ConfirmedLink>> = {
     unitPlanId: 'up-l13-3bhk-maidroom-a',
     evidence: 'Centre: locator blue centred; wide centre geometry with full-width balcony and W.I.C.',
   },
+  'l13-3bed-a-prime': {
+    unitPlanId: 'up-l13-3bhk-maidroom-b-prime',
+    evidence:
+      'Right wing: sheet prints STREET VIEW; locator blue at far right; mirror of the left-wing plan. Captioned Level 13 by the 2026 brochure revision (page 46 right), which supersedes the earlier Level 14 caption.',
+  },
   // Level 14
   'l14-3bed-a': {
     unitPlanId: 'up-l14-3bhk-maidroom-b',
@@ -94,13 +119,25 @@ export const confirmedUnitPlans: Readonly<Record<string, ConfirmedLink>> = {
   },
   'l15-3bed-variant-unstated': {
     unitPlanId: 'up-l15-3bhk-penthouse-jacuzzi-a',
-    evidence: 'Right wing: sheet prints STREET VIEW; locator blue at far right; the package itself records the locator as verifying this residence. The plate prints no type letter.',
+    evidence:
+      'Right wing: sheet prints STREET VIEW; locator blue at far right; the package itself records the locator as verifying this residence. The plate prints no type letter.',
+    // The sheet badged this A until the 2026-09 revision, which collided with
+    // the 4-bedroom penthouse A on the same floor; it now badges it C, and the
+    // floor's three sheets read A / B / C from left to right. The plate prints
+    // nothing here, so there is no second source to disagree.
+    variant: 'C',
   },
 }
 
 /**
  * True when the two brochure sources disagree about the residence's letter
  * (or the plate prints none), so no "Type X" should be asserted for it.
+ *
+ * A link that carries its own `variant` is the exception: the brochure has
+ * settled that residence's letter since, and it is stated like any other.
  */
-export const variantIsInDispute = (residenceId: string, notes: string, variant: string | null): boolean =>
-  residenceId in confirmedUnitPlans || variant === null || /floorplate says/i.test(notes)
+export const variantIsInDispute = (residenceId: string, notes: string, variant: string | null): boolean => {
+  const settled = confirmedUnitPlans[residenceId]?.variant
+  if (settled) return false
+  return residenceId in confirmedUnitPlans || variant === null || /floorplate says/i.test(notes)
+}

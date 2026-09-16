@@ -233,7 +233,16 @@ export function ReposeLifestyle({ onReturn }: Props) {
 
   const enquire = () => showModal('enquire')
 
-  /** "Back to reception": the way back is the arch — the page glides through it. */
+  /**
+   * The one way out of the finale: the page glides through the arch, and the
+   * arch hands it to the arrival — the building, with the floor explorer on
+   * it, one more time.
+   *
+   * It used to be labelled "BACK TO RECEPTION", from when the arch jumped the
+   * page back UP into the opening chapter. It does not any more (see
+   * `App.returnToBuilding`), so it was sending anyone who pressed it forward
+   * to the closing screen instead. The label now says where it goes.
+   */
   const restart = () => navigate('finale-end')
 
   // A panel holds the page still (through the one shared lock, so the arch

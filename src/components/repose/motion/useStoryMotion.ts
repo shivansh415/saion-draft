@@ -128,15 +128,21 @@ export function useStoryMotion(root:RefObject<HTMLDivElement|null>,active:boolea
    });
   },element);
   let disposed=false;
-  // Synchronously, while the loader still covers the frame: a refresh 150ms in
-  // landed in the middle of the hero's reveal and cost a ~68ms frame there.
-  // Every section has an explicit height, so there is nothing to wait for.
-  ScrollTrigger.sort();ScrollTrigger.refresh();
+  // `sort()` is owed: three pins have just been created and they have to
+  // refresh in document order or each one's spacer shifts the ones after it.
+  //
+  // The refresh itself used to be forced and synchronous here, with a comment
+  // about the loader covering the frame. That loader is gone — the amenities
+  // are entered on scroll from the residence tail — so this ran in the middle
+  // of the visitor's scroll, in the same commit that inserts ten sections into
+  // the document, and was felt as a hitch exactly at the hand-over. The
+  // deferred form does the same measuring at the next quiet moment instead.
+  ScrollTrigger.sort();ScrollTrigger.refresh(true);
   // Only if the faces are genuinely still coming. The loader waits on
   // `document.fonts.ready` before it lifts, so in the normal flow this promise
   // is already settled and re-measuring everything again would be wasted work
   // at the worst possible moment.
-  if(document.fonts.status!=='loaded')document.fonts.ready.then(()=>{if(!disposed)ScrollTrigger.refresh();});
+  if(document.fonts.status!=='loaded')document.fonts.ready.then(()=>{if(!disposed)ScrollTrigger.refresh(true);});
   return ()=>{disposed=true;mm.revert();ctx.revert();horizontal.current=null;};
  },[active,root,horizontal]);
 }
