@@ -40,25 +40,38 @@ export function Cinemagraph({ src, poster, alt, className = '' }: Props) {
     // photograph of the same amenity, so it stands in completely.
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
 
+    // Whether the film is near the screen. Kept so that a tab coming back to
+    // the foreground resumes only the film that is actually on it.
+    let near = false
+    const run = () => {
+      if (!near || document.visibilityState === 'hidden') {
+        video.pause()
+        return
+      }
+      // The bytes are asked for here rather than in the markup. At
+      // `preload="auto"` every cinemagraph on the page fetched itself in
+      // full on mount — several films competing with the pictures the
+      // visitor was actually looking at. The margin below is a whole
+      // viewport, so the fetch still starts a screen early.
+      if (video.preload !== 'auto') video.preload = 'auto'
+      void video.play().catch(() => {})
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          // The bytes are asked for here rather than in the markup. At
-          // `preload="auto"` every cinemagraph on the page fetched itself in
-          // full on mount — several films competing with the pictures the
-          // visitor was actually looking at. The margin below is a whole
-          // viewport, so the fetch still starts a screen early.
-          if (video.preload !== 'auto') video.preload = 'auto'
-          void video.play().catch(() => {})
-        } else {
-          video.pause()
-        }
+        near = entry.isIntersecting
+        run()
       },
       { rootMargin: '100% 0px 100% 0px', threshold: 0 },
     )
     observer.observe(video)
+    // "Off screen" includes the whole tab being in the background: the
+    // observer keeps reporting the film as on screen there, and a muted loop
+    // goes on decoding for a tab nobody is looking at.
+    document.addEventListener('visibilitychange', run)
     return () => {
       observer.disconnect()
+      document.removeEventListener('visibilitychange', run)
       video.pause()
     }
   }, [])

@@ -48,11 +48,10 @@ function refreshIfDocumentResized(): void {
  */
 function App() {
   // A reload part-way down should not drop the visitor into the middle of the
-  // film with an empty canvas.
+  // film with an empty canvas. Restoration itself is switched off in
+  // `main.tsx`, before the first render, so nothing can have been restored by
+  // the time this runs; this only puts the page at the top of the journey.
   useEffect(() => {
-    if ('scrollRestoration' in window.history) {
-      window.history.scrollRestoration = 'manual'
-    }
     window.scrollTo(0, 0)
   }, [])
 

@@ -127,6 +127,8 @@ export const ResidencePlanView = forwardRef<HTMLButtonElement, Props>(function R
       data-fx-res
       aria-label={residence ? `${residence.name} plan` : 'Residence plan'}
       aria-hidden={residence ? undefined : true}
+      /* As the floorplate: out of the Tab order too while nothing is open. */
+      inert={residence ? undefined : true}
     >
       <div className="fx-res__head" data-fx-res-head>
         <button type="button" className="fx-plate__back" onClick={onBack} ref={backRef}>

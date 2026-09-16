@@ -333,7 +333,14 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onNearL
     if (!section) return
     const trigger = ScrollTrigger.create({
       trigger: section,
-      start: () => `top top-=${section.offsetHeight * unitFraction(LIFESTYLE_MOUNT_AT)}`,
+      // `unitFraction` is a fraction of the scroll TRACK — the section less
+      // the sticky viewport that stays on screen through it — which is what
+      // every other beat here (the scrub, the reception band, `travelTo`) is
+      // measured against. Multiplying by the section's full height put this
+      // threshold one viewport-share too low: ~550px late on a 900px window,
+      // ~500px on a phone. Still ahead of the reception band, so nothing was
+      // seen to fail; it is measured the same way as the rest now.
+      start: () => `top top-=${(section.offsetHeight - window.innerHeight) * unitFraction(LIFESTYLE_MOUNT_AT)}`,
       invalidateOnRefresh: true,
       onEnter: onNearLifestyle,
       // Deliberately no `onLeaveBack`: once the chapter is in the document it

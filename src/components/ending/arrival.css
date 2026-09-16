@@ -28,6 +28,19 @@
    instant the arch hands over, so the gate is lifted permanently instead. */
 .arrival [data-fx-root] {
   opacity: 1;
+  /* The SAME box the arch lands its still in, and the same one the opening's
+     sticky frame paints it in: 100svh, anchored to the top. The section
+     itself is `window.innerHeight` tall because that is the number the pin
+     above it is laid out with (see Arrival.tsx) — but on a phone mid-scroll
+     the browser bar is collapsed, so innerHeight is the LARGE viewport while
+     svh stays the small one, and a cover fit into the taller box lands the
+     building at a different scale from the one the arch has just delivered:
+     a 12% jump in the tower at the exact moment the two are meant to be
+     pixel-identical. Sized like the arch's target instead, the hand-over is
+     seamless on a phone as it already was on a desktop, and the strip left
+     under it is the same ink ground the opening's frame leaves there. */
+  bottom: auto;
+  height: 100svh;
 }
 
 /* The marks belong to the BUILDING screen.

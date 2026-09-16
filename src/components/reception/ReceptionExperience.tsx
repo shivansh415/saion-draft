@@ -284,28 +284,35 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
    * to tear the timeline down, which would break the scrub the visitor is
    * still holding.
    */
-  const resetScene = useCallback(() => {
+  /**
+   * Every layer put back to rest — the state the timeline is built FROM.
+   *
+   * Restated explicitly, never cleared wholesale, since the scene's geometry
+   * lives in the same inline styles React writes. Shared by the reset at the
+   * band's start and by the rebuild below.
+   */
+  const restScene = useCallback(() => {
     // Mutated, never replaced: the timeline tweens THIS object, and handing it
     // a new one would leave the camera driven by an orphan.
     Object.assign(proxy.current, { walk: 0, settle: 0, open: 0 })
 
-    // Rest is restated explicitly — never cleared wholesale, since the scene's
-    // geometry lives in the same inline styles React writes.
     const root = rootRef.current
-    if (root) {
-      const q = (selector: string) => root.querySelectorAll<HTMLElement>(selector)
-      gsap.set(q('[data-rc-camera]'), { x: 0, y: 0, scale: 1, opacity: 1 })
-      gsap.set(q('[data-rc-still]'), { opacity: 0 })
-      gsap.set(q('[data-rc-through]'), { clipPath: insetOf(layoutRef.current.throughInset) })
-      gsap.set(q('[data-rc-leaf]'), { rotationY: 0, opacity: 1 })
-      gsap.set(q('[data-rc-streak], [data-rc-bloom], [data-rc-vignette], [data-rc-back], [data-rc-welcome], [data-rc-explore]'), { opacity: 0 })
-      gsap.set(q('[data-rc-inside]'), { opacity: 0, scale: 1 })
-      gsap.set(q('[data-rc-exterior]'), { filter: 'none' })
-      gsap.set(root, { '--rc-cue': 1 })
-    }
+    if (!root) return
+    const q = (selector: string) => root.querySelectorAll<HTMLElement>(selector)
+    gsap.set(q('[data-rc-camera]'), { x: 0, y: 0, scale: 1, opacity: 1 })
+    gsap.set(q('[data-rc-still]'), { opacity: 0 })
+    gsap.set(q('[data-rc-through]'), { clipPath: insetOf(layoutRef.current.throughInset) })
+    gsap.set(q('[data-rc-leaf]'), { rotationY: 0, opacity: 1 })
+    gsap.set(q('[data-rc-streak], [data-rc-bloom], [data-rc-vignette], [data-rc-back], [data-rc-welcome], [data-rc-explore]'), { opacity: 0 })
+    gsap.set(q('[data-rc-inside]'), { opacity: 0, scale: 1 })
+    gsap.set(q('[data-rc-exterior]'), { filter: 'none' })
+    gsap.set(root, { '--rc-cue': 1 })
+  }, [])
 
+  const resetScene = useCallback(() => {
+    restScene()
     changePhase('idle')
-  }, [changePhase])
+  }, [restScene, changePhase])
 
   /* --------------------------------------------------------------- *
    * The choreography
@@ -432,9 +439,21 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
     const ceiling = new Promise<void>((resolve) => window.setTimeout(resolve, RECEPTION_WARM_CEILING_MS))
     void Promise.race([stills, ceiling]).then(() => {
       if (cancelled) return
+      // A REBUILD — a resize or a rotation while the walk is under way — must
+      // start from rest. The timeline is all `to()` tweens, and a `to` records
+      // its start value from the DOM the first time it renders: built over a
+      // scene that was mid-walk (doors turned, camera gone, lobby up), the new
+      // timeline read THOSE as its starting points, so scrolling back out
+      // left the doors open and the lobby standing until the band's very
+      // first pixel snapped everything to the building at once. Putting the
+      // layers at rest first costs nothing visible: the previous timeline is
+      // killed and the current progress re-applied in the same tick below,
+      // before the frame is painted.
+      timelineRef.current?.kill()
+      timelineRef.current = null
+      restScene()
       const timeline = build()
       if (!timeline) return
-      timelineRef.current?.kill()
       timelineRef.current = timeline
       ready.current = true
       // Whatever the band already says — a reload part-way down, or a rebuild
@@ -461,7 +480,7 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
     }
     // `layout` is in here so a resize rebuilds the choreography against the
     // new geometry: every camera position is derived from the cover rect.
-  }, [active, build, layout])
+  }, [active, build, layout, restScene])
 
   useEffect(
     () => () => {

@@ -76,11 +76,21 @@ export function useStoryMotion(root:RefObject<HTMLDivElement|null>,active:boolea
    mm.add('(min-width: 901px) and (prefers-reduced-motion: no-preference)',()=>{
     const panels=gsap.utils.toArray<HTMLElement>('.rp-panel',element);
     const duration=panels.length-1;
+    // The current panel is written to the DOM only when it CHANGES: this runs
+    // on every scrubbed frame of the horizontal journey, and re-setting
+    // `inert` / `aria-hidden` on five panels and `aria-current` on five
+    // buttons per frame was needless attribute churn in the middle of a pin.
+    let currentPanel=-1;
+    const sceneButtons=element.querySelectorAll('[data-scene-button]');
+    const line=element.querySelector<HTMLElement>('.rp-scene-line span');
     const horizontalTimeline=gsap.timeline({scrollTrigger:{trigger:'.rp-horizontal',start:'top top',end:()=>`+=${window.innerWidth*4.2}`,pin:'.rp-horizontal-stage',scrub:.65,invalidateOnRefresh:true,anticipatePin:1,refreshPriority:10,onToggle:s=>{panels.forEach(p=>{p.style.willChange=s.isActive?'transform':'auto';});},onUpdate:s=>{
      const current=Math.min(panels.length-1,Math.round(s.progress*duration));
-     panels.forEach((p,i)=>{p.inert=i!==current;p.setAttribute('aria-hidden',String(i!==current));});
-     element.querySelectorAll('[data-scene-button]').forEach((button,i)=>{button.setAttribute('aria-current',i===current?'step':'false');});
-     const line=element.querySelector<HTMLElement>('.rp-scene-line span');if(line)line.style.transform=`scaleX(${s.progress})`;
+     if(current!==currentPanel){
+      currentPanel=current;
+      panels.forEach((p,i)=>{p.inert=i!==current;p.setAttribute('aria-hidden',String(i!==current));});
+      sceneButtons.forEach((button,i)=>{button.setAttribute('aria-current',i===current?'step':'false');});
+     }
+     if(line)line.style.transform=`scaleX(${s.progress})`;
     }}});
     horizontal.current=horizontalTimeline.scrollTrigger!;
     panels.forEach((panel,i)=>{

@@ -815,7 +815,13 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
       data-mode={mode}
       data-revealed={revealed || undefined}
       data-suspended={suspended || undefined}
-      inert={suspended || undefined}
+      /* Inert while the film still has the frame as well as while another
+         chapter does: the layer is painted at opacity 0 under the film, and
+         `aria-hidden` alone left its fifteen level buttons in the Tab order —
+         a keyboard visitor pressing Tab on the opening title landed on an
+         invisible "LEVEL 15". Nothing here can be used before `active`
+         anyway (`choose`, the tower and the invite all wait for it). */
+      inert={suspended || !active || undefined}
       aria-hidden={!active || suspended}
       onPointerMove={onRootPointerMove}
       onPointerLeave={scheduleHide}
@@ -834,6 +840,12 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
           height={FINAL_FRAME_STILL.height}
           alt="Reposé Residence, completed"
           decoding="async"
+          /* In the DOM from the first render, so it is fetched while the
+             preloader is still holding out for the film's critical frames —
+             the one moment the connection is contended. It is not looked at
+             until the film has ended, a good while later, so it is asked for
+             behind the frames rather than alongside them. */
+          fetchPriority="low"
           draggable={false}
         />
       </div>

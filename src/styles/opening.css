@@ -609,7 +609,14 @@
   border-radius: 4px;
   background: rgb(244 241 232 / 0%);
   pointer-events: auto;
+  /* Hidden AND out of hit-testing at rest. `opacity: 0` alone left this box
+     hoverable for the whole of the film — and its hover paints the ivory
+     plate below — so an empty ivory card appeared wherever the mouse
+     happened to cross it, over the opening title included. The film's
+     timeline brings it in with `autoAlpha` between 0.78 and 0.92 and takes
+     it out the same way (see OpeningExperience). */
   opacity: 0;
+  visibility: hidden;
   z-index: 4;
   transition: background 0.4s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
@@ -963,6 +970,24 @@
     font-size: 0.5rem;
     letter-spacing: 0.28em;
     padding: 0.7rem 0.8rem; /* a tap target */
+  }
+
+  /* On a narrow screen the explorer's copy is anchored to the foot of the
+     frame — the same band the podium, and so this cue, occupies. Measured on
+     a 390×844 phone with the explorer revealed: the cue's button sat at
+     y 631–668 directly under the "Explore residences" title at y 604–664, so
+     the words were painted over each other and a tap on the TITLE landed on
+     the cue and carried the visitor off to the residence chapter. Yielding
+     to 0.55 (the wide-screen rule above) is not enough where the two share
+     the same pixels: while the explorer is up the cue stands down entirely,
+     exactly as it does under an open plan. The amenities stay one scroll
+     away, and the lobby offers them again. */
+  .fx[data-revealed] ~ .am-cue[data-active],
+  .fx[data-revealed] ~ .am-cue[data-active] .am-cue__button {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+    transition: opacity 300ms ease, visibility 0s linear 300ms;
   }
 }
 

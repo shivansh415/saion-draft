@@ -322,6 +322,17 @@ export function ArchPortal({ active, host, towerSrc, sources, triggerRef, onComp
       // A zero-effect spine, so every position below is a fraction of the pin.
       timeline.to({}, { duration: 1 }, 0)
 
+      /**
+       * A fade for whatever of the surround is actually there. The finale's
+       * base used to carry a metadata line and the SAION mark beside the link;
+       * the approved finale no longer does, and a tween handed an empty target
+       * list logs "GSAP target not found" on every mount of the chapter. The
+       * absent pieces are simply not tweened.
+       */
+      const fade = (targets: HTMLElement[], vars: gsap.TweenVars, at: number) => {
+        if (targets.length) timeline.to(targets, vars, at)
+      }
+
       if (reduced) {
         // No travel: the still simply comes forward, full-frame, over the finale.
         proxy.c = 1
@@ -329,7 +340,7 @@ export function ArchPortal({ active, host, towerSrc, sources, triggerRef, onComp
         proxy.p2 = 1
         gsap.set(capture, { opacity: 0 })
         timeline.fromTo(portal, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.6, ease: 'sine.inOut' }, 0.15)
-        timeline.to(present(intro, baseMeta, baseLink, call, word, logo, ...nav), { opacity: 0, duration: 0.4, ease: 'sine.in' }, 0.1)
+        fade(present(intro, baseMeta, baseLink, call, word, logo, ...nav), { opacity: 0, duration: 0.4, ease: 'sine.in' }, 0.1)
       } else {
         // The portal takes over from the figure on the first breath of scroll,
         // over the same pixels: nothing moves until it has.
@@ -354,13 +365,13 @@ export function ArchPortal({ active, host, towerSrc, sources, triggerRef, onComp
         // The surround, in order of weight: metadata first, then the invitation,
         // the nav, the SAION mark last; the word is covered by the arch itself
         // and only let go once it nearly is.
-        timeline.to(present(intro), { opacity: 0, duration: 0.18, ease: 'sine.in' }, BEATS.hold)
-        timeline.to(present(baseMeta), { opacity: 0, duration: 0.18, ease: 'sine.in' }, 0.23)
-        timeline.to(present(baseLink), { opacity: 0, duration: 0.18, ease: 'sine.in' }, 0.26)
-        timeline.to(present(call), { opacity: 0, y: 28, duration: 0.26, ease: 'power1.in' }, 0.24)
-        timeline.to(nav, { opacity: 0, duration: 0.35, ease: 'sine.inOut' }, 0.35)
-        timeline.to(present(logo), { opacity: 0, duration: 0.22, ease: 'sine.in' }, 0.5)
-        timeline.to(present(word), { opacity: 0, duration: 0.25, ease: 'sine.in' }, 0.55)
+        fade(present(intro), { opacity: 0, duration: 0.18, ease: 'sine.in' }, BEATS.hold)
+        fade(present(baseMeta), { opacity: 0, duration: 0.18, ease: 'sine.in' }, 0.23)
+        fade(present(baseLink), { opacity: 0, duration: 0.18, ease: 'sine.in' }, 0.26)
+        fade(present(call), { opacity: 0, y: 28, duration: 0.26, ease: 'power1.in' }, 0.24)
+        fade(nav, { opacity: 0, duration: 0.35, ease: 'sine.inOut' }, 0.35)
+        fade(present(logo), { opacity: 0, duration: 0.22, ease: 'sine.in' }, 0.5)
+        fade(present(word), { opacity: 0, duration: 0.25, ease: 'sine.in' }, 0.55)
       }
 
       /** The arch has the frame while it is pinned and still on its way. */

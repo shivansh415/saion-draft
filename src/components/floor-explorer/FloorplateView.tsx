@@ -68,6 +68,10 @@ export const FloorplateView = forwardRef<HTMLButtonElement, Props>(function Floo
       data-fx-plate
       aria-label={level ? `${level.label} floorplate` : 'Floorplate'}
       aria-hidden={level ? undefined : true}
+      /* Mounted for the whole of the explorer's life and painted at opacity 0
+         until a level opens — `aria-hidden` hid it from a reader but not from
+         Tab, so "Back to building" was a focus stop on the clean building. */
+      inert={level ? undefined : true}
     >
       {/* Fine technical grid behind the sheet, fading toward the margins. */}
       <div className="fx-plate__grid" data-fx-grid aria-hidden="true" />
