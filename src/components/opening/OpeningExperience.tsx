@@ -675,7 +675,9 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onNearL
       intro
         .fromTo(
           '[data-opening-line]',
-          { yPercent: 116, y: 0 },
+          // 140, not 116: the mask now keeps headroom for the accent on
+          // REPOSÉ, so the line starts deeper to be wholly out of it.
+          { yPercent: 140, y: 0 },
           { yPercent: 0, y: 0, duration: 1.55, stagger: 0.16 },
         )
         .fromTo(

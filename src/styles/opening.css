@@ -135,6 +135,13 @@
 
 .op-title {
   margin: 0;
+  /* A column, not a block: each line's reveal mask below carries a negative
+     top margin that cancels its own headroom, and in a block those margins
+     would collapse through this element and between the lines, moving the
+     whole title and its line spacing. Flex items' margins never collapse. */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   font-family: var(--font-display);
   font-weight: 300;
   font-size: clamp(3.1rem, 9vw, 11rem);
@@ -143,6 +150,23 @@
   text-transform: uppercase;
   width: max-content;
   max-width: 100%;
+}
+
+/* The É in REPOSÉ. The face's cap height is 0.72em, but the acute over the E
+   reaches 0.95em — and at a line-height of 0.86 the line box begins only
+   0.05em above the caps, so the accent stood 0.18em ABOVE the box the mask
+   clips to. It was seen only while the line travelled up through the mask
+   and was cut off the moment the line settled: the title read REPOSE. The
+   mask is given the headroom and takes it back as margin, so the line sits
+   exactly where it did; the pre-reveal offset is deepened by the same
+   amount so the accent's tip cannot show through before the line rises. */
+.op-title .op-line {
+  padding-block-start: 0.24em;
+  margin-block-start: -0.22em;
+}
+
+.op-title .op-line__inner {
+  transform: translateY(140%);
 }
 
 .op-tagline {
@@ -834,7 +858,8 @@
     top: 20%;
   }
 
-  .op-line__inner {
+  .op-line__inner,
+  .op-title .op-line__inner {
     transform: none;
   }
 
