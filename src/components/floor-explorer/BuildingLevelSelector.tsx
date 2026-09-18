@@ -21,6 +21,12 @@ interface Props {
   selected: Marker | null
   /** True while a transition or the floorplate view owns the overlay. */
   frozen: boolean
+  /**
+   * True while a floorplate is open: the line, the mask and the hit-zones
+   * are frozen as ever, but the rail stays live, and a press on it turns
+   * the floorplate to that level without going back to the building.
+   */
+  railLive?: boolean
   /** True once the visitor has asked for the explorer; false = clean building. */
   revealed: boolean
   /** Coarse pointer: no hover, a first tap selects, a second opens. */
@@ -58,6 +64,7 @@ export function BuildingLevelSelector({
   shown,
   selected,
   frozen,
+  railLive = false,
   revealed,
   coarse,
   reducedMotion,
@@ -256,9 +263,26 @@ export function BuildingLevelSelector({
   )
 
   const choose = (level: Level) => {
-    if (frozen) return
+    if (frozen && !railLive) return
     onChoose(level)
   }
+
+  // On a frame short enough for the rail to scroll (see the stylesheet's
+  // short-frame block), a floor turned from the wheel may be off the rail's
+  // edge; the rail is brought to it. Only the rail's own scroll is moved —
+  // never the page's, which is locked under an open floorplate.
+  const listRef = useRef<HTMLElement | null>(null)
+  useEffect(() => {
+    if (!railLive || !shown) return
+    const nav = listRef.current
+    if (!nav || nav.scrollHeight <= nav.clientHeight + 1) return
+    const row = nav.querySelector<HTMLElement>(`[data-level="${shown}"]`)
+    if (!row) return
+    const top = row.offsetTop
+    const bottom = top + row.offsetHeight
+    if (top < nav.scrollTop) nav.scrollTop = top
+    else if (bottom > nav.scrollTop + nav.clientHeight) nav.scrollTop = bottom - nav.clientHeight
+  }, [railLive, shown])
 
   const rootWidth = rect.containerWidth
 
@@ -399,7 +423,7 @@ export function BuildingLevelSelector({
             scroll (fifteen rows do not fit a phone on its side); the two
             attributes hand that scroll to the rail rather than to the page's
             smooth scroller, which would otherwise swallow the wheel. */}
-        <nav className="fx__list" aria-label="Levels" data-lenis-prevent data-scroll-lock-allow>
+        <nav className="fx__list" aria-label="Levels" data-lenis-prevent data-scroll-lock-allow ref={listRef}>
           <ol data-fx-list>
             {/* Above the last residential level, and marked as its own kind of
                 destination rather than as a sixteenth floor. Off in production

@@ -53,6 +53,68 @@ export function unlockScroll(): void {
   if (holds === 0) release()
 }
 
+/**
+ * How long the input has to be quiet before the gesture that is being held
+ * through is taken to be over. Trackpad momentum arrives as a stream of
+ * wheel events a few milliseconds apart; a gap this long only ever falls
+ * between two gestures.
+ */
+const GESTURE_GAP = 160
+/** No gesture lasts this long; the hold is never left engaged past it. */
+const GESTURE_MAX = 2000
+
+let gestureTimer: number | null = null
+let gestureRelease: (() => void) | null = null
+
+/**
+ * Holds the page where it is until the gesture that brought it here is over.
+ *
+ * The arch hands the page to the arrival on a scroll that is still going: a
+ * wheel flick or a trackpad's momentum is a stream of events that carries on
+ * for a good while after the hand-off, and every one of them landed after
+ * the page had been placed on the building — so the building slid on up
+ * and the closing screen came in under it before anyone had seen the
+ * selector. The rest of that stream is absorbed here, through the same lock
+ * everything else uses; the next gesture, made on purpose, moves the page
+ * as normal.
+ *
+ * Measured, not timed: the hold ends `GESTURE_GAP` after the LAST input, so
+ * a gesture that has already stopped costs one short beat and a long
+ * momentum is held for exactly as long as it lasts.
+ */
+export function holdScrollThroughGesture(): void {
+  if (gestureRelease) {
+    arm()
+    return
+  }
+  lockScroll()
+  const startedAt = performance.now()
+  const onInput = () => {
+    if (performance.now() - startedAt > GESTURE_MAX) done()
+    else arm()
+  }
+  const options: AddEventListenerOptions = { passive: true, capture: true }
+  window.addEventListener('wheel', onInput, options)
+  window.addEventListener('touchmove', onInput, options)
+  window.addEventListener('scroll', onInput, options)
+  const done = () => {
+    if (gestureTimer !== null) window.clearTimeout(gestureTimer)
+    gestureTimer = null
+    window.removeEventListener('wheel', onInput, options)
+    window.removeEventListener('touchmove', onInput, options)
+    window.removeEventListener('scroll', onInput, options)
+    gestureRelease = null
+    unlockScroll()
+  }
+  gestureRelease = done
+  arm()
+
+  function arm(): void {
+    if (gestureTimer !== null) window.clearTimeout(gestureTimer)
+    gestureTimer = window.setTimeout(() => gestureRelease?.(), GESTURE_GAP)
+  }
+}
+
 function engage(): void {
   heldAt = window.scrollY
   lenis?.stop()
@@ -80,7 +142,7 @@ function engage(): void {
     // control is pressed — and preventing the default on keydown suppresses
     // the click the browser would have synthesised. Cancelling it everywhere
     // meant a keyboard-only visitor could not press "Back to building",
-    // "View in 3D", "View Interior" or the zoom reset at all while a plan was
+    // "View in 3D" or the zoom reset at all while a plan was
     // open, since the lock is held for the whole of it.
     if (event.key === ' ' || event.key === 'Spacebar') {
       const control = target?.closest('button, a[href], [role="button"], summary, select')

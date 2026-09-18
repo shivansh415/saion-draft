@@ -29,7 +29,21 @@
 .rp-ui{position:fixed;z-index:40;mix-blend-mode:normal;color:#f4f0e7;text-shadow:0 1px 12px #0002;pointer-events:none}/* The journey's own interface belongs to the journey. On the arrival — the
    last chapter, which lives inside this one so that scrolling back from it
    retraces the amenities — it stands down, and comes back if the visitor
-   goes back up. */[data-arrived] .rp-ui,[data-arrived] .rp-header{opacity:0;pointer-events:none;transition:opacity .55s cubic-bezier(.22,.61,.36,1)}
+   goes back up. The buttons are stood down with it: they opt back into the
+   pointer below, so a faded header used to leave an invisible brand button
+   and ENQUIRE over the arrival's building, and a press meant for the
+   explorer went to them. */
+[data-arrived] .rp-ui,[data-arrived] .rp-header{opacity:0;pointer-events:none;transition:opacity .55s cubic-bezier(.22,.61,.36,1)}
+[data-arrived] .rp-ui button{pointer-events:none}
+/* And it is there only while the amenities are on screen at all
+   (`data-journey`, see ReposeLifestyle): fixed, it otherwise stood over every
+   chapter above once the amenities had mounted — the residence cards, the
+   reception, the building, the film. `visibility`, never `opacity`: the arch
+   fades this chrome with a scrubbed `to()` tween, and a `to()` records its
+   start from the computed style when its trigger is first refreshed — at the
+   amenities' mount, before the journey is on screen. Hidden by opacity here,
+   that start read 0 and the tween held the chrome invisible for good. */
+.repose-experience:not([data-journey]) .rp-ui{visibility:hidden}
 /* The arrival is pulled up over the arch's last viewport so that scrolling
    back finds one building rather than two (ending/Arrival). While the arch is
    pinned it is fixed over those same pixels and travelling, so the arrival
@@ -486,3 +500,14 @@
  .rp-index-list.is-live .rp-index-row{opacity:1}
  .rp-index-plate{transition:none}
 }
+
+/* The finale's pin, on a phone. ScrollTrigger pins it `position: fixed` with
+   its bottom on the viewport's bottom as measured at the last refresh — and
+   it deliberately does NOT re-measure when a phone's toolbar slides away
+   (`ignoreMobileResize`, which is what keeps the scrub from jolting). So with
+   the toolbar collapsed mid-pin, the screen is taller than the pinned box by
+   the toolbar's height and the band under it shows whatever the pin-spacer
+   leaves: the chapter's paper ground, a light strip under a dark olive finale.
+   The spacer carries the finale's own ground instead, so that band is the
+   same colour as the section standing over it. */
+.pin-spacer:has(> .rp-finale){background:#303629}

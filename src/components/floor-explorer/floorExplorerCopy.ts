@@ -25,6 +25,8 @@ export const VIEWER_COPY = {
   reset: 'Reset view',
   /** Read to assistive technology on the viewport. */
   hint: 'Scroll or pinch to zoom, drag to pan, double-click to step in and out',
+  /** The floorplate's: there the wheel turns floors rather than zooming. */
+  plateHint: 'Scroll to change floors; pinch or double-click to zoom, drag to pan',
 } as const
 
 export const RESIDENCE_COPY = {
@@ -36,8 +38,6 @@ export const RESIDENCE_COPY = {
   view3dNote: 'Coming soon',
   floorplate: 'Floorplate',
   position: 'Position',
-  /** The control that takes the visitor to the residence chapter's interiors. */
-  viewInterior: 'View Interior',
 } as const
 
 /**

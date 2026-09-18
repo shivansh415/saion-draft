@@ -632,7 +632,17 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onNearL
       // level rail used to be scrubbed in here alongside it, which meant the
       // film ended on a building already covered in interface; they are now
       // the explorer's to reveal, when the visitor asks for them.
-      timeline.to('[data-fx-root]', { opacity: 1, duration: explorerIn * 0.7 }, HANDOFF.explorerInStart)
+      //
+      // Scrubbed as a custom property on the SECTION, which the explorer's
+      // root reads (`.fx { opacity: var(--fx-in) }`), rather than as the
+      // root's own opacity. A tween holds the element it was built for, and
+      // this timeline is built once; the explorer's root, on the other hand,
+      // can be replaced under it — a dev-server remount is enough — and a
+      // replacement started life at its stylesheet's opacity of 0 with nothing
+      // left to ever raise it: the building came back with no explorer on it
+      // at all. The section is never replaced, and a property on it reaches
+      // whichever root is inside it.
+      timeline.to(section, { '--fx-in': 1, duration: explorerIn * 0.7 }, HANDOFF.explorerInStart)
     }, section)
 
     return () => context.revert()
@@ -720,10 +730,9 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onNearL
             <span className="why-dubai__panel" data-why-panel />
             <h2 className="why-dubai__heading" data-why-heading>WHY DUBAI?</h2>
             <p className="why-dubai__body" data-why-body>
-              From global trade and innovation to luxury living and world-class
-              experiences, Dubai has become a magnet for ambition. It's where
-              opportunity meets security—drawing millions who want more
-              than just a place to live.
+              Built for ambition. Designed for possibility.
+              <br />
+              Dubai is where opportunity becomes a way of life.
             </p>
           </div>
         </div>
@@ -740,7 +749,7 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onNearL
         </div>
 
         {/* Chapter 02 rests over the held final frame; the hand-off above scrubs it in. */}
-        <FloorExplorer active={explorerActive} onTerrace={onTerrace} onExplore={onExplore} suspended={entering || covered} />
+        <FloorExplorer active={explorerActive} onTerrace={onTerrace} suspended={entering || covered} />
 
         {/* The way to the amenities, marked on the storey it belongs to. It is a
             sibling of the explorer so the stylesheet can retire it the moment the

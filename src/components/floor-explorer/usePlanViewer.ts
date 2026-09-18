@@ -31,6 +31,10 @@ import type { RefObject } from 'react'
  * cursor and back out; two fingers pinch and pan together; one finger pans;
  * a double-tap steps in and out. A click that followed a drag is swallowed
  * so a pan across the plate never opens a residence.
+ *
+ * A view may decline the plain wheel (`wheelZoom: false`): the floorplate
+ * gives it to the explorer, which turns floors with it, and keeps only the
+ * trackpad pinch — a wheel with ctrl held — for itself.
  */
 
 /** The viewport listens for this; the explorer sends it to put a view back to its fit. */
@@ -56,6 +60,8 @@ interface Options {
   enabled: boolean
   /** Open at a readable zoom where the fit would be unreadably small. */
   readable?: boolean
+  /** Whether a plain wheel zooms. A trackpad pinch always does. Default true. */
+  wheelZoom?: boolean
 }
 
 interface Transform {
@@ -82,7 +88,14 @@ export interface PlanViewerHandle {
   reset: (animate?: boolean) => void
 }
 
-export function usePlanViewer({ viewportRef, frameRef, contentRef, enabled, readable = false }: Options): PlanViewerHandle {
+export function usePlanViewer({
+  viewportRef,
+  frameRef,
+  contentRef,
+  enabled,
+  readable = false,
+  wheelZoom = true,
+}: Options): PlanViewerHandle {
   const handle = useRef<PlanViewerHandle>({ reset: () => {} })
   // A stable handle for callers; the effect below swaps what it delegates to.
   const [api] = useState<PlanViewerHandle>(() => ({ reset: (animate) => handle.current.reset(animate) }))
@@ -239,6 +252,8 @@ export function usePlanViewer({ viewportRef, frameRef, contentRef, enabled, read
     /* ---------------------------------------------------------- input */
     const onWheel = (event: WheelEvent) => {
       if (!enabledRef.current) return
+      // Not this view's to take: it bubbles on to whoever is listening above.
+      if (!wheelZoom && !event.ctrlKey) return
       event.preventDefault()
       const lines = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 100 : 1
       const sensitivity = event.ctrlKey ? TRACKPAD_PINCH_SENSITIVITY : WHEEL_SENSITIVITY
@@ -442,7 +457,7 @@ export function usePlanViewer({ viewportRef, frameRef, contentRef, enabled, read
       frame.style.removeProperty('--fx-zoom')
       handle.current = { reset: () => {} }
     }
-  }, [viewportRef, frameRef, contentRef, readable])
+  }, [viewportRef, frameRef, contentRef, readable, wheelZoom])
 
   return api
 }

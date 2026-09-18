@@ -18,7 +18,7 @@ import {
   STILL,
   SWING_PERSPECTIVE,
 } from './entranceCalibration'
-import { containRect, stillBoxToScreen, stillRect, stillToScreen } from './imageSpace'
+import { containRect, coverRect, stillBoxToScreen, stillRect, stillToScreen } from './imageSpace'
 import type { Box, Point } from './imageSpace'
 
 export interface EntranceLayout {
@@ -66,7 +66,15 @@ export function layoutEntrance(rect: CoverRect): EntranceLayout {
   const target = stillToScreen(rect, FILM_WINDOW, CAMERA_TARGET.x, CAMERA_TARGET.y)
   const centre: Point = { x: rect.containerWidth / 2, y: rect.containerHeight / 2 }
 
-  const reception = containRect(
+  // The lobby is a 2.27:1 panorama, shown whole on a landscape screen (the
+  // SAION wall is the point of it, and on a desktop the fit costs a band of
+  // ink at top and bottom). A portrait phone is another matter: shown whole
+  // there it is a strip across a fifth of the screen with ink above and
+  // below, which reads as a broken picture rather than a room. Where the
+  // whole picture would fill less than half the frame's height it is
+  // cover-fitted about the same focal point instead; every landscape shape
+  // keeps the fit it was approved with.
+  const whole = containRect(
     rect.containerWidth,
     rect.containerHeight,
     RECEPTION.width,
@@ -74,6 +82,17 @@ export function layoutEntrance(rect: CoverRect): EntranceLayout {
     RECEPTION_FOCAL.x,
     RECEPTION_FOCAL.y,
   )
+  const reception =
+    whole.height < rect.containerHeight * 0.5
+      ? coverRect(
+          rect.containerWidth,
+          rect.containerHeight,
+          RECEPTION.width,
+          RECEPTION.height,
+          RECEPTION_FOCAL.x,
+          RECEPTION_FOCAL.y,
+        )
+      : whole
   const s = CAMERA_ARRIVAL_SCALE
   const through: Box = {
     x: target.x + (reception.x - centre.x) / s,

@@ -30,12 +30,37 @@ const HIDE_DELAY = 400
 
 /**
  * building  → selector
- * floorplate → opening · floorplate · closing
+ * floorplate → opening · floorplate · switching · closing
  * residence  → openingResidence · residence · closingResidence
  */
-type Mode = 'selector' | 'opening' | 'floorplate' | 'closing' | 'openingResidence' | 'residence' | 'closingResidence'
+type Mode =
+  | 'selector'
+  | 'opening'
+  | 'floorplate'
+  | 'switching'
+  | 'closing'
+  | 'openingResidence'
+  | 'residence'
+  | 'closingResidence'
 
 const RESIDENCE_MODES: readonly Mode[] = ['openingResidence', 'residence', 'closingResidence']
+/** The floorplate has the frame and the level rail beside it is live. */
+const PLATE_MODES: readonly Mode[] = ['floorplate', 'switching']
+
+/**
+ * Wheel travel, in pixels, that turns one floor while a floorplate is open.
+ * A single notch of a mouse wheel is 100 in Chrome; a trackpad's flick is a
+ * stream of small deltas that add up to this in a few frames.
+ */
+const WHEEL_FLOOR_STEP = 60
+/**
+ * After a floor has been turned, the rest of the same gesture is let go: a
+ * trackpad's momentum runs on for the best part of a second, and without
+ * this one flick would race through the whole building.
+ */
+const WHEEL_FLOOR_COOLDOWN = 520
+/** Quiet this long between wheel events, and what follows is a new gesture. */
+const WHEEL_GESTURE_GAP = 200
 
 interface Props {
   /** True once the scroll hand-off has completed and the selector may take input. */
@@ -46,18 +71,20 @@ interface Props {
    */
   onTerrace: () => void
   /**
-   * On to the lifestyle chapter — the residence interiors. The explorer does
-   * not own that chapter; it hands over, closing whatever plan is open and
-   * unlocking the scroll so the page can travel.
-   */
-  onExplore: () => void
-  /**
    * True while another chapter has the frame (the walk into the reception).
    * The explorer stands down entirely — no pointer, no keyboard, no reveal —
    * and is put back to the clean building, so that when the frame is handed
    * back the visitor meets the building, not a selector they never asked for.
    */
   suspended?: boolean
+  /**
+   * Presented rather than offered. At the top of the journey the explorer
+   * waits to be asked for (a pointer over the tower, a tap on the invitation)
+   * and retires when the pointer leaves; on the arrival, after the amenities,
+   * it is the whole point of the screen, so it reveals itself the moment it
+   * is active and stays up.
+   */
+  presented?: boolean
 }
 
 const useMediaQuery = (query: string): boolean => {
@@ -97,6 +124,7 @@ const DRAWING_WAIT = 2200
  *   selector          the calibrated level lines and list (Phase 1)
  *   opening           the line extends, the building recedes, the plate emerges (Phase 2)
  *   floorplate        the exact supplied floorplate with its residences (Phase 3)
+ *   switching         one floorplate turning to another, from the rail or the wheel
  *   openingResidence  the plate zooms into the chosen residence; its plan arrives
  *   residence         the exact supplied unit plan, held
  *   closingResidence  back to the floor
@@ -108,7 +136,7 @@ const DRAWING_WAIT = 2200
 /** The terrace is off in production, so nothing warms its bundle. */
 const NO_PREFETCH = () => {}
 
-export function FloorExplorer({ active, onTerrace, onExplore, suspended = false }: Props) {
+export function FloorExplorer({ active, onTerrace, suspended = false, presented = false }: Props) {
   const rootRef = useRef<HTMLDivElement | null>(null)
   const backRef = useRef<HTMLButtonElement | null>(null)
   /** What to put focus back on when a LEVEL closes (a tower hit area or a rail row). */
@@ -140,6 +168,15 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
   const [terraceSelected, setTerraceSelected] = useState(false)
   const [mode, setMode] = useState<Mode>('selector')
   const [openLevel, setOpenLevel] = useState<Level | null>(null)
+  /** The level a floorplate is turning to, while it turns; marks the rail ahead of the drawing. */
+  const [switchingTo, setSwitchingTo] = useState<LevelId | null>(null)
+  // Read by the wheel handler, which must not re-subscribe on every turn.
+  const openLevelRef = useRef<Level | null>(null)
+  const switchingToRef = useRef<LevelId | null>(null)
+  /** A turn asked for while one was already under way; taken when it lands. */
+  const pendingLevelRef = useRef<Level | null>(null)
+  /** `switchLevel`, for the turn that lands to take the one queued behind it. */
+  const switchLevelRef = useRef<(level: Level) => void>(() => {})
 
   /** Residence indicated on the plate (hovered or focused), by id. */
   const [unitHovered, setUnitHovered] = useState<string | null>(null)
@@ -171,7 +208,8 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
    * Only dropping to the ground plane, or leaving the window, starts the
    * clock, and even then it is `HIDE_DELAY` before anything moves.
    * --------------------------------------------------------------- */
-  const [revealed, setRevealed] = useState(false)
+  // Presented, it is up from the first frame it is active for.
+  const [revealed, setRevealed] = useState(() => presented && active && !suspended)
   const revealedRef = useRef(false)
   const hideTimer = useRef<number | null>(null)
 
@@ -195,8 +233,8 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
     // A touch pointer has no "away": it stops existing the moment the finger
     // lifts, which would otherwise retire the explorer the instant it was
     // asked for. On touch the explorer stays until a plan opens or the
-    // visitor scrolls back into the film.
-    if (coarse || !revealedRef.current || modeRef.current !== 'selector') return
+    // visitor scrolls back into the film. Presented, it stays regardless.
+    if (coarse || presented || !revealedRef.current || modeRef.current !== 'selector') return
     cancelHide()
     hideTimer.current = window.setTimeout(() => {
       hideTimer.current = null
@@ -209,13 +247,16 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
       setSelected(null)
       setTerraceSelected(false)
     }, HIDE_DELAY)
-  }, [coarse, cancelHide])
+  }, [coarse, presented, cancelHide])
 
   useEffect(() => cancelHide, [cancelHide])
 
   // Leaving the explorer (scrolling back into the film) drops any hover so a
   // stale line never greets the visitor on return, and puts the building back
-  // to clean so the next arrival is the same as the first.
+  // to clean so the next arrival is the same as the first. Presented, the
+  // explorer comes up the moment the frame is its own, without being asked —
+  // there is no hide clock to cancel, since `scheduleHide` never sets one for
+  // a presented explorer.
   const [wasActive, setWasActive] = useState(active)
   if (wasActive !== active) {
     setWasActive(active)
@@ -223,6 +264,8 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
       setHovered(null)
       setTerraceHovered(false)
       setRevealed(false)
+    } else if (presented && !suspended) {
+      setRevealed(true)
     }
   }
 
@@ -246,7 +289,8 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
   const markedHover: Marker | null = hovered ?? (terraceHovered ? TERRACE_ID : null)
   const markedSelection: Marker | null = selected ?? (terraceSelected ? TERRACE_ID : null)
   const shown: Marker | null =
-    !active ? null : frozen ? (openLevel?.id ?? null) : revealed ? (markedHover ?? markedSelection) : null
+    !active ? null : frozen ? (switchingTo ?? openLevel?.id ?? null) : revealed ? (markedHover ?? markedSelection) : null
+  const plateUp = PLATE_MODES.includes(mode)
 
   /**
    * The ground plane in viewport pixels — below the tower's base, and never
@@ -349,6 +393,7 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
 
       lastTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
       changeMode('opening')
+      openLevelRef.current = level
       setOpenLevel(level)
       setSelected(level.id)
       setHovered(null)
@@ -365,15 +410,18 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
       const dim = q('[data-fx-dim]')
       const stage = q('[data-fx-stage]')
       const copy = q('[data-fx-copy]')
-      const list = q('[data-fx-list]')
       const hits = q('[data-fx-hits]')
       const area = q('[data-fx-plate-area]')
       const figure = q('[data-fx-plate-figure]')
       const head = q('[data-fx-plate-head]')
-      if (!line || !tag || !dim || !stage || !copy || !list || !hits || !area || !figure || !head) return
+      if (!line || !tag || !dim || !stage || !copy || !hits || !area || !figure || !head) return
 
       // The hover tweens on these must not finish underneath the transition.
       gsap.killTweensOf([line, tag, dim])
+
+      // The level rail is NOT among what leaves: it stays where it is, on the
+      // right of the frame, and turns the floorplate from there. Only the
+      // copy, the lines and the hit-zones on the tower go with the building.
 
       const timeline = gsap.timeline({
         defaults: { ease: 'power3.inOut' },
@@ -387,7 +435,7 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
 
       if (reducedMotion) {
         timeline
-          .to([copy, list, hits, dim, tag, line], { opacity: 0, duration: 0.3 }, 0)
+          .to([copy, hits, dim, tag, line], { opacity: 0, duration: 0.3 }, 0)
           .to(stage, { opacity: 0.16, duration: 0.4 }, 0)
           .fromTo(figure, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.2)
           .fromTo(head, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.3)
@@ -400,7 +448,6 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
         .to(line, { x: 0, y: band.lineY, scaleX: 1, opacity: 1, duration: 0.95 }, 0)
         .to(tag, { opacity: 0, duration: 0.3, ease: 'power2.out' }, 0)
         .to(copy, { opacity: 0, y: -10, duration: 0.55, ease: 'power2.in' }, 0.05)
-        .to(list, { opacity: 0, x: 10, duration: 0.55, ease: 'power2.in' }, 0.05)
         .to(hits, { opacity: 0, duration: 0.3 }, 0)
         .to(dim, { opacity: 0, duration: 0.6, ease: 'power2.out' }, 0.15)
 
@@ -469,6 +516,7 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
 
     const finish = () => {
       changeMode('selector')
+      openLevelRef.current = null
       setOpenLevel(null)
       unlockScroll()
       const trigger = lastTriggerRef.current
@@ -514,6 +562,178 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
   }, [openLevel, rect, reducedMotion, coarse, changeMode])
 
   /* --------------------------------------------------------------- *
+   * Floor to floor — the plate turns without going back to the building
+   *
+   * The level rail stays live while a floorplate is open, and the wheel
+   * steps through it (see the wheel effect below). Either asks for this:
+   * the drawing on view leaves in the direction of travel, the next one
+   * arrives from the other, and the head is rewritten between the two.
+   * The building behind, the grid and the rail do not move.
+   * --------------------------------------------------------------- */
+  const switchLevel = useCallback(
+    (level: Level) => {
+      const root = rootRef.current
+      const from = openLevelRef.current
+      if (!root || !from) return
+      if (modeRef.current === 'switching') {
+        // One turn at a time; the latest ask is what is taken when it lands.
+        if (level.id !== switchingToRef.current) pendingLevelRef.current = level
+        return
+      }
+      if (modeRef.current !== 'floorplate' || level.id === from.id) return
+
+      const q = (selector: string) => root.querySelector<HTMLElement>(selector)
+      const area = q('[data-fx-plate-area]')
+      const figure = q('[data-fx-plate-figure]')
+      const head = q('[data-fx-plate-head]')
+      if (!area || !figure || !head) return
+
+      changeMode('switching')
+      switchingToRef.current = level.id
+      setSwitchingTo(level.id)
+      setSelected(level.id)
+      setUnitHovered(null)
+      setUnitSelected(null)
+      gsap.killTweensOf([figure, head])
+
+      // Up the building, the drawing on view drops away and the next comes
+      // down to meet it; down the building, the other way about.
+      const up = Number(level.id) > Number(from.id)
+      const travel = reducedMotion ? 0 : up ? 18 : -18
+      const speed = coarse ? 1.3 : 1
+
+      const land = () => {
+        openLevelRef.current = level
+        setOpenLevel(level)
+        // Whatever was zoomed into on the last floor is not where this one
+        // opens: the fit, as a plate always opens at.
+        resetPlanViewer(area)
+      }
+
+      const finish = () => {
+        switchingToRef.current = null
+        setSwitchingTo(null)
+        changeMode('floorplate')
+        const next = pendingLevelRef.current
+        pendingLevelRef.current = null
+        if (next && next.id !== level.id) switchLevelRef.current(next)
+      }
+
+      /** The drawing's <img> has the new plate painted, or has given up on it. */
+      const painted = () => {
+        const image = figure.querySelector<HTMLImageElement>('img')
+        if (!image || image.complete) return Promise.resolve()
+        return new Promise<void>((resolve) => {
+          image.addEventListener('load', () => resolve(), { once: true })
+          image.addEventListener('error', () => resolve(), { once: true })
+        })
+      }
+
+      const arrive = () => {
+        const timeline = gsap.timeline({ defaults: { ease: 'power3.inOut' }, onComplete: finish })
+        timeline.timeScale(speed)
+        timeline
+          .fromTo(
+            figure,
+            { opacity: 0, y: -travel, scale: reducedMotion ? 1 : 0.985 },
+            { opacity: 1, y: 0, scale: 1, duration: reducedMotion ? 0.35 : 0.75, ease: 'expo.out' },
+            0,
+          )
+          .fromTo(
+            head,
+            { opacity: 0, y: reducedMotion ? 0 : 10 },
+            { opacity: 1, y: 0, duration: reducedMotion ? 0.35 : 0.6, ease: 'power3.out' },
+            0.08,
+          )
+      }
+
+      // The next plate is warmed while this one leaves; it is all but always
+      // in hand already, since the rail warms on hover and the queue warms
+      // the rest once the explorer is up.
+      const ready = Promise.race([warmImage(floorplateImage(level.floorplate)), settle(DRAWING_WAIT)])
+
+      const leave = gsap.timeline({
+        defaults: { ease: 'power2.in' },
+        onComplete: () => {
+          void ready.then(() => {
+            land()
+            // The new source is committed on the next render; the arrival is
+            // held until the drawing has painted so the sheet never sizes
+            // itself under the eye.
+            requestAnimationFrame(() =>
+              requestAnimationFrame(() => {
+                void Promise.race([painted(), settle(DRAWING_WAIT)]).then(arrive)
+              }),
+            )
+          })
+        },
+      })
+      leave.timeScale(speed)
+      leave
+        .to(head, { opacity: 0, y: reducedMotion ? 0 : 6, duration: 0.28 }, 0)
+        .to(figure, { opacity: 0, y: travel, scale: reducedMotion ? 1 : 0.985, duration: reducedMotion ? 0.28 : 0.4 }, 0)
+    },
+    [reducedMotion, coarse, changeMode],
+  )
+  useEffect(() => {
+    switchLevelRef.current = switchLevel
+  }, [switchLevel])
+
+  /**
+   * One floor up or down the rail from the one on view (or the one being
+   * turned to, so a second notch mid-turn queues the floor after).
+   */
+  const stepFloor = useCallback(
+    (direction: 1 | -1) => {
+      if (data.status !== 'ready') return
+      const levels = data.model.levels
+      const current = switchingToRef.current ?? openLevelRef.current?.id
+      if (!current) return
+      const index = levels.findIndex((level) => level.id === current)
+      // The rail reads top to bottom, 15 down to 01: scrolling down goes down it.
+      const next = levels[index + direction]
+      if (next) switchLevel(next)
+    },
+    [data, switchLevel],
+  )
+
+  /**
+   * The wheel, while a floorplate is open, turns floors — it does not zoom
+   * the drawing. The viewer under the plate leaves a plain wheel alone (see
+   * `FloorplateView`, `wheelZoom: false`); a pinch on a trackpad still
+   * arrives as a wheel with ctrl held, and that one is still the viewer's.
+   * The page is locked underneath either way, so nothing here reaches it.
+   */
+  useEffect(() => {
+    const root = rootRef.current
+    if (!root || !active) return
+    let travelled = 0
+    let lastAt = -Infinity
+    let restUntil = 0
+    const onWheel = (event: WheelEvent) => {
+      if (!PLATE_MODES.includes(modeRef.current)) return
+      if (event.ctrlKey) return
+      if (event.cancelable) event.preventDefault()
+      const now = performance.now()
+      if (now - lastAt > WHEEL_GESTURE_GAP) travelled = 0
+      lastAt = now
+      if (now < restUntil) return
+      const lines = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? 100 : 1
+      const delta = event.deltaY * lines
+      if (delta === 0) return
+      if (Math.sign(delta) !== Math.sign(travelled)) travelled = 0
+      travelled += delta
+      if (Math.abs(travelled) < WHEEL_FLOOR_STEP) return
+      const direction = travelled > 0 ? 1 : -1
+      travelled = 0
+      restUntil = now + WHEEL_FLOOR_COOLDOWN
+      stepFloor(direction)
+    }
+    root.addEventListener('wheel', onWheel, { passive: false })
+    return () => root.removeEventListener('wheel', onWheel)
+  }, [active, stepFloor])
+
+  /* --------------------------------------------------------------- *
    * Residence — open
    * --------------------------------------------------------------- */
   const openUnit = useCallback(
@@ -534,9 +754,10 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
       const plateHead = q('[data-fx-plate-head]')
       const resFigure = q('[data-fx-res-figure]')
       const resHead = q('[data-fx-res-head]')
-      if (!plateArea || !plateFigure || !plateHead || !resFigure || !resHead) return
+      const list = q('[data-fx-list]')
+      if (!plateArea || !plateFigure || !plateHead || !resFigure || !resHead || !list) return
 
-      gsap.killTweensOf([plateFigure, plateHead, resFigure, resHead])
+      gsap.killTweensOf([plateFigure, plateHead, resFigure, resHead, list])
 
       const timeline = gsap.timeline({
         defaults: { ease: 'power3.inOut' },
@@ -549,7 +770,7 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
 
       if (reducedMotion) {
         timeline
-          .to(plateHead, { opacity: 0, duration: 0.3 }, 0)
+          .to([plateHead, list], { opacity: 0, duration: 0.3 }, 0)
           .to(plateFigure, { opacity: 0, duration: 0.4 }, 0)
           .fromTo(resFigure, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.25)
           .fromTo(resHead, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.35)
@@ -576,8 +797,11 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
       // Already close in? Then a quieter lift.
       const grow = zoom > 1.6 ? 1.35 : 2.3
 
+      // The rail goes with the floor: the residence's plan takes the right of
+      // the frame, where the rail stands.
       timeline
         .to(plateHead, { opacity: 0, y: -8, duration: 0.4, ease: 'power2.in' }, 0)
+        .to(list, { opacity: 0, x: 10, duration: 0.4, ease: 'power2.in' }, 0)
         .to(plateFigure, { scale: grow, opacity: 0, duration: 1.05, ease: 'power2.inOut' }, 0.12)
 
       const reveal = () => {
@@ -616,9 +840,10 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
     const plateHead = q('[data-fx-plate-head]')
     const resFigure = q('[data-fx-res-figure]')
     const resHead = q('[data-fx-res-head]')
-    if (!plateFigure || !plateHead || !resFigure || !resHead) return
+    const list = q('[data-fx-list]')
+    if (!plateFigure || !plateHead || !resFigure || !resHead || !list) return
 
-    gsap.killTweensOf([plateFigure, plateHead, resFigure, resHead])
+    gsap.killTweensOf([plateFigure, plateHead, resFigure, resHead, list])
 
     const finish = () => {
       changeMode('floorplate')
@@ -645,7 +870,7 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
       timeline
         .to([resHead, resFigure], { opacity: 0, duration: 0.3 }, 0)
         .to(plateFigure, { opacity: 1, scale: 1, duration: 0.4 }, 0.2)
-        .to(plateHead, { opacity: 1, y: 0, duration: 0.3 }, 0.3)
+        .to([plateHead, list], { opacity: 1, y: 0, x: 0, duration: 0.3 }, 0.3)
       return
     }
 
@@ -655,54 +880,8 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
       // The floor comes back out around the residence it went into.
       .to(plateFigure, { scale: 1, opacity: 1, duration: 1.0, ease: 'power2.inOut' }, 0.35)
       .to(plateHead, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, 0.75)
+      .to(list, { opacity: 1, x: 0, duration: 0.6, ease: 'power2.out' }, 0.75)
   }, [reducedMotion, coarse, changeMode])
-
-  /* --------------------------------------------------------------- *
-   * Exit to the residence interiors chapter
-   *
-   * Unlike close / closeUnit, this is not an animation back: it is an
-   * immediate tear-down so the page can travel to the lifestyle chapter
-   * without the explorer's locked scroll or open state fighting it.
-   * --------------------------------------------------------------- */
-  const exitToInteriors = useCallback(() => {
-    const root = rootRef.current
-    if (!root) { onExplore(); return }
-
-    // Kill every tween the explorer may have running.
-    const all = root.querySelectorAll<HTMLElement>(
-      '[data-fx-line],[data-fx-tag],[data-fx-dim],[data-fx-stage],' +
-      '[data-fx-copy],[data-fx-list],[data-fx-hits],' +
-      '[data-fx-plate-area],[data-fx-plate-figure],[data-fx-plate-head],' +
-      '[data-fx-res-figure],[data-fx-res-head]',
-    )
-    all.forEach((el) => gsap.killTweensOf(el))
-
-    // Reset visible elements back to their resting values so a return
-    // to the explorer after the chapter does not find stale transforms.
-    all.forEach((el) => gsap.set(el, { clearProps: 'all' }))
-
-    // Reset plan viewers so the next open starts from the fit.
-    const resArea = root.querySelector<HTMLElement>('[data-fx-res-figure]')
-    if (resArea) resetPlanViewer(resArea)
-    const plateArea = root.querySelector<HTMLElement>('[data-fx-plate-area]')
-    if (plateArea) resetPlanViewer(plateArea)
-
-    // Tear down state.
-    changeMode('selector')
-    setOpenLevel(null)
-    setOpenResidence(null)
-    setUnitHovered(null)
-    setUnitSelected(null)
-    setRevealed(false)
-    setHovered(null)
-    setSelected(null)
-    setTerraceHovered(false)
-    setTerraceSelected(false)
-    unlockScroll()
-
-    // Now navigate.
-    onExplore()
-  }, [onExplore, changeMode])
 
   // Escape steps back one level: residence → floor, floor → building.
   useEffect(() => {
@@ -764,6 +943,11 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
   const choose = useCallback(
     (level: Level) => {
       if (!active) return
+      // A floorplate is already open: the rail turns it, in one press.
+      if (PLATE_MODES.includes(modeRef.current)) {
+        switchLevel(level)
+        return
+      }
       if (coarse && selected !== level.id) {
         // First tap indicates; the readout offers the plan, a second tap opens it.
         setSelected(level.id)
@@ -772,7 +956,7 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
       }
       open(level)
     },
-    [active, coarse, selected, open],
+    [active, coarse, selected, open, switchLevel],
   )
 
   const prefetch = useCallback((level: Level) => void warmImage(floorplateImage(level.floorplate)), [])
@@ -895,6 +1079,7 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
         shown={shown}
         selected={markedSelection}
         frozen={frozen || !active}
+        railLive={plateUp}
         revealed={revealed}
         coarse={coarse}
         reducedMotion={reducedMotion}
@@ -926,7 +1111,6 @@ export function FloorExplorer({ active, onTerrace, onExplore, suspended = false 
         interactive={mode === 'residence'}
         reducedMotion={reducedMotion}
         onBack={closeUnit}
-        onExplore={exitToInteriors}
         ref={unitBackRef}
       />
     </div>

@@ -1,7 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
 
 import { OPENING_COPY } from '../../data/opening'
-import { glideTo, pageTop } from '../../lib/pageScroll'
 import { FloorExplorer } from '../floor-explorer/FloorExplorer'
 import { ScrollTrigger } from '../repose/motion/gsap'
 import { ClosingCall } from './ClosingCall'
@@ -14,22 +13,14 @@ import './arrival.css'
  *  concern, mounted nowhere near here) into the ending. */
 const NO_TERRACE = () => {}
 
-/**
- * "View Interior", pressed in the arrival's own explorer.
- *
- * The residence chapter is ABOVE this one in the document — the visitor has
- * already scrolled through it — so this travels back up to it, the same glide
- * `App.explore` makes on the way down. Found by the chapter's own root mark
- * rather than by threading a callback down through two chapters, exactly as
- * App does it.
- *
- * It is a real handler and not a no-op on purpose: the explorer requires
- * `onExplore`, and leaving it off is what broke `tsc -b` (and therefore every
- * production build) while `vite dev` went on working.
- */
-const EXPLORE_INTERIORS = () => {
-  const residence = document.querySelector<HTMLElement>('[data-repose-root]')
-  if (residence) glideTo(pageTop(residence), 1.4)
+interface Props {
+  /**
+   * True while this screen holds the frame: the arch has completed and is
+   * not travelling again. The explorer is stood up on it — revealed at once,
+   * selector and all, rather than waiting to be hovered for — and stood
+   * down if the visitor scrolls back up into the arch.
+   */
+  active: boolean
 }
 
 /**
@@ -65,7 +56,7 @@ const EXPLORE_INTERIORS = () => {
  * arrival then begins on the pin's last pixel: one building, continuous, in
  * both directions.
  */
-export function Arrival() {
+export function Arrival({ active }: Props) {
   const root = useRef<HTMLDivElement | null>(null)
 
   useLayoutEffect(() => {
@@ -87,8 +78,9 @@ export function Arrival() {
         {/* The floor explorer, exactly as met at the top of the journey — its
             own picture is the arch's still at the arch's own cover fit, so the
             hand-over stays the pixel-exact exchange it always was. It measures
-            and reveals itself; this screen only has to give it the box. */}
-        <FloorExplorer active suspended={false} onTerrace={NO_TERRACE} onExplore={EXPLORE_INTERIORS} />
+            itself; this screen gives it the box and says when the arch has
+            arrived, and it presents its selector the moment it has. */}
+        <FloorExplorer active={active} suspended={false} presented onTerrace={NO_TERRACE} />
 
         {/* The journey's closing marks, in the places they have always had:
             the residence on the left, the developer on the right, on the two

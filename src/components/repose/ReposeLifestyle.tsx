@@ -272,6 +272,42 @@ export function ReposeLifestyle({ onReturn }: Props) {
    * it.
    */
   const [arrived, setArrived] = useState(false)
+  /**
+   * True while the amenities journey itself is on screen.
+   *
+   * The chapter's chrome is `position: fixed`, and the chapter is put into
+   * the document long before the visitor reaches it — so once the amenities
+   * had mounted, the header, the progress rail and the chapter count were
+   * painted over everything ABOVE them as well: the residence cards, the
+   * reception, the building, the film, for anyone who scrolled back up.
+   * The chrome belongs to the ten amenity sections and is shown only while
+   * `.rp-main` is in the viewport; the arrival, which is inside `.rp-main`,
+   * stands it down separately (`arrived`).
+   */
+  const [journey, setJourney] = useState(false)
+  useEffect(() => {
+    if (!amenities) return
+    const element = main.current
+    if (!element || typeof IntersectionObserver === 'undefined') {
+      setJourney(true)
+      return
+    }
+    const observer = new IntersectionObserver((entries) => setJourney(entries.some((entry) => entry.isIntersecting)))
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [amenities])
+  /**
+   * The arch, and whether it has finished with the frame.
+   *
+   * `handedOff` is set the first time the arch completes and stays set; the
+   * arch itself re-fires its completion on every pass. `archTravelling` is
+   * the arch pinned and still on its way — true again if the visitor scrolls
+   * back up into it. Together they say when the arrival actually holds the
+   * screen, which is when its floor explorer is stood up: not from mount, or
+   * it would be warming eight floorplates behind the amenities.
+   */
+  const [handedOff, setHandedOff] = useState(false)
+  const [archTravelling, setArchTravelling] = useState(false)
   useEffect(() => {
     if (!amenities) return
     const element = document.querySelector('[data-arrival-root]')
@@ -291,6 +327,7 @@ export function ReposeLifestyle({ onReturn }: Props) {
       className="repose-experience"
       ref={root}
       data-phase={phase}
+      data-journey={journey || undefined}
       data-arrived={arrived || undefined}
       data-repose-root
     >
@@ -356,7 +393,11 @@ export function ReposeLifestyle({ onReturn }: Props) {
               towerSrc={TOWER_SRC}
               sources={portalSources}
               triggerRef={portal}
-              onComplete={() => returnRef.current()}
+              onComplete={() => {
+                setHandedOff(true)
+                returnRef.current()
+              }}
+              onTravelling={setArchTravelling}
             />
           }
         />
@@ -384,7 +425,7 @@ export function ReposeLifestyle({ onReturn }: Props) {
             reached by jumping back UP to the opening's building, which is what
             made the journey a loop; it is placed here instead, so the page only
             travels forward and scrolling back retraces the way it came. */}
-        <Arrival />
+        <Arrival active={handedOff && !archTravelling} />
       </div>
       )}
 

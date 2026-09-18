@@ -6,7 +6,7 @@ import { getLifestyle, loadLifestyle, prefetchLifestyle } from './components/rep
 import { getTerrace, loadTerrace } from './components/terrace/lazy'
 import { useSmoothScroll } from './hooks/useSmoothScroll'
 import { glideTo, jumpTo, pageTop } from './lib/pageScroll'
-import { getSmoothScroll, unlockScroll } from './lib/scrollLock'
+import { getSmoothScroll, holdScrollThroughGesture, unlockScroll } from './lib/scrollLock'
 
 /**
  * The document's height at the last refresh we asked for.
@@ -18,6 +18,16 @@ import { getSmoothScroll, unlockScroll } from './lib/scrollLock'
  * has actually changed size. Everything below asks through this.
  */
 let measuredHeight = 0
+
+// Every refresh — asked for here or run by ScrollTrigger itself on load and
+// on resize — measures the document as it stands, so the height it last
+// measured is what the question below is asked against. Left at zero, the
+// first question always answered "yes": a forced refresh of every pin on the
+// page at the very moment the arch handed over to the arrival, for a document
+// whose size had not changed.
+ScrollTrigger.addEventListener('refresh', () => {
+  measuredHeight = document.documentElement.scrollHeight
+})
 
 function refreshIfDocumentResized(): void {
   const height = document.documentElement.scrollHeight
@@ -209,6 +219,12 @@ function App() {
     unlockScroll()
     const arrival = document.querySelector<HTMLElement>('[data-arrival-root]')
     if (arrival) jumpTo(pageTop(arrival))
+    // The scroll that carried the page through the arch is usually still
+    // going — the rest of a wheel flick, a trackpad's momentum — and every
+    // event of it landed AFTER the page had been placed on the building, so
+    // the building slid on up and the closing screen came in under it. The
+    // rest of that gesture is absorbed; the next one is the visitor's own.
+    holdScrollThroughGesture()
     requestAnimationFrame(() => {
       getSmoothScroll()?.resize()
       // Nothing is added to or taken out of the document across this

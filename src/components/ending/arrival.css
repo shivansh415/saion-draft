@@ -28,19 +28,17 @@
    instant the arch hands over, so the gate is lifted permanently instead. */
 .arrival [data-fx-root] {
   opacity: 1;
-  /* The SAME box the arch lands its still in, and the same one the opening's
-     sticky frame paints it in: 100svh, anchored to the top. The section
-     itself is `window.innerHeight` tall because that is the number the pin
-     above it is laid out with (see Arrival.tsx) — but on a phone mid-scroll
-     the browser bar is collapsed, so innerHeight is the LARGE viewport while
-     svh stays the small one, and a cover fit into the taller box lands the
-     building at a different scale from the one the arch has just delivered:
-     a 12% jump in the tower at the exact moment the two are meant to be
-     pixel-identical. Sized like the arch's target instead, the hand-over is
-     seamless on a phone as it already was on a desktop, and the strip left
-     under it is the same ink ground the opening's frame leaves there. */
+  /* The SAME box the arch lands its still in — the opening's sticky frame,
+     which ArchPortal measures — anchored to the top. That frame is 100lvh
+     (see opening.css), so this is too: a different height here would cover-fit
+     the building at a different scale from the one the arch has just delivered,
+     a visible jump in the tower at the moment the two are meant to be
+     pixel-identical. The section around it is `window.innerHeight` tall because
+     that is the number the pin above is laid out with (see Arrival.tsx); where
+     the two differ it clips the foot of the picture, never exposes ground. */
   bottom: auto;
-  height: 100svh;
+  height: 100vh;
+  height: 100lvh;
 }
 
 /* The marks belong to the BUILDING screen.
@@ -78,7 +76,7 @@
   position: absolute;
   left: 6vw;
   right: 6vw;
-  bottom: 4vh;
+  bottom: calc(4vh + var(--fold));
   z-index: 2;
   display: flex;
   align-items: flex-end;
@@ -127,13 +125,13 @@
      readout) ran under REPOSÉ RESIDENCE. Lifted clear of the marks' own band:
      their offset from the foot, their height, and a gap. */
   .arrival [data-fx-root] .fx__copy {
-    bottom: calc(3vh + 4.3rem);
+    bottom: calc(3vh + 4.3rem + var(--fold));
   }
 
   .arrival__brand {
     left: 5vw;
     right: 5vw;
-    bottom: 3vh;
+    bottom: calc(3vh + var(--fold));
     gap: 18px;
   }
 

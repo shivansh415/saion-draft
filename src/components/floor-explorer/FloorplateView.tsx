@@ -52,7 +52,16 @@ export const FloorplateView = forwardRef<HTMLButtonElement, Props>(function Floo
   const [ratio, learnRatio] = useImageRatio(src, FALLBACK_RATIO)
   const { areaRef, sheetRef: figureRef } = useSheetFit({ ratio, fill: 0.92 })
   const contentRef = useRef<HTMLDivElement | null>(null)
-  const viewer = usePlanViewer({ viewportRef: areaRef, frameRef: figureRef, contentRef, enabled: interactive, readable: true })
+  // The plain wheel is the explorer's here — it turns floors — so the viewer
+  // keeps only the pinch, the drag, the double-click and the touch gestures.
+  const viewer = usePlanViewer({
+    viewportRef: areaRef,
+    frameRef: figureRef,
+    contentRef,
+    enabled: interactive,
+    readable: true,
+    wheelZoom: false,
+  })
 
   const hotspots = level?.floorplate.hotspots ?? []
 
@@ -160,7 +169,7 @@ export const FloorplateView = forwardRef<HTMLButtonElement, Props>(function Floo
           data-fx-viewer-reset
           onClick={() => viewer.reset()}
           tabIndex={interactive ? 0 : -1}
-          title={VIEWER_COPY.hint}
+          title={VIEWER_COPY.plateHint}
         >
           <span className="fx-viewport__reset-rule" />
           {VIEWER_COPY.reset}

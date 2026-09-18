@@ -15,7 +15,11 @@
   inset: 0;
   background: var(--ink);
   color: var(--paper);
-  opacity: 0; /* scrubbed in by the opening's hand-off */
+  /* Scrubbed in by the opening's hand-off, as a property on the chapter's
+     section (see OpeningExperience) so it reaches this root whatever element
+     happens to be standing here. The arrival, which has no such scroll,
+     overrides it outright. */
+  opacity: var(--fx-in, 0);
   pointer-events: none;
   will-change: opacity;
 }
@@ -25,9 +29,13 @@
 }
 
 /* While a plan is opening, open or closing, the selector is faded out and
-   must not keep taking clicks or showing a pointer through the plan. */
+   must not keep taking clicks or showing a pointer through the plan.
+
+   The level rail is the exception: it stays up beside an open floorplate
+   (`floorplate`, and `switching` while one turns to another) and turns the
+   plate from there, so it keeps its pointer through those two. */
 .fx:not([data-mode='selector']) .fx-hit,
-.fx:not([data-mode='selector']) .fx__list,
+.fx:not([data-mode='selector']):not([data-mode='floorplate']):not([data-mode='switching']) .fx__list,
 .fx:not([data-mode='selector']) .fx__readout,
 .fx:not([data-mode='selector']) .fx-terrace-cue {
   pointer-events: none;
@@ -604,13 +612,17 @@
   --fx-line-soft: rgb(255 255 255 / 5%);
 }
 
+/* The section's own box never takes the pointer — it fills the frame, and
+   the level rail stands UNDER it in the stacking order, live while the plate
+   is open. What answers the pointer is the drawing's room and the controls
+   in the head, each turned on below for the mode they belong to. */
 .fx-plate {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-.fx[data-mode='floorplate'] .fx-plate {
+.fx[data-mode='floorplate'] .fx-plate__area {
   pointer-events: auto;
 }
 
@@ -630,6 +642,7 @@
 }
 
 .fx[data-mode='floorplate'] .fx-plate__grid,
+.fx[data-mode='switching'] .fx-plate__grid,
 .fx[data-mode='openingResidence'] .fx-plate__grid,
 .fx[data-mode='residence'] .fx-plate__grid,
 .fx[data-mode='closingResidence'] .fx-plate__grid {
@@ -755,13 +768,23 @@
 
 /* The room the sheet may occupy; the sheet is fitted and centred inside it.
    The room is also the floorplate's viewport: the drawing is zoomed and
-   panned inside the sheet's box and clipped here, at the room's edge. */
+   panned inside the sheet's box and clipped here, at the room's edge.
+
+   The level rail stands in the right margin while the plate is open, so the
+   room keeps clear of it — on both sides, so the drawing stays centred in
+   the frame. On the desktop shapes that matter the drawing is fitted to the
+   room's HEIGHT and never reached the rail anyway; this only counts on a
+   frame narrow enough for the width to decide. */
+.fx {
+  --fx-rail-room: 5.5rem;
+}
+
 .fx-plate__area {
   position: absolute;
-  left: calc(var(--gutter) + 1.5vw);
-  right: calc(var(--gutter) + 1.5vw);
+  left: calc(var(--gutter) + 1.5vw + var(--fx-rail-room));
+  right: calc(var(--gutter) + 1.5vw + var(--fx-rail-room));
   top: clamp(11.5rem, 24vh, 14rem);
-  bottom: clamp(3rem, 9vh, 5rem);
+  bottom: calc(clamp(3rem, 9vh, 5rem) + var(--fold));
   max-width: 1440px;
   margin-inline: auto;
   overflow: hidden;
@@ -1090,7 +1113,10 @@
   gap: 0.85rem;
   margin: 0;
   padding: 0.85rem 1.4rem;
-  border: 1px solid rgb(255 255 255 / 28%);
+  /* The outline is the control. At 28% it disappeared into the dark ground
+     on most screens and the label read as loose type; it is held at a
+     weight that is always seen, and lifted rather than found on hover. */
+  border: 1px solid rgb(255 255 255 / 58%);
   border-radius: 999px;
   background: transparent;
   color: var(--paper);
@@ -1107,26 +1133,26 @@
 
 .fx-res__cta:hover,
 .fx-res__cta:focus-visible {
-  border-color: rgb(255 255 255 / 60%);
-  background: rgb(255 255 255 / 5%);
+  border-color: rgb(255 255 255 / 88%);
+  background: rgb(255 255 255 / 6%);
 }
 
 /* A control with nothing behind it: no render is supplied for this residence.
-   It used to look identical to a live one and simply not answer, which reads
-   as broken rather than as not yet available. The wrapper exists to carry the
-   note, since a disabled control shows no title of its own. */
+   It does not answer, and the wrapper carries the note that says so, since a
+   disabled control shows no title of its own. It keeps the same solid,
+   rounded outline as a live one — dimmed, not dashed — so the control reads
+   the same on every residence rather than looking broken on most of them. */
 .fx-res__cta-wrap {
   display: inline-flex;
 }
 
 .fx-res__cta[data-placeholder] {
-  opacity: 0.38;
-  border-style: dashed;
+  opacity: 0.62;
   cursor: default;
 }
 
 .fx-res__cta[data-placeholder]:hover {
-  border-color: rgb(255 255 255 / 28%);
+  border-color: rgb(255 255 255 / 58%);
   background: transparent;
 }
 
@@ -1154,7 +1180,7 @@
   left: calc(var(--gutter) + min(29vw, 27rem));
   right: var(--gutter);
   top: clamp(4rem, 9vh, 7rem);
-  bottom: clamp(2.5rem, 7vh, 4.5rem);
+  bottom: calc(clamp(2.5rem, 7vh, 4.5rem) + var(--fold));
   max-width: 1240px;
 }
 
@@ -1278,7 +1304,7 @@
 
   .fx__copy {
     top: auto;
-    bottom: calc(var(--gutter-block) + 0.5rem);
+    bottom: calc(var(--gutter-block) + 0.5rem + var(--fold));
     transform: none;
     max-width: calc(100% - var(--gutter) - 5.5rem);
   }
@@ -1336,11 +1362,14 @@
     min-height: 2.6rem;
   }
 
+  /* The rail is on the right here too, so only the right keeps clear of it:
+     the drawing opens at a readable zoom on a phone and pans, and the width
+     is worth more than the symmetry. */
   .fx-plate__area {
     left: 3vw;
-    right: 3vw;
+    right: calc(3vw + 3.6rem);
     top: clamp(15rem, 38vh, 20rem);
-    bottom: 4vh;
+    bottom: calc(4vh + var(--fold));
   }
 
   .fx-unit-tag {
@@ -1373,7 +1402,7 @@
     left: 3vw;
     right: 3vw;
     top: clamp(17rem, 39vh, 21rem);
-    bottom: 3vh;
+    bottom: calc(3vh + var(--fold));
     max-width: none;
   }
 
@@ -1409,7 +1438,7 @@
   .fx-plate__area,
   .fx-res__area {
     top: clamp(5.5rem, 34vh, 13rem);
-    bottom: 2vh;
+    bottom: calc(2vh + var(--fold));
   }
 
   /* The head has to fit what it is given, so it loses its breathing room

@@ -315,6 +315,24 @@ export const InteriorCinema = forwardRef<CinemaHandle, Props>(function InteriorC
     if (!open && meter.current) meter.current.style.transform = 'scaleX(0)'
   }, [open])
 
+  /*
+   * The open film is put back into motion when the page is looked at again.
+   * A tab switched away from, or a phone locked, pauses the film — and a
+   * paused `<video>` does not start itself when the page comes back, so the
+   * room stood as a still with the frame open around it, for as long as the
+   * visitor stayed. The cinemagraphs already do this for themselves.
+   */
+  useEffect(() => {
+    if (!open) return
+    const resume = () => {
+      if (document.visibilityState !== 'visible') return
+      const video = videos.current.get(open.room.id)
+      if (video && video.paused) void video.play().catch(() => {})
+    }
+    document.addEventListener('visibilitychange', resume)
+    return () => document.removeEventListener('visibilitychange', resume)
+  }, [open])
+
   const time = useCallback((event: React.SyntheticEvent<HTMLVideoElement>) => {
     const video = event.currentTarget
     const bar = meter.current

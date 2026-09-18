@@ -15,11 +15,30 @@
 }
 
 /* The single persistent viewport. Sticky rather than GSAP-pinned: no
-   pin-spacer, no layout reflow, no chance of a jump at either boundary. */
+   pin-spacer, no layout reflow, no chance of a jump at either boundary.
+
+   `100lvh`, not `100svh`. The small viewport is the screen WITH the browser's
+   toolbar showing; on a phone that toolbar slides away as soon as the visitor
+   scrolls, the screen grows by its height, and a 100svh frame stayed the short
+   height with the section's ink ground exposed underneath it — a dark band
+   across the bottom of the film on an iPhone, for the whole of the opening.
+   The large viewport is the screen at its tallest, so the picture always
+   reaches the bottom of the glass. It is a static length (unlike `dvh`, which
+   would resize the canvas, re-fit the explorer and rebuild the reception walk
+   every time the toolbar moved). What is anchored to the bottom of this frame
+   is lifted by `--fold` (see index.css) so it clears the toolbar when the
+   toolbar IS showing. */
+/* The floor explorer's arrival, 0 → 1 across the hand-off. Declared on the
+   section and scrubbed there by GSAP; `.fx` reads it as its opacity. */
+.opening {
+  --fx-in: 0;
+}
+
 .opening__viewport {
   position: sticky;
   top: 0;
-  height: 100svh;
+  height: 100vh; /* fallback: on iOS and Android, vh IS the large viewport */
+  height: 100lvh;
   width: 100%;
   overflow: hidden;
   background: var(--ink);
@@ -156,7 +175,7 @@
 
   position: absolute;
   right: var(--gutter);
-  bottom: var(--gutter-block);
+  bottom: calc(var(--gutter-block) + var(--fold));
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -195,7 +214,7 @@
 .op-hint {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--gutter-block) - 0.25rem);
+  bottom: calc(var(--gutter-block) - 0.25rem + var(--fold));
   transform: translateX(-50%);
   pointer-events: none;
 }
@@ -501,11 +520,10 @@
 
 .why-dubai__body {
   position: relative;
-  /* Three lines rather than four. The copy is unchanged — the measure is what
-     decides the break, so it is the measure that moved: the paragraph now fills
-     the block, and the block sets the width. A narrow screen has no room for a
-     line this long and will still take more; this is a desktop shape, not a
-     promise. */
+  /* Two short lines, each its own sentence, broken where the copy breaks them
+     and nowhere else on a desktop: the paragraph fills the block, and the
+     block sets the width. A narrow screen has no room for a line this long
+     and will still take more; this is a desktop shape, not a promise. */
   max-width: 100%;
   margin-top: clamp(1.2rem, 2.6vh, 2.2rem);
   font-family: var(--font-sans);
@@ -708,7 +726,7 @@
 .opening__meter {
   position: absolute;
   inset-inline: 0;
-  bottom: 0;
+  bottom: var(--fold);
   height: 1px;
   background: rgb(255 255 255 / 8%);
   transition: opacity 900ms ease 400ms;

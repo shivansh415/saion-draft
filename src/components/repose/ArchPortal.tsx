@@ -36,6 +36,13 @@ interface Props {
   triggerRef: MutableRefObject<ScrollTrigger | null>
   /** Called once the building stands alone and the page already rests at the opening's end. */
   onComplete: () => void
+  /**
+   * Whether the arch has the frame — pinned and still on its way. It is what
+   * `data-arch-pinned` says on the chapter's root, told to React as well, so
+   * the arrival can stand its explorer up the moment the arch has arrived and
+   * take it down again if the visitor scrolls back up into the arch.
+   */
+  onTravelling?: (travelling: boolean) => void
 }
 
 interface Geometry {
@@ -92,12 +99,14 @@ const NARROW = '(max-width: 900px)'
  * the very same still in the very same rectangle — and the chapter is handed
  * back. Nothing on screen changes; only who owns it.
  */
-export function ArchPortal({ active, host, towerSrc, sources, triggerRef, onComplete }: Props) {
+export function ArchPortal({ active, host, towerSrc, sources, triggerRef, onComplete, onTravelling }: Props) {
   const ref = useRef<HTMLDivElement | null>(null)
   const completeRef = useRef(onComplete)
+  const travellingRef = useRef(onTravelling)
   useEffect(() => {
     completeRef.current = onComplete
-  }, [onComplete])
+    travellingRef.current = onTravelling
+  }, [onComplete, onTravelling])
 
   useLayoutEffect(() => {
     if (!active) return
@@ -144,7 +153,10 @@ export function ArchPortal({ active, host, towerSrc, sources, triggerRef, onComp
       const W = finaleBox.width
       const H = finaleBox.height
       const vh = window.innerHeight
-      // The explorer's viewport is the opening's sticky frame, 100svh tall.
+      // The explorer's viewport is the opening's sticky frame (100lvh — the
+      // screen at its tallest, so a phone's collapsing toolbar never exposes
+      // ground under it). Measured, never assumed, so the arrival's box and
+      // this one are always the same number.
       const stage = document.querySelector<HTMLElement>('.opening__viewport')
       const svh = stage?.clientHeight || vh
 
@@ -276,11 +288,23 @@ export function ArchPortal({ active, host, towerSrc, sources, triggerRef, onComp
     const setOwner = (pinned: boolean) => {
       if (pinned === owns) return
       owns = pinned
+      travellingRef.current?.(pinned)
       if (!chapter) return
       if (pinned) chapter.setAttribute('data-arch-pinned', '')
       else chapter.removeAttribute('data-arch-pinned')
     }
 
+    /**
+     * Fired once per arrival, not once ever.
+     *
+     * It used to latch: the first time the arch completed the page was
+     * halted on the arrival, and every time after — the visitor scrolls back
+     * up into the arch to look again, then on — the arch completed and did
+     * nothing, so the scroll that carried them through it carried them on
+     * past the building and into the closing screen. Re-armed whenever the
+     * arch is re-entered from below, so every completion lands the page on
+     * the arrival the same way the first one did.
+     */
     let done = false
     const handoff = () => {
       if (done) return
@@ -410,6 +434,9 @@ export function ArchPortal({ active, host, towerSrc, sources, triggerRef, onComp
         // wrong side of a rounding error. `onLeave` fires when the trigger
         // passes its end, whatever the last update happened to read.
         onLeave: handoff,
+        onEnterBack: () => {
+          done = false
+        },
       })
       triggerRef.current = trigger
     }, finale)
@@ -417,6 +444,7 @@ export function ArchPortal({ active, host, towerSrc, sources, triggerRef, onComp
     return () => {
       triggerRef.current = null
       chapter?.removeAttribute('data-arch-pinned')
+      if (owns) travellingRef.current?.(false)
       context.revert()
     }
   }, [active, host, triggerRef])

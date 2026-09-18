@@ -175,6 +175,33 @@ html {
   scroll-behavior: auto;
 }
 
+/*
+ * The browser's collapsible toolbar, as a length.
+ *
+ * On a phone the address bar / bottom toolbar slides away as the visitor
+ * scrolls, and the visible screen grows by its height. `100svh` is the screen
+ * WITH the toolbar (the smallest it ever is), `100lvh` WITHOUT it (the largest).
+ * The difference is what `--fold` measures — ~80px on an iPhone in Safari, and
+ * exactly 0 on a desktop, where the two units are the same number.
+ *
+ * Full-screen frames that stay on screen while the page scrolls under them
+ * (the opening's sticky viewport) are sized to `100lvh`, so their picture
+ * always reaches the real bottom of the glass; anything anchored to their
+ * BOTTOM edge — a caption, a control, a brand mark — is lifted by `--fold`, so
+ * it still sits above the toolbar at the moment the toolbar is showing. Both
+ * are static lengths: neither changes when the toolbar moves, so nothing is
+ * re-laid-out, re-fitted or re-measured mid-scroll.
+ */
+:root {
+  --fold: 0px;
+}
+
+@supports (height: 100lvh) {
+  :root {
+    --fold: calc(100lvh - 100svh);
+  }
+}
+
 body {
   margin: 0;
   min-height: 100svh;
