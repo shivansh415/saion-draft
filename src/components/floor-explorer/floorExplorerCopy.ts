@@ -29,6 +29,13 @@ export const VIEWER_COPY = {
   plateHint: 'Scroll to change floors; pinch or double-click to zoom, drag to pan',
 } as const
 
+/** Sales availability, from the developer's list (see `availability.ts`). */
+export const AVAILABILITY_COPY = {
+  sold: 'Sold',
+  fullySold: 'Fully sold',
+  available: 'Available',
+} as const
+
 export const RESIDENCE_COPY = {
   back: 'Back to floor',
   view3d: 'View in 3D',

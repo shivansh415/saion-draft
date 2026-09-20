@@ -1,9 +1,12 @@
 import type { KeyboardEvent } from 'react'
 
+import { AVAILABILITY_COPY } from './floorExplorerCopy'
 import type { UnitHotspot } from './floorExplorerData'
 
 interface Props {
   hotspots: readonly UnitHotspot[]
+  /** Residence ids sold on the level on view (see `availability.ts`). */
+  sold: ReadonlySet<string>
   /** Residence currently indicated (hovered, focused, tapped or opening). */
   shown: string | null
   /** True while a residence is opening or open: the rest of the plate recedes further. */
@@ -19,6 +22,10 @@ interface Props {
 const toPath = (polygon: UnitHotspot['polygon']): string =>
   polygon.map(([x, y], index) => `${index === 0 ? 'M' : 'L'}${x} ${y}`).join(' ') + ' Z'
 
+/** The same polygon as a CSS clip, for the hatch laid over a sold residence. */
+const toClip = (polygon: UnitHotspot['polygon']): string =>
+  `polygon(${polygon.map(([x, y]) => `${x}% ${y}%`).join(', ')})`
+
 /**
  * The residences drawn over a floorplate.
  *
@@ -30,8 +37,17 @@ const toPath = (polygon: UnitHotspot['polygon']): string =>
  *
  * A residence without a verified unit plan indicates and reads out exactly
  * like the others; it simply does not open (see `UnitHotspot.plan`).
+ *
+ * A residence that has SOLD is marked on the drawing itself, the way a set
+ * of plans is marked up: a fine diagonal hatch over the residence and a
+ * small SOLD mark at its centre, both there whether or not anything is
+ * indicated. The hatch is a clipped element rather than an SVG pattern
+ * because the SVG below is stretched to the sheet (`preserveAspectRatio:
+ * none`), which would stretch a pattern with it; a CSS gradient in a
+ * clip-path polygon of the same percentages hatches evenly at any size. It
+ * is still a residence: it indicates, reads out and opens as any other.
  */
-export function UnitHotspotLayer({ hotspots, shown, focus, coarse, interactive, onHover, onChoose }: Props) {
+export function UnitHotspotLayer({ hotspots, sold, shown, focus, coarse, interactive, onHover, onChoose }: Props) {
   const enter = (id: string) => {
     if (!coarse && interactive) onHover(id)
   }
@@ -47,6 +63,22 @@ export function UnitHotspotLayer({ hotspots, shown, focus, coarse, interactive, 
 
   return (
     <>
+      {/* Under the hit-zones, so the residence beneath still answers the
+          pointer; the marks themselves never take it. */}
+      <div className="fx-units__sold" aria-hidden="true">
+        {hotspots.map((hotspot) => {
+          const id = hotspot.residence.id
+          if (!sold.has(id)) return null
+          return (
+            <span
+              key={id}
+              className={`fx-sold${shown === id ? ' is-shown' : ''}`}
+              style={{ clipPath: toClip(hotspot.polygon) }}
+            />
+          )
+        })}
+      </div>
+
       <svg
         className="fx-units"
         data-fx-units
@@ -59,14 +91,18 @@ export function UnitHotspotLayer({ hotspots, shown, focus, coarse, interactive, 
       >
         {hotspots.map((hotspot) => {
           const id = hotspot.residence.id
-          const label = `${hotspot.residence.name}, ${hotspot.typeLabel ?? hotspot.positionLabel}`
+          const isSold = sold.has(id)
+          const label = `${hotspot.residence.name}, ${hotspot.typeLabel ?? hotspot.positionLabel}${
+            isSold ? ` — ${AVAILABILITY_COPY.sold.toLowerCase()}` : ''
+          }`
           return (
             <path
               key={id}
               d={toPath(hotspot.polygon)}
-              className={`fx-unit${shown === id ? ' is-shown' : ''}`}
+              className={`fx-unit${shown === id ? ' is-shown' : ''}${isSold ? ' is-sold' : ''}`}
               data-unit={id}
               data-open={hotspot.plan ? 'true' : 'false'}
+              data-sold={isSold || undefined}
               vectorEffect="non-scaling-stroke"
               role="button"
               tabIndex={interactive ? 0 : -1}
@@ -83,18 +119,25 @@ export function UnitHotspotLayer({ hotspots, shown, focus, coarse, interactive, 
         })}
       </svg>
 
-      {/* The indicated residence's tag, at its centroid. */}
+      {/* The indicated residence's tag, at its centroid — and, on a sold
+          residence, the SOLD mark, which is always there. The two share the
+          point: the mark carries the letter itself, so nothing overlaps. */}
       <div className="fx-units__tags" aria-hidden="true">
         {hotspots.map((hotspot) => {
           const id = hotspot.residence.id
           const tag = hotspot.tag
+          const at = { left: `${hotspot.labelAt[0]}%`, top: `${hotspot.labelAt[1]}%` }
+          if (sold.has(id)) {
+            return (
+              <span key={id} className={`fx-unit-sold${shown === id ? ' is-shown' : ''}`} style={at}>
+                {tag && <span className="fx-unit-sold__tag">{tag}</span>}
+                <span className="fx-unit-sold__word">{AVAILABILITY_COPY.sold}</span>
+              </span>
+            )
+          }
           if (!tag) return null
           return (
-            <span
-              key={id}
-              className={`fx-unit-tag${shown === id ? ' is-shown' : ''}`}
-              style={{ left: `${hotspot.labelAt[0]}%`, top: `${hotspot.labelAt[1]}%` }}
-            >
+            <span key={id} className={`fx-unit-tag${shown === id ? ' is-shown' : ''}`} style={at}>
               {tag}
             </span>
           )

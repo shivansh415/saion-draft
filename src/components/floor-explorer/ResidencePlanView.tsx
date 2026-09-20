@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useRef, useState } from 'react'
 
 import { PlanMorph } from './PlanMorph'
-import { RESIDENCE_COPY, VIEWER_COPY } from './floorExplorerCopy'
+import { AVAILABILITY_COPY, RESIDENCE_COPY, VIEWER_COPY } from './floorExplorerCopy'
 import { PLAN_PRESENTATION, formatLevelList, planFallback, unitPlanImage } from './floorExplorerData'
 import type { Level, UnitHotspot } from './floorExplorerData'
 import { unit3dView } from './unit3dViews'
@@ -69,6 +69,7 @@ export const ResidencePlanView = forwardRef<HTMLButtonElement, Props>(function R
   const residence = hotspot?.residence ?? null
   const variant = hotspot?.typeLabel ?? null
   const residenceId = residence?.id ?? null
+  const isSold = residenceId !== null && level !== null && level.sold.has(residenceId)
 
   /**
    * The residence's supplied 3D render, or null where none is supplied —
@@ -136,7 +137,10 @@ export const ResidencePlanView = forwardRef<HTMLButtonElement, Props>(function R
 
         {level && residence && (
           <>
-            <p className="fx-res__eyebrow">{level.label}</p>
+            <p className="fx-res__eyebrow">
+              {level.label}
+              {isSold && <span className="fx-res__sold">{AVAILABILITY_COPY.sold}</span>}
+            </p>
             <h3 className="fx-res__title">{residence.name}</h3>
             <p className="fx-res__variant">{variant ?? hotspot?.positionLabel}</p>
 

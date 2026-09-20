@@ -8,7 +8,7 @@ import { bandPx } from './levelGeometry'
 import { isTerrace, markerBandPx, terraceBandPx, TERRACE_ENABLED, TERRACE_ID } from './terraceZone'
 import type { Marker } from './terraceZone'
 import { EXPLORER_COPY as COPY, TERRACE_COPY } from './floorExplorerCopy'
-import { formatResidenceTypes } from './floorExplorerData'
+import { formatAvailability, formatResidenceTypes } from './floorExplorerData'
 import type { FloorExplorerModel, Level } from './floorExplorerData'
 
 interface Props {
@@ -407,6 +407,14 @@ export function BuildingLevelSelector({
                 <>
                   <span className="fx__readout-level">{readoutLevel.label}</span>
                   <span className="fx__readout-types">{formatResidenceTypes(readoutLevel.residenceTypes)}</span>
+                  {formatAvailability(readoutLevel) && (
+                    <span
+                      className="fx__readout-availability"
+                      data-fully-sold={readoutLevel.sold.size >= readoutLevel.residences.length || undefined}
+                    >
+                      {formatAvailability(readoutLevel)}
+                    </span>
+                  )}
                   {coarse && selected === readoutLevel.id && (
                     <button type="button" className="fx__open" onClick={() => choose(readoutLevel)}>
                       <span className="fx__open-rule" />
@@ -457,15 +465,22 @@ export function BuildingLevelSelector({
             {levels.map((level) => {
               const isShown = shown === level.id
               const isSelected = selected === level.id
+              // Every residence on the level has sold: the rail says so.
+              const fullySold = level.residences.length > 0 && level.sold.size >= level.residences.length
+              const availability = formatAvailability(level)
               return (
                 <li key={level.id}>
                   <button
                     type="button"
-                    className={`fx-level${isShown ? ' is-shown' : ''}${isSelected ? ' is-selected' : ''}`}
+                    className={`fx-level${isShown ? ' is-shown' : ''}${isSelected ? ' is-selected' : ''}${
+                      fullySold ? ' is-sold' : ''
+                    }`}
                     data-fx-reveal-level
                     data-level={level.id}
                     aria-pressed={isSelected}
-                    aria-label={`${level.label} — ${formatResidenceTypes(level.residenceTypes)}`}
+                    aria-label={`${level.label} — ${formatResidenceTypes(level.residenceTypes)}${
+                      availability ? ` — ${availability}` : ''
+                    }`}
                     onPointerEnter={() => enter(level)}
                     onPointerLeave={leave}
                     onFocus={() => {

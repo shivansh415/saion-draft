@@ -1,7 +1,14 @@
 import { forwardRef, useRef, useState } from 'react'
 
-import { PLATE_COPY, VIEWER_COPY } from './floorExplorerCopy'
-import { PLAN_PRESENTATION, floorplateImage, formatLevelList, formatResidenceTypes, planFallback } from './floorExplorerData'
+import { AVAILABILITY_COPY, PLATE_COPY, VIEWER_COPY } from './floorExplorerCopy'
+import {
+  PLAN_PRESENTATION,
+  floorplateImage,
+  formatAvailability,
+  formatLevelList,
+  formatResidenceTypes,
+  planFallback,
+} from './floorExplorerData'
 import type { Level, UnitHotspot } from './floorExplorerData'
 import { UnitHotspotLayer } from './UnitHotspotLayer'
 import { usePlanViewer } from './usePlanViewer'
@@ -64,6 +71,8 @@ export const FloorplateView = forwardRef<HTMLButtonElement, Props>(function Floo
   })
 
   const hotspots = level?.floorplate.hotspots ?? []
+  const sold: ReadonlySet<string> = level?.sold ?? new Set<string>()
+  const availability = level ? formatAvailability(level) : null
 
   // The readout keeps the last residence it showed while it fades.
   const [lastUnit, setLastUnit] = useState<string | null>(null)
@@ -100,6 +109,12 @@ export const FloorplateView = forwardRef<HTMLButtonElement, Props>(function Floo
                 {PLATE_COPY.shared} {formatLevelList(level.sharedWith)}
               </p>
             )}
+            {availability && (
+              <p className="fx-plate__availability" data-fully-sold={sold.size >= level.residences.length || undefined}>
+                <span className="fx-plate__availability-rule" aria-hidden="true" />
+                {availability}
+              </p>
+            )}
 
             {/* Live readout of the indicated residence. */}
             <div className="fx-plate__unit" data-visible={shownUnit ? 'true' : 'false'} aria-live="polite">
@@ -108,6 +123,9 @@ export const FloorplateView = forwardRef<HTMLButtonElement, Props>(function Floo
                   <span className="fx-plate__unit-rule" />
                   <span className="fx-plate__unit-name">{readout.residence.name}</span>
                   <span className="fx-plate__unit-variant">{readout.typeLabel ?? readout.positionLabel}</span>
+                  {sold.has(readout.residence.id) && (
+                    <span className="fx-plate__unit-sold">{AVAILABILITY_COPY.sold}</span>
+                  )}
                   {readout.plan ? (
                     coarse &&
                     selectedUnit === readout.residence.id && (
@@ -153,6 +171,7 @@ export const FloorplateView = forwardRef<HTMLButtonElement, Props>(function Floo
             )}
             <UnitHotspotLayer
               hotspots={hotspots}
+              sold={sold}
               shown={shownUnit}
               focus={residenceFocus}
               coarse={coarse}

@@ -13,6 +13,8 @@
  */
 
 import { useEffect, useState } from 'react'
+import { soldResidences } from './availability'
+import { AVAILABILITY_COPY } from './floorExplorerCopy'
 
 import type { LevelId } from './levelCalibration'
 import { unitHotspots } from './unitHotspots'
@@ -231,6 +233,12 @@ export interface Level {
   readonly sharedWith: readonly LevelId[]
   readonly sharesFloorplate: boolean
   readonly unitPlanMappingStatus: MappingStatus
+  /**
+   * Residence ids sold on THIS level, from the developer's availability list
+   * (see `availability.ts`). Per level rather than on the residence record,
+   * because the records are shared by every level on the same plate.
+   */
+  readonly sold: ReadonlySet<string>
 }
 
 export interface FloorExplorerModel {
@@ -370,6 +378,7 @@ function build(selector: SelectorFile, residences: ResidencesFile): FloorExplore
       sharedWith: entry.sharedWith.filter(isLevelId),
       sharesFloorplate: entry.sharesFloorplate,
       unitPlanMappingStatus: entry.unitPlanMappingStatus,
+      sold: soldResidences(entry.level, set.filter((residence) => wanted.has(residence.id))),
     })
   }
 
@@ -430,6 +439,19 @@ export function useFloorExplorerData(): FloorExplorerDataState {
 
 /** "1 BHK · 1 BHK + Study · 2 BHK + Maid Room" */
 export const formatResidenceTypes = (types: readonly string[]): string => types.join(' · ')
+
+/**
+ * A level's availability, as a line: "Fully sold", "4 sold · 2 available" —
+ * or null where nothing on the level has sold, so a level with everything to
+ * offer says nothing about it.
+ */
+export function formatAvailability(level: Level): string | null {
+  const total = level.residences.length
+  const sold = level.residences.filter((residence) => level.sold.has(residence.id)).length
+  if (sold === 0 || total === 0) return null
+  if (sold >= total) return AVAILABILITY_COPY.fullySold
+  return `${sold} ${AVAILABILITY_COPY.sold} · ${total - sold} ${AVAILABILITY_COPY.available}`
+}
 
 /** "Type A", "Type B′" — or null where the brochure prints no variant. */
 export const residenceVariant = (residence: ResidenceRecord): string | null =>

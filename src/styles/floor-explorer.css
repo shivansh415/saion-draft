@@ -1010,6 +1010,173 @@
 }
 
 /* ---------------------------------------------------------------------
+   Sold
+
+   From the developer's availability list (see `availability.ts`). Marked
+   the way a set of plans is marked up by hand: a fine diagonal hatch over
+   the residence, in the paper's own tone, and a small mark at its centre
+   that carries the residence's letter and the one word. Always there, not
+   only on hover — a sale is a fact of the drawing, not a state of the
+   pointer — and quiet enough that the plan stays the subject. The same
+   mark, in the same voice, follows the residence into its readout, its own
+   plan, and the level rail on the building.
+   --------------------------------------------------------------------- */
+
+.fx-units__sold {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* The hatch: a clip of the residence's own polygon over a repeating hairline.
+   Inside the zoom wrapper, so it scales with the drawing as ink on it would. */
+.fx-sold {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background:
+    repeating-linear-gradient(-45deg, rgb(246 244 241 / 20%) 0 1px, transparent 1px 8px),
+    rgb(9 12 16 / 30%);
+  transition: opacity 420ms ease;
+}
+
+/* Indicated, the hatch eases so the outline and the drawing read through it. */
+.fx-sold.is-shown {
+  opacity: 0.6;
+}
+
+/* The mark at the residence's centre, held at its own size at any zoom (as
+   the letter tag is). A pill in the explorer's control language — the same
+   hairline outline the cues wear — on a little of the ground, so it holds
+   against the drawing's own line work. */
+.fx-unit-sold {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0.42em 0.85em 0.4em;
+  border: 1px solid rgb(246 244 241 / 44%);
+  border-radius: 999px;
+  background: rgb(9 12 16 / 62%);
+  backdrop-filter: blur(6px);
+  transform: translate(-50%, -50%) scale(calc(1 / var(--fx-zoom, 1)));
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: clamp(0.5rem, 0.62vw, 0.66rem);
+  letter-spacing: 0.32em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--paper);
+  white-space: nowrap;
+  opacity: 0.92;
+  transition:
+    opacity 380ms ease,
+    border-color 380ms ease,
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.fx-unit-sold.is-shown {
+  opacity: 1;
+  border-color: rgb(246 244 241 / 80%);
+}
+
+/* The residence's letter, in the display face, as the tag shows it. */
+.fx-unit-sold__tag {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.6em;
+  letter-spacing: 0.02em;
+  line-height: 0.9;
+  opacity: 0.92;
+}
+
+.fx-unit-sold__word {
+  padding-inline-start: 0.32em; /* optical: the tracking after the last letter */
+}
+
+/* The level's tally, under the plate's title: "4 sold · 2 available". */
+.fx-plate__availability {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0.2rem 0 0;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.55rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 70%);
+}
+
+.fx-plate__availability-rule {
+  display: block;
+  width: 22px;
+  height: 1px;
+  background: currentcolor;
+  opacity: 0.5;
+}
+
+.fx-plate__availability[data-fully-sold] {
+  color: var(--paper);
+}
+
+/* The word beside the indicated residence's name, and beside the plan's level. */
+.fx-plate__unit-sold,
+.fx-res__sold {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4em 0.8em 0.38em;
+  border: 1px solid rgb(255 255 255 / 44%);
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: 0.52rem;
+  letter-spacing: 0.32em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--paper);
+  text-indent: 0.32em; /* centres the tracked word in its pill */
+}
+
+.fx-plate__unit-sold {
+  margin-top: 0.15rem;
+}
+
+.fx-res__sold {
+  margin-inline-start: 0.9rem;
+  vertical-align: middle;
+}
+
+/* On the building: a level with nothing left is struck through on the rail
+   and says so in the readout. */
+.fx-level.is-sold .fx-level__number {
+  opacity: 0.42;
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: rgb(255 255 255 / 72%);
+}
+
+.fx-level.is-sold.is-shown .fx-level__number,
+.fx-level.is-sold.is-selected .fx-level__number {
+  opacity: 0.72;
+}
+
+.fx__readout-availability {
+  display: block;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: clamp(0.52rem, 0.64vw, 0.66rem);
+  letter-spacing: 0.3em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 62%);
+}
+
+.fx__readout-availability[data-fully-sold] {
+  color: var(--paper);
+}
+
+/* ---------------------------------------------------------------------
    The residence view
    --------------------------------------------------------------------- */
 
