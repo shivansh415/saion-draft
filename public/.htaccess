@@ -1,0 +1,50 @@
+# Reposé Residence — Hostinger (LiteSpeed / Apache) server configuration.
+#
+# The site is a single static page built by Vite into dist/, uploaded to
+# public_html/. What is set here is what vercel.json sets for Vercel: long
+# caches on hashed and immutable files, short on the JSON the explorer reads,
+# none on the HTML — so a new deployment is picked up at once while the film
+# frames, plans and fonts stay cached.
+
+Options -Indexes
+DirectoryIndex index.html
+
+# Always HTTPS. Hostinger issues the certificate; this makes it the only door.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTPS} off
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# Types the server may not know.
+<IfModule mod_mime.c>
+  AddType image/webp .webp
+  AddType font/woff2 .woff2
+  AddType model/gltf-binary .glb
+  AddType video/mp4 .mp4
+  AddType application/json .json
+</IfModule>
+
+# Compression for text — LiteSpeed does this itself, this covers Apache.
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml
+</IfModule>
+
+<IfModule mod_headers.c>
+  # The HTML: never cached, so every visit sees the latest build.
+  <FilesMatch "\.html$">
+    Header set Cache-Control "public, max-age=0, must-revalidate"
+  </FilesMatch>
+  # Hashed bundles and fonts: immutable.
+  <FilesMatch "\.(js|css|woff2|woff)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+  # Film frames, stills, plans, videos and the model: a month, then revalidate.
+  <FilesMatch "\.(webp|png|jpg|jpeg|svg|mp4|glb)$">
+    Header set Cache-Control "public, max-age=2592000, stale-while-revalidate=2592000"
+  </FilesMatch>
+  # The explorer's package data: an hour.
+  <FilesMatch "\.json$">
+    Header set Cache-Control "public, max-age=3600, stale-while-revalidate=604800"
+  </FilesMatch>
+</IfModule>
