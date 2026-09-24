@@ -16,7 +16,7 @@ import { glideTo, pageTop } from '../../lib/pageScroll'
 import { useCoverRect } from '../floor-explorer/useCoverRect'
 import { EntranceHotspot } from './EntranceHotspot'
 import { EntranceTransition } from './EntranceTransition'
-import { CAMERA_ARRIVAL_SCALE, SWING_DEGREES } from './entranceCalibration'
+import { CAMERA_ARRIVAL_SCALE, SLIDE_TRAVEL } from './entranceCalibration'
 import { insetOf, layoutEntrance } from './entranceLayout'
 import { RECEPTION_ASSETS, RECEPTION_COPY } from './receptionCopy'
 import '../../styles/reception.css'
@@ -302,7 +302,7 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
     gsap.set(q('[data-rc-camera]'), { x: 0, y: 0, scale: 1, opacity: 1 })
     gsap.set(q('[data-rc-still]'), { opacity: 0 })
     gsap.set(q('[data-rc-through]'), { clipPath: insetOf(layoutRef.current.throughInset) })
-    gsap.set(q('[data-rc-leaf]'), { rotationY: 0, opacity: 1 })
+    gsap.set(q('[data-rc-leaf]'), { x: 0, opacity: 1 })
     gsap.set(q('[data-rc-streak], [data-rc-bloom], [data-rc-vignette], [data-rc-back], [data-rc-welcome], [data-rc-explore]'), { opacity: 0 })
     gsap.set(q('[data-rc-inside]'), { opacity: 0, scale: 1 })
     gsap.set(q('[data-rc-exterior]'), { filter: 'none' })
@@ -370,10 +370,21 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
     //    door grow fastest while the walk is fastest.
     timeline.to(proxy.current, { walk: 1, duration: T.walk, ease: 'power1.inOut', onUpdate: update }, 0)
 
-    // 2. The doors open inward for the visitor. A trace of what is behind
-    //    them shows through the glass as they turn.
-    timeline.to(leafL, { rotationY: SWING_DEGREES, opacity: 0.86, duration: T.doors, ease: 'power2.inOut' }, T.doorsAt)
-    timeline.to(leafR, { rotationY: -SWING_DEGREES, opacity: 0.86, duration: T.doors, ease: 'power2.inOut' }, T.doorsAt)
+    // 2. The door slides open for the visitor.
+    //
+    //    Both leaves run to the RIGHT, together and by the same distance, so
+    //    the pair reads as one panel on a track rather than two leaves
+    //    parting. The travel is the opening's own width, measured here rather
+    //    than assumed, so it clears the doorway exactly at every viewport and
+    //    every crop; `.rc__aperture` clips at the opening, so the panel passes
+    //    out of sight into the pocket behind the glazing.
+    //
+    //    `power2.inOut` is deliberate and is what makes it read as automatic:
+    //    an operator eases the door off its seal, runs it, and brings it to
+    //    rest without a bump. The lobby behind is uncovered from the left as
+    //    the panel goes, which is what a slider actually does to the view.
+    const travel = layoutRef.current.opening.width * SLIDE_TRAVEL
+    timeline.to([leafL, leafR], { x: travel, duration: T.doors, ease: 'power2.inOut' }, T.doorsAt)
 
     // 3. The threshold. The opening rushes past the edges of the frame, the
     //    glass flares once, the exterior softens and its edges go dark.

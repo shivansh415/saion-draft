@@ -14,12 +14,12 @@
  * What the entrance is
  * --------------------
  * A recessed, lit portal at the RIGHT of the podium: a warm soffit over a
- * fully glazed front, and in the centre of the glass a PAIR OF HINGED DOORS —
- * dark bronze stiles and head rail, glass leaves, a pull handle on each leaf
- * at the meeting stiles (see `entrance-reference.webp`). Pull handles mean
- * swing doors, not sliders: the leaves turn on their outer stiles and open
- * INWARD, away from the visitor, which is the motion built in
- * `EntranceTransition`.
+ * fully glazed front, and in the centre of the glass an AUTOMATIC SLIDING
+ * DOOR — dark bronze stiles and head rail, glass leaves (see
+ * `entrance-reference.webp`). The leaves do not turn: they travel sideways,
+ * to the RIGHT, and pass out of the opening into the pocket behind the
+ * glazing — the motion built in `EntranceTransition`. Confirmed by the
+ * developer: the entrance is a slider, not a swing pair.
  *
  * Still ↔ film
  * ------------
@@ -99,14 +99,27 @@ export const CAMERA_TARGET = { x: px(1910.5), y: py(1648) } as const
 export const CAMERA_ARRIVAL_SCALE = 7
 
 /**
- * Perspective for the swing, in still pixels at rest: about four door-widths
- * from the leaves, which is where a visitor stands when the doors begin to
- * open for them. Deeper flattens the swing; shallower fish-eyes it.
+ * Perspective on the aperture, in still pixels at rest.
+ *
+ * The leaves are flat now — a slider translates, it does not turn — so this
+ * no longer bends anything. It is kept because the aperture is still a 3D
+ * context and the value is the distance the rest of the scene is composed
+ * at; removing it would change nothing on screen and touch three files.
  */
 export const SWING_PERSPECTIVE = 420
 
-/** How far the leaves turn. Not a full quarter: doors open for you, not at you. */
-export const SWING_DEGREES = 64
+/**
+ * How far the leaves travel when the door opens, as a share of the opening's
+ * own width. 1 clears the aperture exactly: the leading edge of the left leaf
+ * arrives at the right jamb, so the doorway is fully open and no part of
+ * either leaf is left standing in it.
+ *
+ * Both leaves travel the same distance and in the same direction, so the pair
+ * reads as one panel running on its track rather than two leaves parting.
+ * `.rc__aperture` clips at the opening, which is what makes them disappear
+ * into the pocket instead of sliding over the glass beside the door.
+ */
+export const SLIDE_TRAVEL = 1
 
 /**
  * The wayfinding cue, directly above the door. The label sits in the transom
