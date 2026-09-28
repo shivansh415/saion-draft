@@ -1,12 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-import {
-  MAX_CONCURRENT_LOADS,
-  NEAREST_RADIUS,
-  PRIME_COUNT,
-  WARM_AHEAD,
-  WARM_BUDGET,
-} from '../data/opening'
+import { NEAREST_RADIUS, PRIME_COUNT, filmBudget } from '../data/opening'
 
 /**
  * Progressive loader for a scroll-driven image sequence.
@@ -112,6 +106,16 @@ export function useImageSequence(sources: readonly string[], options: Options = 
     const status = new Uint8Array(total)
     const decoded = new Uint8Array(total)
 
+    /**
+     * What this device can carry — measured once, here, rather than assumed.
+     * On a phone this fetches and decodes a few at a time instead of in a
+     * burst, and on a phone that is short of memory or cores it takes the
+     * film at half rate as well. See `filmBudget` for why.
+     */
+    const budget = filmBudget()
+    /** The gate scales with the stride: half a film is half as many arrivals. */
+    const criticalWanted = Math.max(1, Math.round(criticalCount / budget.stride))
+
     let inflight = 0
     let loadedCount = 0
     let criticalSettled = 0
@@ -171,8 +175,8 @@ export function useImageSequence(sources: readonly string[], options: Options = 
       // held behind a file that is not coming.
       if (criticalCount > 0) {
         criticalSettled++
-        optionsRef.current.onCriticalProgress?.(Math.min(1, criticalSettled / criticalCount))
-        if (criticalSettled >= criticalCount) setCriticalReady(true)
+        optionsRef.current.onCriticalProgress?.(Math.min(1, criticalSettled / criticalWanted))
+        if (criticalSettled >= criticalWanted) setCriticalReady(true)
       }
 
       pump()
@@ -228,12 +232,16 @@ export function useImageSequence(sources: readonly string[], options: Options = 
      * stall. `getNearest`'s radius covers the gaps the lattice leaves, so
      * every frame the playhead lands on has something honest to draw.
      */
-    const STRIDES = [8, 4, 2, 1]
+    // The finest pass is the device's own stride: at stride 2 the queue never
+    // reaches an odd frame, so half the film is never fetched and never
+    // decoded. `getNearest` (radius 14) answers for the frames that are not
+    // there, so the playhead always has something honest to draw.
+    const STRIDES = [8, 4, 2, 1].filter((s) => s >= budget.stride)
 
     const nextIndex = (): number => {
-      // The dense head, always first.
+      // The dense head, always first — on the device's own stride.
       const head = Math.min(PRIME_COUNT, total)
-      for (let i = 0; i < head; i++) {
+      for (let i = 0; i < head; i += budget.stride) {
         if (status[i] === IDLE) return i
       }
 
@@ -254,7 +262,7 @@ export function useImageSequence(sources: readonly string[], options: Options = 
 
     const pump = () => {
       if (disposed || suspended || hidden) return
-      while (inflight < MAX_CONCURRENT_LOADS) {
+      while (inflight < budget.concurrency) {
         const index = nextIndex()
         if (index < 0) return
         load(index)
@@ -302,13 +310,13 @@ export function useImageSequence(sources: readonly string[], options: Options = 
 
       warm: (index) => {
         const start = Math.max(0, Math.round(index))
-        let budget = WARM_BUDGET
-        for (let offset = 0; offset < WARM_AHEAD && budget > 0; offset++) {
+        let left = budget.warmBudget
+        for (let offset = 0; offset < budget.warmAhead && left > 0; offset += budget.stride) {
           const i = start + offset
           if (i >= total) break
           if (status[i] === LOADED && !decoded[i]) {
             decoded[i] = 1
-            budget--
+            left--
             images[i]?.decode?.().catch(() => {})
           }
         }

@@ -499,6 +499,87 @@ export const WARM_AHEAD = 24
 export const WARM_BUDGET = 6
 
 /* ------------------------------------------------------------------ *
+ * What this device can actually carry
+ *
+ * Every number above was tuned on a desktop and, until now, every device
+ * got all of them: four hundred and forty 1600×900 frames, twelve requests
+ * in flight, a rolling window of twenty-four decodes. A recent iPhone has
+ * the memory bandwidth and the decode throughput for that. A mid-range
+ * Android does not — the main thread spends its time decoding, touch events
+ * queue behind it, and the page reads as FROZEN rather than slow. That is
+ * the "it doesn't scroll on my phone" this exists to fix; the scroll was
+ * never blocked, it simply never got a frame to move on.
+ *
+ * Two different concessions, because they cost different things:
+ *
+ *   pacing   how many frames are fetched and decoded at once. Costs
+ *            nothing visible — the same film arrives, a little less
+ *            greedily — so every touch device gets it.
+ *   stride   loading one frame in two. The film then scrubs at half its
+ *            frame rate, which `getNearest` (radius 14) covers without a
+ *            held frame, and halves both the bytes and the peak memory.
+ *            That IS visible under a slow drag, so it is kept for devices
+ *            that have told us they are short of memory or cores.
+ *
+ * Signals, in order of trust: `deviceMemory` (Chrome/Android, in GB, capped
+ * at 8), `hardwareConcurrency`, and the connection's own advice. Safari does
+ * not report deviceMemory, so an iPhone falls through to the core count and
+ * keeps the full film — which is the intent: it was never the phone that
+ * struggled.
+ */
+export interface FilmBudget {
+  /** Load one frame in `stride`. 1 = every frame. */
+  readonly stride: number
+  /** Parallel image requests. */
+  readonly concurrency: number
+  /** How far ahead of the playhead to pre-decode. */
+  readonly warmAhead: number
+  /** How many decodes to start per frame. */
+  readonly warmBudget: number
+}
+
+const FULL_BUDGET: FilmBudget = {
+  stride: 1,
+  concurrency: MAX_CONCURRENT_LOADS,
+  warmAhead: WARM_AHEAD,
+  warmBudget: WARM_BUDGET,
+}
+
+export function filmBudget(): FilmBudget {
+  if (typeof navigator === 'undefined' || typeof window === 'undefined') return FULL_BUDGET
+
+  const nav = navigator as Navigator & {
+    deviceMemory?: number
+    connection?: { saveData?: boolean; effectiveType?: string }
+  }
+  const memory = typeof nav.deviceMemory === 'number' ? nav.deviceMemory : null
+  const cores = typeof nav.hardwareConcurrency === 'number' ? nav.hardwareConcurrency : null
+  const connection = nav.connection
+  const slowLine =
+    connection?.saveData === true ||
+    connection?.effectiveType === '2g' ||
+    connection?.effectiveType === 'slow-2g' ||
+    connection?.effectiveType === '3g'
+
+  // A touch device is paced more gently whatever else is true: the same film,
+  // fetched and decoded a few at a time rather than in a burst, which is what
+  // keeps the main thread free enough to answer a finger.
+  const touch = window.matchMedia('(pointer: coarse)').matches
+  if (!touch && !slowLine) return FULL_BUDGET
+
+  // Short of memory, short of cores, or on a line that has asked us to be
+  // careful: take the film at half rate as well.
+  const constrained = (memory !== null && memory <= 4) || (cores !== null && cores <= 4) || slowLine === true
+
+  return {
+    stride: constrained ? 2 : 1,
+    concurrency: constrained ? 4 : 6,
+    warmAhead: constrained ? 8 : 12,
+    warmBudget: constrained ? 2 : 3,
+  }
+}
+
+/* ------------------------------------------------------------------ *
  * Renderer tuning
  * ------------------------------------------------------------------ */
 
