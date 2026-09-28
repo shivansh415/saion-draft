@@ -7,7 +7,7 @@
  * neither asserts anything the brochure or the supplied list does not.
  *
  * `image` is what the index shows beside a row. Where the project has a
- * photograph of that amenity it is used; where it does not — the padel court
+ * photograph of that amenity it is used; where it does not — the pickleball court
  * and the cricket simulator — the row shows the podium plan, which is the
  * client's own drawing of the level they sit on, rather than an unrelated
  * stock-looking substitute. It is the same drawing the map chapter presents.
@@ -71,7 +71,7 @@ export const AMENITIES: readonly Amenity[] = [
   { id: 'jacuzzi', name: 'Jacuzzi', group: 'Water', note: 'A warm corner of the podium.', src: `${AMENITY_PLATES}/jacuzzi.webp`, alt: 'The jacuzzi on the podium level' },
   { id: 'adults-outdoor-gym', name: 'Adults Outdoor Gym', group: 'Movement', note: 'Open-air exercise, in the shade of the planting.', src: `${AMENITY_PLATES}/adults-outdoor-gym.webp`, alt: 'The outdoor gym at Reposé' },
   { id: 'kids-play', name: 'Kids Play Area', group: 'Together', note: 'Room for their adventures.', src: `${AMENITY_PLATES}/kids-play-area.webp`, alt: 'The children’s play area' },
-  { id: 'padel-court', name: 'Padel Court', group: 'Movement', note: 'The marked court on the podium.', src: `${TERRACE}/plate-sports-court.webp`, alt: 'The marked court on the project drawing' },
+  { id: 'pickleball-court', name: 'Pickleball Court', group: 'Movement', note: 'The marked court on the podium.', src: `${TERRACE}/plate-sports-court.webp`, alt: 'The marked court on the project drawing' },
   { id: 'cricket-simulator', name: 'Cricket Simulator', group: 'Movement', note: 'A net and a game, without leaving home.', src: `${AMENITY_PLATES}/cricket-simulator.webp`, alt: 'The cricket simulator' },
 ]
 
@@ -115,7 +115,7 @@ export const MAP_MARKS: readonly { id: string; label: string; x: number; y: numb
   // because a mark is centred on the whole dot-and-label row, so a longer
   // label would otherwise drag the dot off the water.
   { id: 'kids-pool', label: 'Kids Swimming Pool', x: 40.4, y: 16 },
-  { id: 'padel-court', label: 'Padel Court', x: 54, y: 13 },
+  { id: 'pickleball-court', label: 'Pickleball Court', x: 54, y: 13 },
   { id: 'kids-play', label: 'Kids Play Area', x: 86, y: 62 },
   { id: 'walking-track', label: 'Walking Track', x: 60, y: 84 },
   // The actual jacuzzi: the round tub on the deck at the south-west corner,
