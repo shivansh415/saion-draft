@@ -191,7 +191,7 @@ const VIEWS: Readonly<Record<string, Unit3dView>> = {
   },
   'l01-05-07-11-2bhk-maidroom-a': {
     src: assetUrl('units-3d/unit-l01-05-07-11-2bhk-maidroom-a-3d.webp'),
-    ink: { left: 0.0475, top: 0.0176, width: 0.8307, height: 0.9707 },
+    ink: { left: 0.0475, top: 0.0166, width: 0.8314, height: 0.9717 },
     align: { left: 0.0030, top: 0.0125, width: 0.9999, height: 1.0250 },
     fill: 0.98,
   },
@@ -227,7 +227,7 @@ const VIEWS: Readonly<Record<string, Unit3dView>> = {
   },
   'l02-04-08-10-2bhk-maidroom-a': {
     src: assetUrl('units-3d/unit-l02-04-08-10-2bhk-maidroom-a-3d.webp'),
-    ink: { left: 0.0801, top: 0.0264, width: 0.7982, height: 0.9395 },
+    ink: { left: 0.0801, top: 0.0254, width: 0.8001, height: 0.9414 },
     align: { left: 0.0013, top: 0.0027, width: 0.9964, height: 1.0198 },
     fill: 0.98,
   },
@@ -263,7 +263,7 @@ const VIEWS: Readonly<Record<string, Unit3dView>> = {
   },
   'l03-09-2bhk-maidroom-a': {
     src: assetUrl('units-3d/unit-l03-09-2bhk-maidroom-a-3d.webp'),
-    ink: { left: 0.0755, top: 0.0195, width: 0.7930, height: 0.9336 },
+    ink: { left: 0.0762, top: 0.0195, width: 0.7923, height: 0.9336 },
     align: { left: -0.0030, top: 0.0209, width: 1.0061, height: 1.0494 },
     fill: 0.98,
   },
