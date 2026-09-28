@@ -311,7 +311,7 @@ const VIEWS: Readonly<Record<string, Unit3dView>> = {
   },
   'l12-3bed-a': {
     src: assetUrl('units-3d/unit-l12-3bhk-maidroom-b-3d.webp'),
-    ink: { left: 0.2350, top: 0.0078, width: 0.5312, height: 0.9922 },
+    ink: { left: 0.2337, top: 0.0078, width: 0.5326, height: 0.9922 },
     align: { left: -0.0698, top: 0.1341, width: 0.9041, height: 0.8389 },
     fill: 0.98,
   },
@@ -365,7 +365,7 @@ const VIEWS: Readonly<Record<string, Unit3dView>> = {
   },
   'l15-2bed-c': {
     src: assetUrl('units-3d/unit-l15-2bhk-maidroom-b-3d.webp'),
-    ink: { left: 0.0326, top: 0.0273, width: 0.8887, height: 0.9072 },
+    ink: { left: 0.0326, top: 0.0264, width: 0.8893, height: 0.9072 },
     align: { left: 0.0049, top: 0.0753, width: 0.7729, height: 0.8164 },
     fill: 0.98,
   },
@@ -377,7 +377,7 @@ const VIEWS: Readonly<Record<string, Unit3dView>> = {
   },
   'l15-4bed-a': {
     src: assetUrl('units-3d/unit-l15-4bhk-penthouse-jacuzzi-a-3d.webp'),
-    ink: { left: 0.1686, top: 0.0283, width: 0.6771, height: 0.9580 },
+    ink: { left: 0.1686, top: 0.0283, width: 0.6784, height: 0.9580 },
     align: { left: -0.0635, top: 0.1339, width: 0.8040, height: 0.8478 },
     fill: 0.98,
   },
