@@ -129,8 +129,14 @@ export const FloorplateView = forwardRef<HTMLButtonElement, Props>(function Floo
                   {sold.has(readout.residence.id) && (
                     <span className="fx-plate__unit-sold">{AVAILABILITY_COPY.sold}</span>
                   )}
+                  {/* The way in, on touch — offered only where there is
+                      somewhere to go. A sold residence says SOLD above and
+                      stops there (see `UnitHotspotLayer`), so it must not
+                      also carry an invitation to open a plan that the press
+                      is going to refuse. */}
                   {readout.plan ? (
                     coarse &&
+                    !sold.has(readout.residence.id) &&
                     selectedUnit === readout.residence.id && (
                       <button type="button" className="fx__open" onClick={() => onUnitChoose(readout)}>
                         <span className="fx__open-rule" />

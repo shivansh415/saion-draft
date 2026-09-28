@@ -909,6 +909,18 @@ export function FloorExplorer({ active, onTerrace, suspended = false, presented 
   const chooseUnit = useCallback(
     (hotspot: UnitHotspot) => {
       if (modeRef.current !== 'floorplate') return
+
+      // A residence that has SOLD indicates and reads out like any other, and
+      // stops there. The plan behind it is a sales drawing: opening one for a
+      // residence nobody can buy is an invitation with nothing at the end of
+      // it, so the mark on the plate is the whole of what it has to say.
+      // `UnitHotspotLayer` says the same thing to the pointer, the keyboard
+      // and assistive technology; this is the guard the state actually keeps.
+      if (openLevelRef.current?.sold.has(hotspot.residence.id)) {
+        setUnitSelected(hotspot.residence.id)
+        return
+      }
+
       const plan = unitPlanImage(hotspot)
       if (plan) void warmImage(plan)
       if (coarse && unitSelected !== hotspot.residence.id) {

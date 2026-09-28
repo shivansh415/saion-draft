@@ -48,6 +48,24 @@ export interface Unit3dView {
   readonly src: string
   /** Where it sits over the drawing. */
   readonly align: Unit3dAlign
+  /**
+   * Where the APARTMENT sits inside the render's own image — fractions of the
+   * render file, not of the sheet. Measured, per file, as the bounding box of
+   * everything that is not the plain white page.
+   *
+   * This is the difference between a render that looks the size of the drawing
+   * it replaced and one that looks lost in the frame. Every supplied render is
+   * the same 1536x1024 canvas, but the apartments are not the same shape: the
+   * wide centre units fill 96% of that canvas across, while the tall, narrow
+   * wing units fill as little as 49% and carry the rest as white paper on both
+   * sides. Framing the IMAGE therefore framed a different amount of apartment
+   * every time — the narrow ones came up at roughly three quarters the size of
+   * the wide ones, which is what reads as "the 3D is smaller than the 2D".
+   *
+   * `unit3dCamera` frames this box instead, so every residence's apartment
+   * arrives at the same share of the sheet whatever shape its canvas is.
+   */
+  readonly ink: Unit3dAlign
   /** Share of the sheet it fills once the frame is its own. */
   readonly fill: number
 }
@@ -65,13 +83,22 @@ export interface Unit3dCamera {
   readonly yPercent: number
 }
 
-export function unit3dCamera({ align, fill }: Unit3dView): Unit3dCamera {
-  const cx = align.left + align.width / 2
-  const cy = align.top + align.height / 2
+export function unit3dCamera({ align, ink, fill }: Unit3dView): Unit3dCamera {
+  // The apartment's box in the SHEET's own space: the render's ink box
+  // (fractions of the render) carried through the registration (fractions of
+  // the sheet). Framing this rather than the render's whole canvas is what
+  // makes every residence arrive at the same size — see `Unit3dView.ink`.
+  const left = align.left + ink.left * align.width
+  const top = align.top + ink.top * align.height
+  const width = ink.width * align.width
+  const height = ink.height * align.height
+
+  const cx = left + width / 2
+  const cy = top + height / 2
   // Uniform, so the tighter of the two dimensions decides it.
-  const scale = Math.min(fill / align.width, fill / align.height)
+  const scale = Math.min(fill / width, fill / height)
   return {
-    // Scaling about the render's own centre leaves that point where it is …
+    // Scaling about the apartment's own centre leaves that point where it is …
     transformOrigin: `${(cx * 100).toFixed(3)}% ${(cy * 100).toFixed(3)}%`,
     scale,
     // … and this carries it to the middle of the sheet.
@@ -140,181 +167,217 @@ export function unit3dCamera({ align, fill }: Unit3dView): Unit3dCamera {
 const VIEWS: Readonly<Record<string, Unit3dView>> = {
   'l01-05-07-11-1bhk-a': {
     src: assetUrl('units-3d/unit-l01-05-07-11-1bhk-a-3d.webp'),
+    ink: { left: 0.1725, top: 0.0234, width: 0.6693, height: 0.9707 },
     align: { left: -0.0713, top: 0.1374, width: 0.9707, height: 0.9249 },
     fill: 0.98,
   },
   'l01-05-07-11-1bhk-a-prime': {
     src: assetUrl('units-3d/unit-l01-05-07-11-1bhk-a-prime-3d.webp'),
+    ink: { left: 0.1751, top: 0.0342, width: 0.6771, height: 0.9658 },
     align: { left: -0.1838, top: 0.0934, width: 1.0225, height: 0.9464 },
     fill: 0.98,
   },
   'l01-05-07-11-1bhk-study-b': {
     src: assetUrl('units-3d/unit-l01-05-07-11-1bhk-study-b-3d.webp'),
+    ink: { left: 0.1452, top: 0.0156, width: 0.6074, height: 0.9844 },
     align: { left: -0.1627, top: 0.0653, width: 1.1287, height: 0.9356 },
     fill: 0.98,
   },
   'l01-05-07-11-1bhk-study-b-prime': {
     src: assetUrl('units-3d/unit-l01-05-07-11-1bhk-study-b-prime-3d.webp'),
+    ink: { left: 0.1367, top: 0.0156, width: 0.6686, height: 0.9756 },
     align: { left: -0.1522, top: 0.0691, width: 1.0703, height: 0.9049 },
     fill: 0.98,
   },
   'l01-05-07-11-2bhk-maidroom-a': {
     src: assetUrl('units-3d/unit-l01-05-07-11-2bhk-maidroom-a-3d.webp'),
+    ink: { left: 0.0475, top: 0.0176, width: 0.8307, height: 0.9707 },
     align: { left: 0.0030, top: 0.0125, width: 0.9999, height: 1.0250 },
     fill: 0.98,
   },
   'l01-05-07-11-2bhk-maidroom-a-prime': {
     src: assetUrl('units-3d/unit-l01-05-07-11-2bhk-maidroom-a-prime-3d.webp'),
+    ink: { left: 0.0293, top: 0.0176, width: 0.8809, height: 0.9590 },
     align: { left: -0.0160, top: 0.0449, width: 1.0195, height: 0.9739 },
     fill: 0.98,
   },
   'l02-04-08-10-1bhk-a': {
     src: assetUrl('units-3d/unit-l02-04-08-10-1bhk-a-3d.webp'),
+    ink: { left: 0.1602, top: 0.0215, width: 0.6947, height: 0.9775 },
     align: { left: -0.0635, top: 0.1051, width: 1.0080, height: 0.9458 },
     fill: 0.98,
   },
   'l02-04-08-10-1bhk-a-prime': {
     src: assetUrl('units-3d/unit-l02-04-08-10-1bhk-a-prime-3d.webp'),
+    ink: { left: 0.1536, top: 0.0225, width: 0.7201, height: 0.9678 },
     align: { left: -0.1381, top: 0.1213, width: 0.9784, height: 0.8990 },
     fill: 0.98,
   },
   'l02-04-08-10-1bhk-study-b': {
     src: assetUrl('units-3d/unit-l02-04-08-10-1bhk-study-b-3d.webp'),
+    ink: { left: 0.1393, top: 0.0088, width: 0.6608, height: 0.9912 },
     align: { left: -0.1513, top: 0.1243, width: 1.0838, height: 0.8644 },
     fill: 0.98,
   },
   'l02-04-08-10-1bhk-study-b-prime': {
     src: assetUrl('units-3d/unit-l02-04-08-10-1bhk-study-b-prime-3d.webp'),
+    ink: { left: 0.1348, top: 0.0078, width: 0.6680, height: 0.9805 },
     align: { left: -0.1458, top: 0.0928, width: 1.0638, height: 0.8946 },
     fill: 0.98,
   },
   'l02-04-08-10-2bhk-maidroom-a': {
     src: assetUrl('units-3d/unit-l02-04-08-10-2bhk-maidroom-a-3d.webp'),
+    ink: { left: 0.0801, top: 0.0264, width: 0.7982, height: 0.9395 },
     align: { left: 0.0013, top: 0.0027, width: 0.9964, height: 1.0198 },
     fill: 0.98,
   },
   'l02-04-08-10-2bhk-maidroom-a-prime': {
     src: assetUrl('units-3d/unit-l02-04-08-10-2bhk-maidroom-a-prime-3d.webp'),
+    ink: { left: 0.0820, top: 0.0225, width: 0.8197, height: 0.9307 },
     align: { left: -0.0158, top: 0.0195, width: 0.9875, height: 0.9877 },
     fill: 0.98,
   },
   'l03-09-1bhk-a': {
     src: assetUrl('units-3d/unit-l03-09-1bhk-a-3d.webp'),
+    ink: { left: 0.1504, top: 0.0186, width: 0.6908, height: 0.9756 },
     align: { left: -0.0786, top: 0.0874, width: 1.0487, height: 0.9928 },
     fill: 0.98,
   },
   'l03-09-1bhk-a-prime': {
     src: assetUrl('units-3d/unit-l03-09-1bhk-a-prime-3d.webp'),
+    ink: { left: 0.1426, top: 0.0156, width: 0.7311, height: 0.9844 },
     align: { left: -0.1481, top: 0.1045, width: 0.9664, height: 0.8311 },
     fill: 0.98,
   },
   'l03-09-1bhk-study-b': {
     src: assetUrl('units-3d/unit-l03-09-1bhk-study-b-3d.webp'),
+    ink: { left: 0.1589, top: 0.0049, width: 0.6016, height: 0.9844 },
     align: { left: -0.1785, top: 0.0638, width: 1.1444, height: 0.9443 },
     fill: 0.98,
   },
   'l03-09-1bhk-study-b-prime': {
     src: assetUrl('units-3d/unit-l03-09-1bhk-study-b-prime-3d.webp'),
+    ink: { left: 0.1478, top: 0.0137, width: 0.6543, height: 0.9863 },
     align: { left: -0.1777, top: 0.0537, width: 1.1172, height: 0.9382 },
     fill: 0.98,
   },
   'l03-09-2bhk-maidroom-a': {
     src: assetUrl('units-3d/unit-l03-09-2bhk-maidroom-a-3d.webp'),
+    ink: { left: 0.0755, top: 0.0195, width: 0.7930, height: 0.9336 },
     align: { left: -0.0030, top: 0.0209, width: 1.0061, height: 1.0494 },
     fill: 0.98,
   },
   'l03-09-2bhk-maidroom-a-prime': {
     src: assetUrl('units-3d/unit-l03-09-2bhk-maidroom-a-prime-3d.webp'),
+    ink: { left: 0.0436, top: 0.0186, width: 0.8600, height: 0.9385 },
     align: { left: -0.0198, top: 0.0364, width: 1.0065, height: 0.9682 },
     fill: 0.98,
   },
   'l06-1bhk-a': {
     src: assetUrl('units-3d/unit-l06-1bhk-a-3d.webp'),
+    ink: { left: 0.1126, top: 0.0352, width: 0.6895, height: 0.9648 },
     align: { left: -0.0711, top: 0.0835, width: 1.0510, height: 0.9943 },
     fill: 0.98,
   },
   'l06-1bhk-a-prime': {
     src: assetUrl('units-3d/unit-l06-1bhk-a-prime-3d.webp'),
+    ink: { left: 0.1719, top: 0.0322, width: 0.6732, height: 0.9561 },
     align: { left: -0.1847, top: 0.0940, width: 1.0249, height: 0.9719 },
     fill: 0.98,
   },
   'l06-1bhk-study-b': {
     src: assetUrl('units-3d/unit-l06-1bhk-study-b-3d.webp'),
+    ink: { left: 0.1576, top: 0.0146, width: 0.5951, height: 0.9736 },
     align: { left: -0.1911, top: 0.0681, width: 1.1726, height: 0.9762 },
     fill: 0.98,
   },
   'l06-1bhk-study-b-prime': {
     src: assetUrl('units-3d/unit-l06-1bhk-study-b-prime-3d.webp'),
+    ink: { left: 0.1322, top: 0.0137, width: 0.6504, height: 0.9863 },
     align: { left: -0.1462, top: 0.0675, width: 1.0656, height: 0.8961 },
     fill: 0.98,
   },
   'l06-2bhk-maidroom-a': {
     src: assetUrl('units-3d/unit-l06-2bhk-maidroom-a-3d.webp'),
+    ink: { left: 0.0469, top: 0.0342, width: 0.8444, height: 0.9658 },
     align: { left: 0.0186, top: 0.0475, width: 0.9815, height: 0.9494 },
     fill: 0.98,
   },
   'l06-2bhk-maidroom-a-prime': {
     src: assetUrl('units-3d/unit-l06-2bhk-maidroom-a-prime-3d.webp'),
+    ink: { left: 0.0957, top: 0.0186, width: 0.7917, height: 0.9189 },
     align: { left: -0.0259, top: 0.0653, width: 0.9986, height: 0.9494 },
     fill: 0.98,
   },
   'l12-3bed-a': {
     src: assetUrl('units-3d/unit-l12-3bhk-maidroom-b-3d.webp'),
+    ink: { left: 0.2350, top: 0.0078, width: 0.5312, height: 0.9922 },
     align: { left: -0.0698, top: 0.1341, width: 0.9041, height: 0.8389 },
     fill: 0.98,
   },
   'l12-3bed-a-prime': {
     src: assetUrl('units-3d/unit-l12-3bhk-maidroom-b-prime-3d.webp'),
+    ink: { left: 0.2454, top: 0.0195, width: 0.4941, height: 0.9805 },
     align: { left: -0.2268, top: 0.1355, width: 1.1081, height: 0.8515 },
     fill: 0.98,
   },
   'l12-3bed-b': {
     src: assetUrl('units-3d/unit-l12-3bhk-maidroom-a-3d.webp'),
+    ink: { left: 0.0215, top: 0.0420, width: 0.9551, height: 0.9160 },
     align: { left: -0.0003, top: 0.1015, width: 0.7830, height: 0.8251 },
     fill: 0.98,
   },
   'l13-3bed-a': {
     src: assetUrl('units-3d/unit-l13-3bhk-maidroom-b-3d.webp'),
+    ink: { left: 0.2305, top: 0.0156, width: 0.5000, height: 0.9844 },
     align: { left: -0.0875, top: 0.0709, width: 1.0023, height: 0.9143 },
     fill: 0.98,
   },
   'l13-3bed-b': {
     src: assetUrl('units-3d/unit-l13-3bhk-maidroom-a-3d.webp'),
+    ink: { left: 0.0592, top: 0.0283, width: 0.8965, height: 0.9326 },
     align: { left: 0.0817, top: 0.0904, width: 0.7385, height: 0.8531 },
     fill: 0.98,
   },
   'l13-3bed-a-prime': {
     src: assetUrl('units-3d/unit-l13-3bhk-maidroom-b-prime-3d.webp'),
+    ink: { left: 0.1862, top: 0.0156, width: 0.5736, height: 0.9844 },
     align: { left: -0.2102, top: 0.1297, width: 1.1287, height: 0.8366 },
     fill: 0.98,
   },
   'l14-3bed-a': {
     src: assetUrl('units-3d/unit-l14-3bhk-maidroom-b-3d.webp'),
+    ink: { left: 0.2318, top: 0.0137, width: 0.5397, height: 0.9746 },
     align: { left: -0.0998, top: 0.0629, width: 1.0140, height: 0.9452 },
     fill: 0.98,
   },
   'l14-3bed-b': {
     src: assetUrl('units-3d/unit-l14-3bhk-maidroom-a-3d.webp'),
+    ink: { left: 0.0384, top: 0.0303, width: 0.9284, height: 0.9053 },
     align: { left: -0.0155, top: 0.0946, width: 0.7991, height: 0.8442 },
     fill: 0.98,
   },
   'l14-3bed-a-prime': {
     src: assetUrl('units-3d/unit-l14-3bhk-maidroom-b-prime-3d.webp'),
+    ink: { left: 0.1693, top: 0.0117, width: 0.6354, height: 0.9883 },
     align: { left: -0.1969, top: 0.1065, width: 1.1287, height: 0.8734 },
     fill: 0.98,
   },
   'l15-2bed-c': {
     src: assetUrl('units-3d/unit-l15-2bhk-maidroom-b-3d.webp'),
+    ink: { left: 0.0326, top: 0.0273, width: 0.8887, height: 0.9072 },
     align: { left: 0.0049, top: 0.0753, width: 0.7729, height: 0.8164 },
     fill: 0.98,
   },
   'l15-3bed-variant-unstated': {
     src: assetUrl('units-3d/unit-l15-3bhk-penthouse-jacuzzi-a-3d.webp'),
+    ink: { left: 0.2005, top: 0.0215, width: 0.5905, height: 0.9785 },
     align: { left: -0.1751, top: 0.1237, width: 0.8450, height: 0.7488 },
     fill: 0.98,
   },
   'l15-4bed-a': {
     src: assetUrl('units-3d/unit-l15-4bhk-penthouse-jacuzzi-a-3d.webp'),
+    ink: { left: 0.1686, top: 0.0283, width: 0.6771, height: 0.9580 },
     align: { left: -0.0635, top: 0.1339, width: 0.8040, height: 0.8478 },
     fill: 0.98,
   },

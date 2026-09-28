@@ -44,8 +44,13 @@ const toClip = (polygon: UnitHotspot['polygon']): string =>
  * indicated. The hatch is a clipped element rather than an SVG pattern
  * because the SVG below is stretched to the sheet (`preserveAspectRatio:
  * none`), which would stretch a pattern with it; a CSS gradient in a
- * clip-path polygon of the same percentages hatches evenly at any size. It
- * is still a residence: it indicates, reads out and opens as any other.
+ * clip-path polygon of the same percentages hatches evenly at any size.
+ *
+ * It indicates and reads out like any other residence, and it does not open.
+ * It used to: the plan came up with SOLD printed across the heading, which
+ * reads as the site offering something it cannot sell. Sold now behaves
+ * exactly as an unverified mapping already did — the residence answers the
+ * pointer, says what it is and says it has gone, and the press ends there.
  */
 export function UnitHotspotLayer({ hotspots, sold, shown, focus, coarse, interactive, onHover, onChoose }: Props) {
   const enter = (id: string) => {
@@ -60,6 +65,8 @@ export function UnitHotspotLayer({ hotspots, sold, shown, focus, coarse, interac
       if (interactive) onChoose(hotspot)
     }
   }
+  /** Whether a press on this residence leads anywhere. */
+  const opens = (hotspot: UnitHotspot) => hotspot.plan !== null && !sold.has(hotspot.residence.id)
 
   return (
     <>
@@ -101,13 +108,13 @@ export function UnitHotspotLayer({ hotspots, sold, shown, focus, coarse, interac
               d={toPath(hotspot.polygon)}
               className={`fx-unit${shown === id ? ' is-shown' : ''}${isSold ? ' is-sold' : ''}`}
               data-unit={id}
-              data-open={hotspot.plan ? 'true' : 'false'}
+              data-open={opens(hotspot) ? 'true' : 'false'}
               data-sold={isSold || undefined}
               vectorEffect="non-scaling-stroke"
               role="button"
               tabIndex={interactive ? 0 : -1}
-              aria-label={hotspot.plan ? `${label} — view residence` : label}
-              aria-disabled={hotspot.plan ? undefined : true}
+              aria-label={opens(hotspot) ? `${label} — view residence` : label}
+              aria-disabled={opens(hotspot) ? undefined : true}
               onPointerEnter={() => enter(id)}
               onPointerLeave={leave}
               onFocus={() => interactive && onHover(id)}
