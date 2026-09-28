@@ -14,7 +14,6 @@ import {
 } from '../../data/opening'
 import { glideTo, pageTop } from '../../lib/pageScroll'
 import { useCoverRect } from '../floor-explorer/useCoverRect'
-import { EntranceHotspot } from './EntranceHotspot'
 import { EntranceTransition } from './EntranceTransition'
 import { CAMERA_ARRIVAL_SCALE, SLIDE_TRAVEL } from './entranceCalibration'
 import { insetOf, layoutEntrance } from './entranceLayout'
@@ -306,7 +305,6 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
     gsap.set(q('[data-rc-streak], [data-rc-bloom], [data-rc-vignette], [data-rc-back], [data-rc-welcome], [data-rc-explore]'), { opacity: 0 })
     gsap.set(q('[data-rc-inside]'), { opacity: 0, scale: 1 })
     gsap.set(q('[data-rc-exterior]'), { filter: 'none' })
-    gsap.set(root, { '--rc-cue': 1 })
   }, [])
 
   const resetScene = useCallback(() => {
@@ -349,7 +347,6 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
     if (reducedMotion) {
       // No camera, no doors: the lobby simply comes to meet the visitor.
       timeline
-        .to(root, { '--rc-cue': 0, duration: 0.3 }, 0)
         .to(inside, { opacity: 1, duration: 0.9, ease: 'power1.inOut' }, 0.1)
         .fromTo(back, { opacity: 0 }, { opacity: 1, duration: 0.5 }, 1.0)
         .fromTo(welcome, { opacity: 0 }, { opacity: 1, duration: 0.6 }, 1.3)
@@ -359,10 +356,8 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
 
     const T = CLOCK
 
-    // 0. The cue retires — through the variable its stylesheet reads, so its
-    //    own state rules keep the last word — and the still arrives over the
-    //    frame (a 3.5/255 change, so it can simply appear).
-    timeline.to(root, { '--rc-cue': 0, duration: 0.35, ease: 'power2.out' }, 0)
+    // 0. The still arrives over the frame (a 3.5/255 change, so it can simply
+    //    appear). The cue that used to retire on this beat has been removed.
     timeline.to(still, { opacity: 1, duration: 0.3, ease: 'power1.inOut' }, 0)
 
     // 1. The approach. Quadratic in and out: from standing, to a walk, to a
@@ -594,11 +589,9 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
     glideTo(pageTop(section) + track * unitFraction(unit), duration)
   }, [])
 
-  /** "Enter inside" — the walk, at about the pace it always played at. */
-  const enter = useCallback(() => {
-    if (!active) return
-    travelTo(RECEPTION_BAND.end, 2.6)
-  }, [active, travelTo])
+  /* There was an `enter` here — what the cue above the door pressed, a glide
+     to the far end of the band. The cue has been removed; the band is still
+     walked, by scrolling, which is what it was rewritten to be driven by. */
 
   /** "Back to building" — the same walk in reverse, a touch brisker. */
   const leave = useCallback(() => {
@@ -663,7 +656,6 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
         </span>
       </button>
 
-      {active && <EntranceHotspot rect={rect} onEnter={enter} />}
     </div>
   )
 }

@@ -19,12 +19,16 @@ import type { RefObject } from 'react'
  * drawing is at 30% of the drawing at any zoom, and the browser's own
  * hit-testing answers a click on it — nothing is re-projected.
  *
- * The fit (zoom 1) is the floor: the drawing can always be seen whole. Where
- * the fit would be unreadably small — a landscape floorplate on a phone held
- * upright — the drawing opens at a readable zoom instead (`readable`), which
- * is then what "reset" returns to. Panning is clamped so the drawing never
- * leaves the viewport: smaller than it, it stays inside; larger, its edges
- * never come inside; at the fit it is centred.
+ * The fit (zoom 1) is where every drawing opens, and the whole drawing is
+ * inside the viewport at it. There was a `readable` option that opened a
+ * drawing ABOVE the fit where the fit would be small — it scaled to the
+ * viewport's HEIGHT, so on any viewport taller than the drawing's own fit it
+ * cropped the left and right edges of the plan and the visitor had to pinch
+ * out to see the floor they had just asked for. That is the bug the client
+ * reported; the fit is now the only opening state, and zooming in is theirs to
+ * ask for. Panning is clamped so the drawing never leaves the viewport:
+ * smaller than it, it stays inside; larger, its edges never come inside; at
+ * the fit it is centred.
  *
  * Input: wheel (and trackpad pinch) zooms about the cursor; a drag pans once
  * the drawing outgrows the viewport; a double-click steps in about the
@@ -35,14 +39,16 @@ import type { RefObject } from 'react'
  * A view may decline the plain wheel (`wheelZoom: false`): the floorplate
  * gives it to the explorer, which turns floors with it, and keeps only the
  * trackpad pinch — a wheel with ctrl held — for itself.
+ *
+ * A view may also decline the double press (`stepZoom: false`): the residence
+ * plan answers a single press by standing the drawing up into its 3D render,
+ * and a double press there would toggle it twice AND step the zoom.
  */
 
 /** The viewport listens for this; the explorer sends it to put a view back to its fit. */
 export const PLAN_VIEWER_RESET_EVENT = 'fx-plan-viewer-reset'
 
 export const MAX_ZOOM = 6
-/** Below this share of the viewport's height the fitted drawing is opened at a readable zoom instead. */
-const MIN_READABLE_HEIGHT = 0.72
 const WHEEL_SENSITIVITY = 0.0016
 const TRACKPAD_PINCH_SENSITIVITY = 0.008
 /** Pointer travel before a press becomes a pan (and its click is swallowed). */
@@ -58,10 +64,10 @@ interface Options {
   contentRef: RefObject<HTMLElement | null>
   /** Take input. The transform itself persists while false — the explorer resets it when it means to. */
   enabled: boolean
-  /** Open at a readable zoom where the fit would be unreadably small. */
-  readable?: boolean
   /** Whether a plain wheel zooms. A trackpad pinch always does. Default true. */
   wheelZoom?: boolean
+  /** Whether a double press steps the zoom in and out. Default true. */
+  stepZoom?: boolean
 }
 
 interface Transform {
@@ -93,8 +99,8 @@ export function usePlanViewer({
   frameRef,
   contentRef,
   enabled,
-  readable = false,
   wheelZoom = true,
+  stepZoom = true,
 }: Options): PlanViewerHandle {
   const handle = useRef<PlanViewerHandle>({ reset: () => {} })
   // A stable handle for callers; the effect below swaps what it delegates to.
@@ -155,11 +161,8 @@ export function usePlanViewer({
       return clamp({ z, x: (vw - z * width) / 2 - left, y: (vh - z * height) / 2 - top })
     }
 
-    const fitTransform = (): Transform => {
-      const { height, vh } = layout
-      const z = readable && height < vh * MIN_READABLE_HEIGHT ? Math.min(vh / height, MAX_ZOOM) : 1
-      return centred(z)
-    }
+    /** The fit: the whole drawing, centred, at zoom 1. */
+    const fitTransform = (): Transform => centred(1)
 
     const isHome = (t: Transform) => Math.abs(t.z - home.z) < 0.01 && Math.abs(t.x - home.x) < 1 && Math.abs(t.y - home.y) < 1
 
@@ -375,7 +378,7 @@ export function usePlanViewer({
       // it belonged to (a two-finger pinch never sets it), so one pinch begun
       // over a hotspot disabled double-tap for everything after it.
       const onControl = pressTarget !== null && pressTarget.closest('button, a, [role="button"]') !== null
-      if (event.pointerType === 'touch' && event.type === 'pointerup' && !wasDrag && !onControl) {
+      if (stepZoom && event.pointerType === 'touch' && event.type === 'pointerup' && !wasDrag && !onControl) {
         const now = performance.now()
         const tap = { at: now, x: event.clientX, y: event.clientY }
         if (lastTap && now - lastTap.at < DOUBLE_TAP_MS && Math.hypot(tap.x - lastTap.x, tap.y - lastTap.y) < DOUBLE_TAP_PX) {
@@ -404,7 +407,7 @@ export function usePlanViewer({
     }
 
     const onDoubleClick = (event: MouseEvent) => {
-      if (!enabledRef.current) return
+      if (!enabledRef.current || !stepZoom) return
       // Touch has its own double-tap above; a synthesised dblclick would undo it.
       if (performance.now() - lastTouchAt < 1000) return
       // The same exemption the touch path makes: a control answers double
@@ -457,7 +460,7 @@ export function usePlanViewer({
       frame.style.removeProperty('--fx-zoom')
       handle.current = { reset: () => {} }
     }
-  }, [viewportRef, frameRef, contentRef, readable, wheelZoom])
+  }, [viewportRef, frameRef, contentRef, wheelZoom, stepZoom])
 
   return api
 }

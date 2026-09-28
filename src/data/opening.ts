@@ -619,6 +619,8 @@ export const OPENING_COPY = {
   titleLines: ['Reposé', 'Residence'],
   tagline: 'A luxurious lifestyle awaits you',
   developerLabel: 'Developed by',
+  /** The developer's own site; the lockup is a link to it. */
+  developerHref: 'https://saionproperties.com/',
   logoSrc: '/assets/opening/branding/saion-logo.png',
   logoAlt: 'SAION Properties',
   hint: 'Scroll',
@@ -643,11 +645,6 @@ export const FINAL_COPY = {
   titleLines: ['Stately', 'Serenity'],
   project: 'Reposé Residence',
   location: 'Al Furjan · Dubai',
-} as const
-
-/** The cue on the completed building that leads to the amenities. */
-export const AMENITIES_COPY = {
-  label: 'Explore amenities',
 } as const
 
 /** The preloader that holds the frame until the film is ready to travel. */

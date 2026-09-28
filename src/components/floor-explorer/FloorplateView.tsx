@@ -57,7 +57,11 @@ export const FloorplateView = forwardRef<HTMLButtonElement, Props>(function Floo
 ) {
   const src = level ? floorplateImage(level.floorplate) : null
   const [ratio, learnRatio] = useImageRatio(src, FALLBACK_RATIO)
-  const { areaRef, sheetRef: figureRef } = useSheetFit({ ratio, fill: 0.92 })
+  // 0.98, not the 0.92 it was: with the drawing no longer opened above its
+  // fit (see `usePlanViewer`), the only thing that decides how big the plan is
+  // on screen is how much of the area it is allowed to fill, so it is given
+  // nearly all of it.
+  const { areaRef, sheetRef: figureRef } = useSheetFit({ ratio, fill: 0.98 })
   const contentRef = useRef<HTMLDivElement | null>(null)
   // The plain wheel is the explorer's here — it turns floors — so the viewer
   // keeps only the pinch, the drag, the double-click and the touch gestures.
@@ -66,7 +70,6 @@ export const FloorplateView = forwardRef<HTMLButtonElement, Props>(function Floo
     frameRef: figureRef,
     contentRef,
     enabled: interactive,
-    readable: true,
     wheelZoom: false,
   })
 

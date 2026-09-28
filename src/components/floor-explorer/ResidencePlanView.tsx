@@ -23,7 +23,7 @@ interface Props {
 const FALLBACK_RATIO = 2550 / 2200
 
 /**
- * How long a press on "View in 3D" waits for the render before standing the
+ * How long a press on the drawing waits for the render before standing the
  * plan up regardless. The render is warmed the moment the residence opens, so
  * this is all but always already spent; it exists so that a press on a cold
  * cache waits a moment rather than building the plan up around a file that
@@ -49,11 +49,19 @@ const settle = (ms: number) => new Promise<void>((resolve) => window.setTimeout(
  *
  * The sheet (`figure`) is the one box the explorer animates in and out, and
  * whatever renders inside it — the drawing in its zoom wrapper — is its own
- * concern. Where the package supplies a 3D render of the residence,
- * "View in 3D" stands the drawing up into it inside that same box and back
- * again (`PlanMorph`, registered by `unit3dViews.ts`); where it does not,
- * the control stays the placeholder it has always been and the sheet renders
- * the drawing alone.
+ * concern. Where the package supplies a 3D render of the residence, the
+ * DRAWING ITSELF is the control: a press on it stands the plan up into the
+ * render inside that same box, and a press on the render lays it back down
+ * (`PlanMorph`, registered by `unit3dViews.ts`). Where none is supplied the
+ * sheet renders the drawing alone and says so in a line under the metadata.
+ *
+ * It was a "View in 3D" button beside the metadata, and the client asked for
+ * the button to go and the picture to answer instead. Two things follow from
+ * that and are done below: the viewer's double-press zoom is declined here
+ * (`stepZoom: false`), or a double-click would toggle the view twice and step
+ * the zoom at the same time; and the drawing carries the button's role,
+ * pressed state and keyboard handling, so it is still a control rather than
+ * merely a clickable region.
  */
 export const ResidencePlanView = forwardRef<HTMLButtonElement, Props>(function ResidencePlanView(
   { level, hotspot, interactive, reducedMotion, onBack },
@@ -64,7 +72,15 @@ export const ResidencePlanView = forwardRef<HTMLButtonElement, Props>(function R
   const { areaRef, sheetRef: figureRef } = useSheetFit({ ratio, fill: 0.96 })
   const contentRef = useRef<HTMLDivElement | null>(null)
   // The sheet is its own viewport: the paper's edge is where the drawing clips.
-  const viewer = usePlanViewer({ viewportRef: figureRef, frameRef: figureRef, contentRef, enabled: interactive })
+  // The double press belongs to nothing here — the single press turns the plan
+  // into its render — so the viewer keeps the wheel, the drag and the pinch.
+  const viewer = usePlanViewer({
+    viewportRef: figureRef,
+    frameRef: figureRef,
+    contentRef,
+    enabled: interactive,
+    stepZoom: false,
+  })
 
   const residence = hotspot?.residence ?? null
   const variant = hotspot?.typeLabel ?? null
@@ -155,39 +171,14 @@ export const ResidencePlanView = forwardRef<HTMLButtonElement, Props>(function R
               </div>
             </dl>
 
-            <div className="fx-res__actions">
-              {view3d ? (
-                <button
-                  type="button"
-                  className="fx-res__cta"
-                  onClick={toggleSolid}
-                  aria-pressed={solid}
-                  aria-busy={waiting || undefined}
-                  data-busy={waiting || undefined}
-                  tabIndex={interactive ? 0 : -1}
-                >
-                  {solid ? RESIDENCE_COPY.view2d : RESIDENCE_COPY.view3d}
-                  <span className="fx-res__cta-arrow" aria-hidden="true">
-                    →
-                  </span>
-                </button>
-              ) : (
-                /* No render is supplied for this residence, so the control is
-                   a placeholder and says so. It used to be focusable and
-                   clickable and do nothing at all, which reads as a broken
-                   button; `disabled` takes it out of the tab order and out of
-                   hit-testing. The note sits on the wrapper because a disabled
-                   control shows no title of its own. */
-                <span className="fx-res__cta-wrap" title={RESIDENCE_COPY.view3dNote}>
-                  <button type="button" className="fx-res__cta" data-placeholder disabled>
-                    {RESIDENCE_COPY.view3d}
-                    <span className="fx-res__cta-arrow" aria-hidden="true">
-                      →
-                    </span>
-                  </button>
-                </span>
-              )}
-            </div>
+            {/* Not a control any more — the drawing is. This only says so,
+                and says which way round the plan currently is. Where no
+                render was supplied it says that instead, so the visitor is
+                never invited to press a picture that will not answer. */}
+            <p className="fx-res__invite" data-busy={waiting || undefined} aria-hidden="true">
+              <span className="fx-res__invite-rule" />
+              {view3d ? (waiting ? RESIDENCE_COPY.opening3d : solid ? RESIDENCE_COPY.tapFor2d : RESIDENCE_COPY.tapFor3d) : RESIDENCE_COPY.view3dNote}
+            </p>
           </>
         )}
       </div>
@@ -196,7 +187,32 @@ export const ResidencePlanView = forwardRef<HTMLButtonElement, Props>(function R
         <div className="fx-res__guides" aria-hidden="true" />
         {/* The sheet: the fixed white paper the drawing is zoomed within. */}
         <figure className="fx-res__figure fx-viewport" data-fx-res-figure data-fx-viewport ref={figureRef}>
-          <div className="fx-zoom" data-fx-zoom ref={contentRef}>
+          {/* The drawing is the control. `role`/`tabIndex`/`aria-pressed` are
+              set only where there is something to press, so a residence with
+              no render is not announced as a button that does nothing — and a
+              press that merely concluded a pan never reaches here, because the
+              viewer swallows it on the figure above (see `usePlanViewer`). */}
+          <div
+            className="fx-zoom"
+            data-fx-zoom
+            data-toggles={view3d ? '' : undefined}
+            data-busy={waiting || undefined}
+            ref={contentRef}
+            role={view3d ? 'button' : undefined}
+            tabIndex={view3d && interactive ? 0 : undefined}
+            aria-pressed={view3d ? solid : undefined}
+            aria-label={view3d ? (solid ? RESIDENCE_COPY.view2d : RESIDENCE_COPY.view3d) : undefined}
+            onClick={view3d ? toggleSolid : undefined}
+            onKeyDown={
+              view3d
+                ? (event) => {
+                    if (event.key !== 'Enter' && event.key !== ' ') return
+                    event.preventDefault()
+                    toggleSolid()
+                  }
+                : undefined
+            }
+          >
             <PlanMorph view={view3d} solid={solid} reducedMotion={reducedMotion}>
               {residence && src && (
                 <img

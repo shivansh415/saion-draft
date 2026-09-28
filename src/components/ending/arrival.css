@@ -109,12 +109,39 @@
   color: var(--paper);
 }
 
+/* The developer's mark is the developer's link. The brand row as a whole is
+   pointer-transparent — it sits over the explorer's own hit zones — so the
+   link takes presses back, and gives them up again whenever the row is faded
+   out for an open plan (the rule above only changes opacity, and an invisible
+   link still answers). */
+.arrival__logo-link {
+  display: block;
+  pointer-events: auto;
+  border-radius: 2px;
+}
+
+.arrival [data-fx-root]:not([data-mode='selector']) ~ .arrival__brand .arrival__logo-link {
+  pointer-events: none;
+}
+
+.arrival__logo-link:focus-visible {
+  outline: 1px solid rgb(255 255 255 / 60%);
+  outline-offset: 6px;
+}
+
 .arrival .arrival__logo {
   display: block;
   width: clamp(118px, 10vw, 152px);
   height: auto;
   object-fit: contain;
   opacity: 0.86;
+  transition: opacity 320ms ease;
+}
+
+@media (hover: hover) {
+  .arrival__logo-link:hover .arrival__logo {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 900px) {
@@ -128,11 +155,18 @@
     bottom: calc(3vh + 4.3rem + var(--fold));
   }
 
+  /* The row keeps its own margins; the lockup at its right end steps inside
+     them. The floating contact cue holds that corner of the viewport from the
+     completed building onward, and at 375px it covered the logo — which is a
+     link now, so it was a link that could not be pressed. The padding is the
+     cue's width and its gutter; the mark at the left end is untouched, and
+     `space-between` simply lands the logo a little further in. */
   .arrival__brand {
     left: 5vw;
     right: 5vw;
     bottom: calc(3vh + var(--fold));
     gap: 18px;
+    padding-inline-end: 4rem;
   }
 
   .arrival__mark {

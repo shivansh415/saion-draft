@@ -90,15 +90,24 @@ export function Arrival({ active }: Props) {
             <strong>REPOS&Eacute; RESIDENCE</strong>
             AL FURJAN &middot; DUBAI
           </span>
-          <img
-            className="arrival__logo"
-            src={OPENING_COPY.logoSrc}
-            alt={OPENING_COPY.logoAlt}
-            width={355}
-            height={164}
-            decoding="async"
-            draggable={false}
-          />
+          {/* The same link the lockup on the opening title card carries. */}
+          <a
+            className="arrival__logo-link"
+            href={OPENING_COPY.developerHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={OPENING_COPY.logoAlt}
+          >
+            <img
+              className="arrival__logo"
+              src={OPENING_COPY.logoSrc}
+              alt={OPENING_COPY.logoAlt}
+              width={355}
+              height={164}
+              decoding="async"
+              draggable={false}
+            />
+          </a>
         </div>
       </section>
 

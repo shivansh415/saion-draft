@@ -144,25 +144,29 @@
   align-items: flex-start;
   font-family: var(--font-display);
   font-weight: 300;
-  font-size: clamp(3.1rem, 9vw, 11rem);
+  font-size: clamp(3.4rem, 9.6vw, 11.6rem);
   line-height: 0.86;
   letter-spacing: 0.005em;
-  text-transform: uppercase;
   width: max-content;
   max-width: 100%;
 }
 
-/* The É in REPOSÉ. The face's cap height is 0.72em, but the acute over the E
-   reaches 0.95em — and at a line-height of 0.86 the line box begins only
-   0.05em above the caps, so the accent stood 0.18em ABOVE the box the mask
-   clips to. It was seen only while the line travelled up through the mask
-   and was cut off the moment the line settled: the title read REPOSE. The
-   mask is given the headroom and takes it back as margin, so the line sits
-   exactly where it did; the pre-reveal offset is deepened by the same
-   amount so the accent's tip cannot show through before the line rises. */
+/* Headroom and legroom for the mask the line is revealed through.
+   The wordmark is set the way the brochure sets it — "Reposé Residence",
+   not REPOSÉ RESIDENCE — so the mask has to clear more than caps at both
+   ends: the acute over the é reaches 0.95em, and the p of Reposé drops
+   about 0.21em below the baseline. At a line-height of 0.86 the line box
+   begins only 0.05em above the caps and ends barely below the baseline, so
+   without this the accent was cut off on the way up and the descender was
+   sheared off for good — the title read Repose.
+
+   Each side is given padding and takes the same amount back as margin, so
+   the lines sit exactly where they did and their spacing is unchanged; only
+   the clipping box grows. The pre-reveal offset below is deepened to match,
+   so no part of a line shows through before it rises. */
 .op-title .op-line {
-  padding-block-start: 0.24em;
-  margin-block-start: -0.22em;
+  padding-block: 0.24em 0.3em;
+  margin-block: -0.22em -0.26em;
 }
 
 .op-title .op-line__inner {
@@ -206,6 +210,32 @@
   gap: 0.62rem;
   opacity: 0;
   transform: translateY(12px);
+  /* The hero is pointer-transparent; its one link is not. */
+  pointer-events: auto;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Past the hero's exit the lockup is at opacity 0 but still laid out over the
+   bottom-right of the frame, where the building's own controls live. Opacity
+   alone does not stop a press, so the section says when the hero has gone. */
+.opening[data-hero-gone] .op-brand {
+  pointer-events: none;
+}
+
+.op-brand:hover .op-brand__mark,
+.op-brand:focus-visible .op-brand__mark {
+  opacity: 1;
+}
+
+.op-brand:hover .op-brand__label,
+.op-brand:focus-visible .op-brand__label {
+  color: rgb(255 255 255 / 86%);
+}
+
+.op-brand:focus-visible {
+  outline: 1px solid rgb(255 255 255 / 60%);
+  outline-offset: 10px;
 }
 
 .op-brand__label {
@@ -222,6 +252,7 @@
   margin-right: -0.28em;
   text-transform: uppercase;
   color: rgb(255 255 255 / 58%);
+  transition: color 320ms ease;
 }
 
 .op-brand__mark {
@@ -229,6 +260,7 @@
   width: var(--lockup);
   height: auto;
   opacity: 0.86;
+  transition: opacity 320ms ease;
 }
 
 /* ---------------------------------------------------------------------
@@ -247,27 +279,36 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.85rem;
+  gap: 1rem;
   opacity: 0;
 }
 
+/* The one instruction the whole site gives, so it is given properly.
+   It was set at 0.55rem in 62% white over a bright cloud frame — present,
+   but not something a visitor reads before they decide the page is broken.
+   Larger, brighter, and shadowed so it holds against the lightest frame the
+   film opens on; the beam below it is longer and travels further, because a
+   moving mark is what says "scroll" rather than the word alone. */
 .op-hint__label {
   font-family: var(--font-sans);
-  font-weight: 300;
-  font-size: 0.55rem;
+  font-weight: 400;
+  font-size: clamp(0.7rem, 0.86vw, 0.82rem);
   letter-spacing: 0.44em;
   text-transform: uppercase;
-  color: rgb(255 255 255 / 62%);
+  color: rgb(255 255 255 / 92%);
+  text-shadow: 0 1px 12px rgb(9 12 16 / 55%);
   padding-inline-start: 0.44em; /* optical centring against the tracking */
+  animation: op-hint-breathe 2.6s ease-in-out infinite;
 }
 
 .op-hint__track {
   position: relative;
   display: block;
   width: 1px;
-  height: 46px;
+  height: 64px;
   overflow: hidden;
-  background: rgb(255 255 255 / 22%);
+  background: rgb(255 255 255 / 34%);
+  box-shadow: 0 0 10px rgb(9 12 16 / 45%);
 }
 
 .op-hint__beam {
@@ -275,8 +316,18 @@
   inset-inline: 0;
   top: -60%;
   height: 60%;
-  background: linear-gradient(to bottom, rgb(255 255 255 / 0%), rgb(255 255 255 / 88%));
+  background: linear-gradient(to bottom, rgb(255 255 255 / 0%), rgb(255 255 255 / 100%));
   animation: op-beam 2.6s cubic-bezier(0.7, 0, 0.3, 1) infinite;
+}
+
+@keyframes op-hint-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
 }
 
 @keyframes op-beam {
@@ -821,8 +872,31 @@
     width: 104px;
   }
 
+  /* It used to be `display: none` here. A phone is exactly where a visitor
+     who does not know the page is scroll-driven gives up on it, so the cue
+     stays — sized down, and moved off the centre.
+
+     Lifted, not moved sideways. On a narrow screen `.op-brand` gives up the
+     right gutter for the left one and the foot of the frame becomes a busy
+     band: at 375px a centred cue clears the lockup by about eight pixels, and
+     the far right belongs to the floating contact cue. Above the band there is
+     open sky, so that is where it goes — still centred, still the last thing
+     read before the scroll begins. */
   .op-hint {
-    display: none;
+    bottom: calc(var(--gutter-block) + 5.5rem + var(--fold));
+  }
+
+  .op-hint__inner {
+    gap: 0.7rem;
+  }
+
+  .op-hint__label {
+    font-size: 0.68rem;
+    letter-spacing: 0.38em;
+  }
+
+  .op-hint__track {
+    height: 46px;
   }
 
   .why-dubai {
@@ -858,6 +932,10 @@
     top: 20%;
   }
 
+  .op-hint__label {
+    animation: none;
+  }
+
   .op-line__inner,
   .op-title .op-line__inner {
     transform: none;
@@ -874,177 +952,11 @@
   }
 }
 
-/* ---------------------------------------------------------------------
-   The amenities cue
-
-   A mark on the building, in the same language as the entrance cue: small
-   tracked capitals and an arrow, placed from the image's own coordinates
-   (see `towerZone`) so it holds its storey at every crop.
-
-   It stands on the lowest residential floor, inside the tower's hit zone, so
-   it must clear out the instant the explorer is asked for — otherwise it
-   would cover Level 01's band and take its clicks.
-   --------------------------------------------------------------------- */
-
-.am-cue {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 900ms ease 500ms;
-}
-
-.am-cue[data-active] {
-  opacity: 1;
-}
-
-.am-cue__button {
-  position: absolute;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin: 0;
-  padding: 0.55rem 0.7rem;
-  border: 0;
-  background: transparent;
-  color: var(--paper);
-  font-family: var(--font-sans);
-  font-weight: 300;
-  font-size: 0.56rem;
-  letter-spacing: 0.36em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  cursor: pointer;
-  opacity: 0.92;
-  transform: translate(-50%, -50%);
-  text-shadow: 0 1px 4px rgb(9 12 16 / 80%);
-  pointer-events: auto;
-  transition: opacity 500ms ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* What this cue stands on is lit glazing, not open sky — the entrance cue's
-   text-shadow alone disappears into it. A soft wash of the render's own dark,
-   with no edge of its own, gives the tracked capitals something to hold
-   against while still reading as shadow on the building rather than a panel
-   laid over it. */
-.am-cue__button::before {
-  content: '';
-  position: absolute;
-  inset: -0.35rem -0.9rem;
-  background: radial-gradient(
-    62% 130% at 50% 50%,
-    rgb(9 12 16 / 62%) 0%,
-    rgb(9 12 16 / 42%) 52%,
-    rgb(9 12 16 / 0%) 100%
-  );
-  pointer-events: none;
-}
-
-.am-cue__label,
-.am-cue__arrow {
-  position: relative;
-}
-
-.am-cue__label {
-  padding-inline-start: 0.36em; /* optical centring against the tracking */
-}
-
-.am-cue__arrow {
-  display: inline-block;
-  font-size: 0.7rem;
-  letter-spacing: 0;
-  opacity: 0.85;
-  transition: transform 600ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.am-cue__button:hover,
-.am-cue__button:focus-visible {
-  opacity: 1;
-}
-
-.am-cue__button:hover .am-cue__arrow,
-.am-cue__button:focus-visible .am-cue__arrow {
-  transform: translateX(5px);
-}
-
-.am-cue__button:focus-visible {
-  outline: 1px solid rgb(255 255 255 / 60%);
-  outline-offset: 2px;
-}
-
-/* The cue stands on the podium, clear of every level band, so the explorer
-   coming up does not have to take it away — it only yields, exactly as the
-   entrance cue does. A plan being open, or another chapter having the frame,
-   does retire it. */
-.fx[data-revealed] ~ .am-cue[data-active] {
-  opacity: 0.55;
-}
-
-/* Retiring the cue has to reach the BUTTON, not only its wrapper: the button
-   declares `pointer-events: auto` of its own a few rules up, and a declared
-   value beats an inherited one. Without the second selector the label is
-   invisible and still hit-testable — and it is painted after the explorer,
-   with no z-index between them, so it sat on top of an open floorplate right
-   where the residence hotspots are. A press there travelled to the lifestyle
-   chapter while the explorer still held the scroll lock, which the visitor
-   read as the plan throwing them back to the building. */
-.fx:not([data-mode='selector']) ~ .am-cue,
-.fx[data-suspended] ~ .am-cue,
-.fx:not([data-mode='selector']) ~ .am-cue .am-cue__button,
-.fx[data-suspended] ~ .am-cue .am-cue__button {
-  opacity: 0;
-  pointer-events: none;
-  /* `visibility` also takes it out of the tab order, which `opacity` and
-     `pointer-events` do not — otherwise Tab still reaches an invisible
-     control sitting over the plan. Delayed to the end of the fade so the
-     cue still leaves rather than vanishing. The same pattern as
-     `.fx[data-suspended] .fx__invite`. */
-  visibility: hidden;
-  transition: opacity 300ms ease, visibility 0s linear 300ms;
-}
-
-/* The walk into the reception and the lifestyle chapter both stand the cue
-   down through its `active` prop — the reception layer sits after this one in
-   the DOM, so it cannot be reached from here by a sibling selector. */
-
-@media (max-width: 900px) {
-  .am-cue__button {
-    font-size: 0.5rem;
-    letter-spacing: 0.28em;
-    padding: 0.7rem 0.8rem; /* a tap target */
-  }
-
-  /* On a narrow screen the explorer's copy is anchored to the foot of the
-     frame — the same band the podium, and so this cue, occupies. Measured on
-     a 390×844 phone with the explorer revealed: the cue's button sat at
-     y 631–668 directly under the "Explore residences" title at y 604–664, so
-     the words were painted over each other and a tap on the TITLE landed on
-     the cue and carried the visitor off to the residence chapter. Yielding
-     to 0.55 (the wide-screen rule above) is not enough where the two share
-     the same pixels: while the explorer is up the cue stands down entirely,
-     exactly as it does under an open plan. The amenities stay one scroll
-     away, and the lobby offers them again. */
-  .fx[data-revealed] ~ .am-cue[data-active],
-  .fx[data-revealed] ~ .am-cue[data-active] .am-cue__button {
-    opacity: 0;
-    pointer-events: none;
-    visibility: hidden;
-    transition: opacity 300ms ease, visibility 0s linear 300ms;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .am-cue,
-  .am-cue__button,
-  .am-cue__arrow {
-    transition: none;
-  }
-
-  .am-cue__button:hover .am-cue__arrow {
-    transform: none;
-  }
-}
+/* The amenities cue — a mark on the podium that led to the lifestyle chapter
+   — used to be styled here, in about a hundred and seventy lines. The client
+   asked for the completed render to carry no marks at all; the chapter it led
+   to is one scroll further down and always was, so the cue and its rules are
+   gone together. */
 
 /* =====================================================================
    The preloader

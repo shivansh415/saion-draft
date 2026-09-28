@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
+import { ContactFloat } from './components/ContactFloat'
 import { OpeningExperience } from './components/opening/OpeningExperience'
 import { getLifestyle, loadLifestyle, prefetchLifestyle } from './components/repose/lazy'
 import { getTerrace, loadTerrace } from './components/terrace/lazy'
@@ -182,6 +183,23 @@ function App() {
   const returnFromTerrace = useCallback(() => setTerraceUp(false), [])
 
   /**
+   * The floating WhatsApp cue: up from the moment the construction film
+   * finishes and the completed building is standing, and for the whole of the
+   * rest of the journey.
+   *
+   * Latched rather than mirrored. The opening chapter reports the building
+   * both ways — it has to, the film is scrubbed and scrolling back up puts
+   * the tower back under construction — but once a visitor has been offered a
+   * way to make contact, taking it away again because they scrolled up to
+   * watch the approach a second time is not something to do to them. So the
+   * cue rises once and stays.
+   */
+  const [contactUp, setContactUp] = useState(false)
+  const onBuildingReady = useCallback((ready: boolean) => {
+    if (ready) setContactUp(true)
+  }, [])
+
+  /**
    * The arch at the end of the chapter has become the building.
    *
    * This is the one place the page is moved without being seen to move, and
@@ -241,6 +259,7 @@ function App() {
         terraceActive={terraceUp}
         onExplore={explore}
         onTerrace={openTerrace}
+        onBuildingReady={onBuildingReady}
         onNearLifestyle={putChapterInDocument}
       />
       {/* The next chapter, in the document below the opening rather than over
@@ -249,6 +268,8 @@ function App() {
       {/* The terrace is a fixed layer over everything, and is off in
           production (floor-explorer/terraceZone → TERRACE_ENABLED). */}
       {terraceUp && Terrace && <Terrace onReturn={returnFromTerrace} />}
+      {/* Fixed, above every chapter and below the films and the preloader. */}
+      <ContactFloat shown={contactUp} />
     </main>
   )
 }

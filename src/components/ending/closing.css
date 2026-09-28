@@ -168,6 +168,58 @@
   }
 }
 
+/* The way back up, and the quietest thing on the page: the journey ends here
+   and this only says it can be taken again. Set below the contact details, so
+   the two ways of getting in touch keep the emphasis. */
+.closing__restart {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75em;
+  margin: clamp(1.4rem, 3.2vh, 2.2rem) 0 0;
+  padding: 0.55rem 0;
+  border: 0;
+  background: transparent;
+  color: rgb(246 244 241 / 52%);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: clamp(0.58rem, 0.7vw, 0.68rem);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.4s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.closing__restart-glyph {
+  display: inline-block;
+  font-size: 1.1em;
+  line-height: 1;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (hover: hover) {
+  .closing__restart:hover {
+    color: var(--paper);
+  }
+
+  .closing__restart:hover .closing__restart-glyph {
+    transform: translateY(-3px);
+  }
+}
+
+.closing__restart:focus-visible {
+  outline: 1px solid rgb(246 244 241 / 60%);
+  outline-offset: 5px;
+  color: var(--paper);
+}
+
+/* Touch: the words stay the size they are; the target does not. */
+@media (pointer: coarse) {
+  .closing__restart {
+    min-height: 44px;
+  }
+}
+
 .closing__foot {
   font-family: var(--font-sans);
   font-size: clamp(0.56rem, 0.66vw, 0.66rem);
@@ -188,6 +240,7 @@
   .closing__rule,
   .closing__foot,
   .closing__cta::after,
+  .closing__restart-glyph,
   .closing__arrow {
     transition-duration: 0.01ms;
   }

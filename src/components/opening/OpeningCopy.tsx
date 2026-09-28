@@ -28,7 +28,19 @@ export function OpeningCopy() {
         </p>
       </div>
 
-      <div className="op-brand" data-opening-brand>
+      {/* The developer's lockup is the developer's link: it opens SAION's own
+          site in a new tab, so the journey this page is is never navigated
+          away from. The hero is `pointer-events: none` as a whole and this is
+          the one thing in it that answers a press — and only while the hero
+          is on screen (see `data-hero-gone`), or an invisible lockup would go
+          on taking presses over the completed building. */}
+      <a
+        className="op-brand"
+        data-opening-brand
+        href={OPENING_COPY.developerHref}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         <span className="op-brand__label">{OPENING_COPY.developerLabel}</span>
         <img
           className="op-brand__mark"
@@ -38,7 +50,7 @@ export function OpeningCopy() {
           height={164}
           decoding="async"
         />
-      </div>
+      </a>
     </div>
   )
 }

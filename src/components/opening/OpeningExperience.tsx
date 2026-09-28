@@ -20,7 +20,6 @@ import {
 } from '../../data/opening'
 import { useImageSequence } from '../../hooks/useImageSequence'
 import { FloorExplorer } from '../floor-explorer/FloorExplorer'
-import { AmenitiesHotspot } from './AmenitiesHotspot'
 import { ReceptionExperience } from '../reception/ReceptionExperience'
 import { prefetchLifestyle } from '../repose/lazy'
 import { CanvasSequence } from './CanvasSequence'
@@ -64,6 +63,12 @@ interface Props {
   /** Up to the terrace, from above Level 15 in the floor explorer. */
   onTerrace: () => void
   /**
+   * The construction has finished and the completed building is standing —
+   * or the visitor has scrolled back up into the film and it has not. The
+   * page's own floating contact cue follows this.
+   */
+  onBuildingReady: (ready: boolean) => void
+  /**
    * The visitor is deep enough in this chapter that the next one should be in
    * the document below them. Fired once on the way down; the chapter is put
    * there BELOW the current position, so the document grows and nothing moves
@@ -73,7 +78,7 @@ interface Props {
   onNearLifestyle: () => void
 }
 
-export function OpeningExperience({ terraceActive, onExplore, onTerrace, onNearLifestyle }: Props) {
+export function OpeningExperience({ terraceActive, onExplore, onTerrace, onBuildingReady, onNearLifestyle }: Props) {
   /**
    * True when this chapter's picture is nobody's business: the visitor has
    * scrolled past it into the chapters below, or the terrace has covered it.
@@ -93,6 +98,8 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onNearL
   /** True once the hand-off has settled and the explorer may take input. */
   const [explorerActive, setExplorerActive] = useState(false)
   const explorerActiveRef = useRef(false)
+  /** True once the hero has finished leaving; only the stylesheet reads it. */
+  const heroGoneRef = useRef(false)
 
   /**
    * The preloader is up until the film can be travelled through, and the
@@ -196,6 +203,19 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onNearL
       }
     }
 
+    // The hero is faded out by the scrubbed timeline, and a faded element
+    // still answers a press — the developer's lockup would go on taking
+    // clicks in the bottom-right of the frame for the whole of the rest of
+    // the chapter. A single attribute flip at the end of the hero's exit,
+    // read by the stylesheet; no per-scroll work.
+    const syncHero = (progress: number) => {
+      const gone = progress * CHAPTER_UNITS >= HERO_EXIT_END
+      if (gone !== heroGoneRef.current) {
+        heroGoneRef.current = gone
+        section.toggleAttribute('data-hero-gone', gone)
+      }
+    }
+
     const trigger = ScrollTrigger.create({
       trigger: section,
       start: 'top top',
@@ -203,12 +223,14 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onNearL
       onUpdate: (self) => {
         targetRef.current = self.progress
         syncExplorer(self.progress)
+        syncHero(self.progress)
       },
     })
 
     // Honour a position restored by the browser or a mid-chapter reload.
     targetRef.current = trigger.progress
     syncExplorer(trigger.progress)
+    syncHero(trigger.progress)
 
     let frameId = 0
 
@@ -311,6 +333,13 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onNearL
   useEffect(() => {
     if (explorerActive) prefetchLifestyle()
   }, [explorerActive])
+
+  // The completed building is the moment the page earns the right to ask for
+  // a conversation; the floating contact cue lives at App level so it outlasts
+  // this chapter, and this is the only place that knows when to raise it.
+  useEffect(() => {
+    onBuildingReady(explorerActive)
+  }, [explorerActive, onBuildingReady])
 
   // Is this chapter still on screen at all? Everything expensive here — the
   // frame resolution, the compositing, the explorer's pointer handling — is
@@ -753,15 +782,16 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onNearL
         {/* Chapter 02 rests over the held final frame; the hand-off above scrubs it in. */}
         <FloorExplorer active={explorerActive} onTerrace={onTerrace} suspended={entering || covered} />
 
-        {/* The way to the amenities, marked on the storey it belongs to. It is a
-            sibling of the explorer so the stylesheet can retire it the moment the
-            explorer is revealed and the level bands claim those pixels. */}
-        <AmenitiesHotspot active={explorerActive && !entering && !covered} onExplore={onExplore} />
+        {/* Chapter 03 rests over the same frame, above the explorer: the walk
+            into the reception, scrubbed by the scroll. From inside, the way on
+            is Chapter 04 — the lifestyle — which mounts after this section and,
+            at its end, hands the frame back here.
 
-        {/* Chapter 03 rests over the same frame, above the explorer: only the cue at
-            the entrance until it is asked for; then the walk into the reception.
-            From inside, the way on is Chapter 04 — the lifestyle — which mounts
-            after this section and, at its end, hands the frame back here. */}
+            There were two marks on the completed building here — "Explore
+            amenities" on the podium and "Enter inside" at the door. Both were
+            shortcuts to places the scroll reaches on its own, and the client
+            asked for the building to be left clean, so both are gone; nothing
+            in the journey moved with them. */}
         <ReceptionExperience
           active={explorerActive}
           onJourney={setEntering}

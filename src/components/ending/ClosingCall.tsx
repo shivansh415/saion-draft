@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { WHATSAPP_HREF, WHATSAPP_LABEL } from '../../data/contact'
+import { jumpTo } from '../../lib/pageScroll'
 import { Walkthrough } from './walkthrough/Walkthrough'
 import { WALKTHROUGH_COPY } from './walkthrough/walkthroughData'
 import './closing.css'
@@ -41,6 +43,22 @@ export function ClosingCall() {
   const [sitting, setSitting] = useState(0)
   const cueRef = useRef<HTMLButtonElement | null>(null)
   const openFilms = useCallback(() => setSitting((n) => n + 1), [])
+
+  /**
+   * Back to the very beginning — the clouds, before the approach.
+   *
+   * A jump, not a glide, and this is the one place on the site where that is
+   * the right answer. Everything above here is scroll-driven: gliding the
+   * page to zero would rewind the whole journey backwards at speed — the
+   * amenities, the lobby's doors closing, four hundred and forty frames of
+   * film in reverse — which is neither what was asked for nor something the
+   * machine can do smoothly. The visitor asked to be AT the start, so they
+   * are put there, and the chapter plays forward from zero as it did the
+   * first time.
+   */
+  const returnToStart = useCallback(() => {
+    jumpTo(0)
+  }, [])
   // Focus comes back to the cue that opened them, so a keyboard visitor is
   // returned to the exact place they left.
   const closeFilms = useCallback(() => {
@@ -100,7 +118,17 @@ export function ClosingCall() {
             <span className="closing__watch-label">{WALKTHROUGH_COPY.cue}</span>
           </button>
 
-          <a className="closing__cta" href={`mailto:${EMAIL}`}>
+          {/* Contact goes to WhatsApp rather than to a mail client: it is the
+              line the sales team actually answers, and it is the same one the
+              floating cue offers. The address and the landline are still
+              below, for anyone who would rather write. */}
+          <a
+            className="closing__cta"
+            href={WHATSAPP_HREF}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={WHATSAPP_LABEL}
+          >
             <span>Contact us</span>
             <span className="closing__arrow" aria-hidden="true">
               &#8599;
@@ -113,6 +141,15 @@ export function ClosingCall() {
           <span aria-hidden="true">&middot;</span>
           <a href={PHONE_HREF}>{PHONE}</a>
         </p>
+
+        {/* The way back up. The journey has no navigation of any kind, so at
+            the end of it this is the only thing that can offer one. */}
+        <button type="button" className="closing__restart" onClick={returnToStart}>
+          <span className="closing__restart-glyph" aria-hidden="true">
+            &#8593;
+          </span>
+          <span>Return to beginning</span>
+        </button>
       </div>
 
       <span className="closing__foot">SAION PROPERTIES &middot; AL FURJAN, DUBAI</span>

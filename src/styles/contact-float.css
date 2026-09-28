@@ -1,0 +1,144 @@
+/* ---------------------------------------------------------------------
+   Reposé Residence — the floating contact cue
+
+   One control, on screen from the moment the building is finished until the
+   end of the journey. See components/ContactFloat.tsx for why it lives at
+   App level rather than inside a chapter.
+
+   Everything about it is deliberately quiet except its colour: the site is a
+   dark, slow, unbranded film, and the one thing a visitor must be able to
+   find without looking for it is the way to talk to someone. So the mark is
+   WhatsApp's own green — recognised before it is read — on a disc small
+   enough not to sit on the picture, lifted off the frame by shadow rather
+   than by a border.
+   --------------------------------------------------------------------- */
+
+.wa {
+  --wa-size: 56px;
+  --wa-green: #25d366;
+
+  position: fixed;
+  right: clamp(1rem, 2.4vw, 2rem);
+  /* Above the home indicator on a phone, the same lift every other mark on a
+     bottom edge takes (see index.css → --fold). */
+  bottom: calc(clamp(1rem, 2.4vw, 2rem) + var(--fold));
+  z-index: 600;
+
+  display: grid;
+  place-items: center;
+  width: var(--wa-size);
+  height: var(--wa-size);
+  border-radius: 50%;
+  background: radial-gradient(120% 120% at 32% 24%, #4fe085 0%, var(--wa-green) 48%, #17b053 100%);
+  color: #fff;
+  box-shadow:
+    0 2px 6px rgb(9 12 16 / 32%),
+    0 10px 30px rgb(9 12 16 / 42%),
+    0 0 0 1px rgb(255 255 255 / 14%) inset;
+
+  /* Down until the building is standing. Not unmounted: it has to be able to
+     rise into place, and an element that is not in the tree cannot. */
+  opacity: 0;
+  transform: translateY(14px) scale(0.86);
+  pointer-events: none;
+  transition:
+    opacity 620ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 620ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 320ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wa[data-shown] {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.wa:hover,
+.wa:focus-visible {
+  box-shadow:
+    0 2px 6px rgb(9 12 16 / 32%),
+    0 14px 38px rgb(9 12 16 / 52%),
+    0 0 0 1px rgb(255 255 255 / 22%) inset;
+}
+
+.wa[data-shown]:hover,
+.wa[data-shown]:focus-visible {
+  transform: translateY(-2px) scale(1.04);
+}
+
+.wa[data-shown]:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.wa:focus-visible {
+  outline: 1px solid rgb(255 255 255 / 70%);
+  outline-offset: 5px;
+}
+
+.wa__glyph {
+  position: relative;
+  width: 60%;
+  height: 60%;
+  fill: currentcolor;
+}
+
+/* A single slow ring, so the cue is noticed once and then forgotten about.
+   It is drawn behind the disc and never takes a pointer. */
+.wa__pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid var(--wa-green);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.wa[data-shown] .wa__pulse {
+  animation: wa-pulse 3.4s ease-out 1.2s infinite;
+}
+
+@keyframes wa-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  70%,
+  100% {
+    transform: scale(1.75);
+    opacity: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .wa {
+    --wa-size: 52px;
+  }
+}
+
+/* Touch: the disc is already past the 44px minimum, so only the ring is
+   stood down — a permanent animation on a phone is a battery cost for a cue
+   the thumb is already resting next to. */
+@media (pointer: coarse) {
+  .wa[data-shown] .wa__pulse {
+    animation-iteration-count: 3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wa {
+    transition: opacity 200ms linear;
+    transform: none;
+  }
+
+  .wa[data-shown],
+  .wa[data-shown]:hover,
+  .wa[data-shown]:focus-visible,
+  .wa[data-shown]:active {
+    transform: none;
+  }
+
+  .wa[data-shown] .wa__pulse {
+    animation: none;
+  }
+}

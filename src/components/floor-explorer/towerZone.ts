@@ -70,21 +70,10 @@ export const INVITE_X = towerCentreAt(INVITE_Y)
  */
 export const PODIUM_BAND = { top: 71.5, bottom: 82.5 } as const
 
-/**
- * Where the amenities cue sits.
- *
- * The building says which is which, so the cues follow it: the tower is
- * residences, the podium is amenities, the portal is the reception. This one
- * therefore sits on the podium — wholly below `TOWER_ZONE`, so the residential
- * envelope and every level band inside it stay free for the floor explorer —
- * at the band's mid-height, and mirrored across the building's centre line
- * from the entrance, so the two ground-level cues sit either side of the tower
- * and neither can reach the other.
- *
- * Both numbers are derived from what is already calibrated here: the tower's
- * own silhouette at its base, and the entrance reserve. Recalibrate either and
- * the cue follows.
+/*
+ * There was an `AMENITIES_X` / `AMENITIES_Y` here — where the cue on the
+ * podium stood. The cue has been removed (the client asked for the completed
+ * render to carry no marks), and nothing else was ever placed from them.
+ * `PODIUM_BAND` above still stands: it is what keeps the podium out of the
+ * tower's own hit zone.
  */
-export const AMENITIES_Y = (PODIUM_BAND.top + PODIUM_BAND.bottom) / 2
-export const AMENITIES_X =
-  2 * towerCentreAt(TOWER_EDGES.bottom.y) - (ENTRANCE_RESERVE.x0 + ENTRANCE_RESERVE.x1) / 2

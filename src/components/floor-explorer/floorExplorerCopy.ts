@@ -23,8 +23,9 @@ export const PLATE_COPY = {
 /** The drawing viewer's one control, shared by the floorplate and the residence plan. */
 export const VIEWER_COPY = {
   reset: 'Reset view',
-  /** Read to assistive technology on the viewport. */
-  hint: 'Scroll or pinch to zoom, drag to pan, double-click to step in and out',
+  /** Read to assistive technology on the viewport. The residence plan declines
+   *  the double press — there it turns the drawing into its 3D render. */
+  hint: 'Scroll or pinch to zoom, drag to pan',
   /** The floorplate's: there the wheel turns floors rather than zooming. */
   plateHint: 'Scroll to change floors; pinch or double-click to zoom, drag to pan',
 } as const
@@ -38,11 +39,17 @@ export const AVAILABILITY_COPY = {
 
 export const RESIDENCE_COPY = {
   back: 'Back to floor',
+  /** Read to assistive technology on the drawing, which is itself the control. */
   view3d: 'View in 3D',
   /** The same control, once the plan is standing up. */
   view2d: 'View in 2D',
-  /** For residences no render is supplied for — the control is a placeholder there. */
-  view3dNote: 'Coming soon',
+  /** The line under the metadata that says the drawing answers a press. */
+  tapFor3d: 'Tap the plan to view it in 3D',
+  tapFor2d: 'Tap the render for the 2D plan',
+  /** While the render is being fetched. */
+  opening3d: 'Opening the 3D view',
+  /** For residences no render is supplied for; there the drawing is not a control. */
+  view3dNote: '3D view coming soon',
   floorplate: 'Floorplate',
   position: 'Position',
 } as const
