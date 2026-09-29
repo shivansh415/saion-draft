@@ -15,7 +15,7 @@ import {
   HERO_EXIT_START,
   HINT_EXIT_END,
   LIFESTYLE_MOUNT_AT,
-  RECEPTION_BAND,
+  BUILDING_GATE_AT,
   resolveFrame,
   unitFraction,
 } from '../../data/opening'
@@ -234,7 +234,7 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onBuild
     if (!section) return null
     const track = section.offsetHeight - window.innerHeight
     if (track <= 0) return null
-    return section.getBoundingClientRect().top + window.scrollY + track * unitFraction(RECEPTION_BAND.start)
+    return section.getBoundingClientRect().top + window.scrollY + track * unitFraction(BUILDING_GATE_AT)
   }, [])
 
   const onReveal = useCallback(() => setRevealed(true), [])

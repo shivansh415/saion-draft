@@ -83,11 +83,13 @@ function restoreHost(element: HTMLElement | null): void {
 /**
  * How long a film runs before the way out starts asking to be noticed.
  *
- * Long enough that it is never competing with the film for the first look —
- * the rooms are short, and this lands around the point where a visitor has
- * seen what they came for and starts wondering how to get back.
+ * Four and a half seconds, down from nine. Nine was chosen so as never to
+ * compete with the film for the first look, and it was too polite by half:
+ * the rooms are short, and a visitor who has finished one and cannot find the
+ * way back has already been stuck for a while by then. It still lets the film
+ * have the opening beat to itself.
  */
-const BACK_NUDGE_MS = 9000
+const BACK_NUDGE_MS = 4500
 
 type Level = 'none' | 'metadata' | 'auto'
 const RANK: Record<Level, number> = { none: 0, metadata: 1, auto: 2 }
@@ -458,7 +460,13 @@ export const InteriorCinema = forwardRef<CinemaHandle, Props>(function InteriorC
         {room?.meta}
       </span>
 
-      <button type="button" className="ri-cinema__back ri-cinema__chrome t-ui" ref={back} onClick={onClose}>
+      <button
+        type="button"
+        className="ri-cinema__back ri-cinema__chrome t-ui"
+        data-nudge={nudgeBack || undefined}
+        ref={back}
+        onClick={onClose}
+      >
         <Attention shown={nudgeBack} />
         <span aria-hidden="true">←</span>
         {RESIDENCE_COPY.back}

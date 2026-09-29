@@ -448,6 +448,58 @@
   transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
+/* Asking to be found.
+ *
+ * The ring alone was not enough here and the reason is the ground: this
+ * control sits on a moving film at 52% of the chapter's near-black, which is
+ * a deliberately quiet thing to be. So while it is nudging it also brightens
+ * its own ground and its hairline, and leans a little toward the way out. The
+ * ring reads as the invitation; this is what makes the ring visible. */
+.ri-cinema__back.ri-cinema__back[data-nudge] {
+  background: rgb(12 14 10 / 74%);
+  border-color: rgb(244 241 232 / 62%);
+  animation: ri-back-nudge 2.9s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+.ri-cinema__back[data-nudge] span {
+  animation: ri-back-lean 2.9s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@keyframes ri-back-nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-6px);
+  }
+}
+
+@keyframes ri-back-lean {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-4px);
+  }
+}
+
+/* Hovering it IS finding it; the asking stops. */
+@media (hover: hover) {
+  .ri-cinema__back.ri-cinema__back[data-nudge]:hover,
+  .ri-cinema__back[data-nudge]:hover span {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ri-cinema__back.ri-cinema__back[data-nudge],
+  .ri-cinema__back[data-nudge] span {
+    animation: none;
+  }
+}
+
 @media (hover: hover) {
   .ri-cinema__back.ri-cinema__back:hover {
     background: rgb(12 14 10 / 68%);

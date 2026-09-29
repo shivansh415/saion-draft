@@ -14,6 +14,15 @@ export function ScrollHint() {
         <span className="op-hint__track">
           <span className="op-hint__beam" />
         </span>
+        {/* A chevron under the line. The word and the beam were both white on
+            a frame that opens on sunlit cloud, and neither was being read; a
+            downward arrow is the one mark that says "this way" without
+            needing to be read at all. */}
+        <span className="op-hint__chevron" aria-hidden="true">
+          <svg viewBox="0 0 24 14" focusable="false">
+            <path d="M2 2 L12 11 L22 2" />
+          </svg>
+        </span>
       </div>
     </div>
   )

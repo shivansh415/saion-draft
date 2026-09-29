@@ -195,6 +195,19 @@ export const RECEPTION_BAND = {
 export const RECEPTION_SPAN = RECEPTION_BAND.end - RECEPTION_BAND.start
 
 /**
+ * Where the journey is held until the building has been looked inside.
+ *
+ * The end of the hand-off — the first frame at which the tower is complete,
+ * the explorer is fully in and the selector is taking input. Not the start of
+ * the walk to the door, which is where this was first put: that left the
+ * whole of the building's hold scrollable, so the page carried on for nearly
+ * two screens after the building appeared and only then stopped, which reads
+ * as the scroll running out somewhere arbitrary rather than as the building
+ * asking to be explored. It stops where the building arrives.
+ */
+export const BUILDING_GATE_AT = afterFilm(HANDOFF_TRACK_VH)
+
+/**
  * Where "Back to building" puts the visitor: a little ABOVE the band, not on
  * its first pixel.
  *
