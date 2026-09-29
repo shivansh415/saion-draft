@@ -62,7 +62,7 @@ export const FILM_TRACK_VH = 620
  * explorer: the closing title retires, the explorer settles over the held
  * final frame, and only then does the level selector take input.
  */
-export const HANDOFF_TRACK_VH = 200
+export const HANDOFF_TRACK_VH = 120
 
 /**
  * The building's own stretch. Nothing changes across it: the completed tower
@@ -71,15 +71,21 @@ export const HANDOFF_TRACK_VH = 200
  * immediately followed by the reception assembling itself — the visitor gets
  * a comfortable run of scroll in which the building is simply THERE.
  *
- * 260vh, not the 130 it was first written at. 130 is about 1.4 screens, and a
- * smoothed scroll carries enough momentum that a single flick crosses it: in
- * a real run, aiming to stop at y=8800 landed at 9502 — past the band
- * entirely, with the walk into the reception already under way and the
- * explorer already stood down. A window the visitor has to CATCH is not an
- * interactive floor explorer. At ~2.7 screens the building is somewhere they
- * can come to rest, hover a level and open a plan.
+ * 140vh, down from 260. The 260 was written to make the explorer impossible to
+ * miss, and it worked — but measured end to end it left 2790px, over three
+ * screens, in which scrolling changed nothing at all. Scrolling that does
+ * nothing teaches the visitor to scroll HARD, and they then arrived at the
+ * walk to the door carrying so much momentum that the approach played out in
+ * a fraction of a second: reported, accurately, as a sudden zoom.
+ *
+ * The scroll that came off this did not disappear — it went into
+ * `RECEPTION_TRACK_VH`, where it buys a longer, gentler walk instead of
+ * nothing. And the fear behind the 260 has since been answered elsewhere:
+ * opening any plan LOCKS the page (see `FloorExplorer` → `lockScroll`), so a
+ * visitor who reaches the explorer cannot be carried past it by momentum, and
+ * the invitation now tells them it is there rather than waiting to be found.
  */
-export const EXPLORER_HOLD_VH = 260
+export const EXPLORER_HOLD_VH = 140
 
 /**
  * The walk into the reception, as scroll.
@@ -90,10 +96,13 @@ export const EXPLORER_HOLD_VH = 260
  * kept scrolling. It is now scrubbed across this band, so the walk in runs
  * forward as the visitor descends and runs backward if they scroll up.
  *
- * 260vh reads at roughly the same pace as the 2.8s walk did at an unhurried
- * scroll speed, and — unlike a clock — it cannot outrun the visitor.
+ * 340vh, up from 260 — and the extra 80 is exactly what was taken off the
+ * building's hold above. The walk is the one stretch here where every pixel of
+ * scroll moves the picture, so it is the right place for scroll to live: a
+ * longer band is a slower, steadier approach at any given scroll speed, which
+ * is the other half of the fix for the sudden zoom at the door.
  */
-export const RECEPTION_TRACK_VH = 260
+export const RECEPTION_TRACK_VH = 340
 
 /**
  * The breath after the walk: the lobby has arrived, and simply stays.
@@ -147,15 +156,25 @@ export const HANDOFF = {
   /** The closing title lifts away. */
   copyOutStart: afterFilm(50),
   copyOutEnd: afterFilm(105),
-  /** The explorer — building still, copy, level list — settles in. */
-  explorerInStart: afterFilm(85),
-  explorerInEnd: afterFilm(165),
+  /**
+   * The explorer — building still, copy, level list — settles in.
+   *
+   * Brought forward from 85→165. The film ends on the completed tower and the
+   * beats used to leave 765px of scroll between that and the first sign of
+   * the explorer, in which the picture did not change by one pixel: the
+   * crossfade this drives only changes the GRADE, never the image. Nearly a
+   * whole screen of scrolling for nothing, right at the moment the visitor is
+   * deciding whether the page is still responding. The building still stands
+   * clean for a beat — 25vh of it — which is all that beat was ever for.
+   */
+  explorerInStart: afterFilm(25),
+  explorerInEnd: afterFilm(95),
   /**
    * From here the selector takes hover, tap and keyboard. A little before the
    * last of the type has settled, so a scroll that comes to rest just short
    * of the end of the track still lands on a working selector.
    */
-  activeAt: afterFilm(150),
+  activeAt: afterFilm(80),
 } as const
 
 /* ------------------------------------------------------------------ *
