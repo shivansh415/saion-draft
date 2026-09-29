@@ -55,17 +55,26 @@ export function CursorLabel() {
     // stranded on screen either way.
     const clear = () => setLabel(null)
 
+    // `mouseleave` on `document` is not reliable — it does not bubble and
+    // browsers disagree about whether it fires at all for the window's edge.
+    // `pointerout` with no `relatedTarget` is the event that actually means
+    // "the pointer has left the document", and without it the label could be
+    // left stranded in a corner of the screen after the pointer had gone.
+    const onOut = (event: PointerEvent) => {
+      if (!event.relatedTarget) clear()
+    }
+
     document.addEventListener('pointermove', onMove, { passive: true })
     document.addEventListener('pointerdown', clear, { passive: true })
+    document.addEventListener('pointerout', onOut, { passive: true })
     window.addEventListener('blur', clear)
-    document.addEventListener('mouseleave', clear)
 
     return () => {
       if (raf.current) cancelAnimationFrame(raf.current)
       document.removeEventListener('pointermove', onMove)
       document.removeEventListener('pointerdown', clear)
+      document.removeEventListener('pointerout', onOut)
       window.removeEventListener('blur', clear)
-      document.removeEventListener('mouseleave', clear)
     }
   }, [])
 

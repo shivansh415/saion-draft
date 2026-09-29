@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 import { EXPLORER_CUE } from './floorExplorerCopy'
 import { ROOF_Y, LEVEL_IDS } from './levelCalibration'
@@ -16,6 +16,16 @@ interface Props {
    * carrying on talking over them — see the note on `engaged` below.
    */
   paused: boolean
+  /**
+   * Whether the visitor has genuinely reached for the building yet — held by
+   * the explorer, not here, because this component is re-keyed on every pass
+   * and anything it held would be wiped each time round. Held locally, the
+   * cue forgot after one pass that the visitor was already on the building
+   * and started talking over them again.
+   */
+  engaged: boolean
+  /** The visitor has just reached for it. */
+  onEngage: () => void
   coarse: boolean
   reducedMotion: boolean
   /** One pass is over. The explorer rests it a beat and plays it again. */
@@ -87,8 +97,8 @@ const GRACE_MS = 900
  * and the storeys are simply shown, drawn at rest — the information survives,
  * the movement does not.
  */
-export function ExplorerCue({ rect, shown, paused, coarse, reducedMotion, onCycleEnd }: Props) {
-  /**
+export function ExplorerCue({ rect, shown, paused, engaged, onEngage, coarse, reducedMotion, onCycleEnd }: Props) {
+  /*
    * Has the visitor actually reached for the building, or is the pointer
    * simply parked on it?
    *
@@ -99,8 +109,6 @@ export function ExplorerCue({ rect, shown, paused, coarse, reducedMotion, onCycl
    * explorer reveals itself on a bare `pointerenter`, and a stationary pointer
    * is enough to fire one. A deliberate move of it is not.
    */
-  const [engaged, setEngaged] = useState(false)
-
   useEffect(() => {
     if (!shown || engaged) return
     const started = performance.now()
@@ -114,12 +122,12 @@ export function ExplorerCue({ rect, shown, paused, coarse, reducedMotion, onCycl
         performance.now() - started > GRACE_MS &&
         Math.hypot(event.clientX - from.x, event.clientY - from.y) >= MOVE_TO_DISMISS
       ) {
-        setEngaged(true)
+        onEngage()
       }
     }
     window.addEventListener('pointermove', onMove, { passive: true })
     return () => window.removeEventListener('pointermove', onMove)
-  }, [shown, engaged])
+  }, [shown, engaged, onEngage])
 
   // One pass done. The explorer rests it a beat and plays it again, until the
   // visitor presses the building — a cue for something this easy to miss is

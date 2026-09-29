@@ -33,6 +33,17 @@ const HIDE_DELAY = 400
 const CUE_REST_MS = 1400
 
 /**
+ * How many separate pushes at the ceiling before the way past is offered.
+ *
+ * A last resort, and it has to behave like one: offered too early it is just
+ * a "skip" button next to the thing the client asked visitors to do. Three
+ * pushes, each at least two seconds apart, cannot come out of one gesture
+ * however hard it is thrown — a single hard scroll yields two at most — so
+ * the third is always a separate decision to insist.
+ */
+const GATE_PUSHES_FOR_ESCAPE = 3
+
+/**
  * building  → selector
  * floorplate → opening · floorplate · switching · closing
  * residence  → openingResidence · residence · closingResidence
@@ -277,6 +288,9 @@ export function FloorExplorer({ active, onTerrace, suspended = false, presented 
    * a set of animations that have to be rewound.
    */
   const [cuePass, setCuePass] = useState(0)
+  /** Survives a re-key, unlike anything the cue itself could hold. */
+  const [cueEngaged, setCueEngaged] = useState(false)
+  const engageCue = useCallback(() => setCueEngaged(true), [])
   const cueRest = useRef<number | null>(null)
   const restCue = useCallback(() => {
     if (cueRest.current !== null) return
@@ -1239,6 +1253,8 @@ export function FloorExplorer({ active, onTerrace, suspended = false, presented 
         rect={rect}
         shown={cueUp}
         paused={revealed}
+        engaged={cueEngaged}
+        onEngage={engageCue}
         coarse={coarse}
         reducedMotion={reducedMotion}
         onCycleEnd={restCue}
@@ -1253,7 +1269,7 @@ export function FloorExplorer({ active, onTerrace, suspended = false, presented 
         <div className="fx-gate" data-fx-gate>
           <span className="fx-gate__rule" aria-hidden="true" />
           <p className="fx-gate__text">{GATE_COPY.wait}</p>
-          {gatePush >= 3 && (
+          {gatePush >= GATE_PUSHES_FOR_ESCAPE && (
             <button type="button" className="fx-gate__skip" onClick={() => setExplored(true)}>
               {GATE_COPY.skip}
               <span className="fx-gate__skip-arrow" aria-hidden="true">

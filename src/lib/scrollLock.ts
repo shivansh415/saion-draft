@@ -193,7 +193,26 @@ let ceilingBound = false
 let clamping = false
 /** Counts the times the visitor has pushed against it, for whoever wants to know. */
 let bumps = 0
+let lastBumpAt = 0
 let onBump: ((count: number) => void) | null = null
+
+/**
+ * How long after a push before another one counts.
+ *
+ * A single flick does not produce one scroll event, it produces a stream of
+ * them as the momentum decays, and every one of them lands past the ceiling.
+ * Counted raw, one flick read as a dozen pushes and the way-past control
+ * appeared on the visitor's very first approach — which is the opposite of
+ * what it is for. A gap this long only ever falls between two gestures, and
+ * a determined visitor therefore takes some seconds to surface the way past
+ * rather than being handed it before they have tried the way in.
+ *
+ * Two seconds, not one: measured, a single hard scroll against the ceiling
+ * runs for three and a half seconds of decaying momentum, and at a shorter
+ * gap that one gesture alone was enough to surface the escape. At two it
+ * yields at most two pushes, so the third has to be a separate decision.
+ */
+const BUMP_GAP_MS = 2000
 
 /**
  * A ceiling is not a lock, and the difference is the whole point of it.
@@ -218,6 +237,7 @@ export function setScrollCeiling(y: number | null, onPush?: (count: number) => v
   onBump = onPush ?? null
   if (ceiling === null) {
     bumps = 0
+    lastBumpAt = 0
     if (ceilingBound) {
       ceilingBound = false
       window.removeEventListener('scroll', clampToCeiling)
@@ -247,7 +267,12 @@ function clampToCeiling(): void {
   // otherwise report a few hundredths past the line for ever.
   if (window.scrollY <= ceiling + 1) return
 
-  bumps += 1
+  const now = performance.now()
+  const isNewPush = now - lastBumpAt > BUMP_GAP_MS
+  if (isNewPush) {
+    lastBumpAt = now
+    bumps += 1
+  }
   clamping = true
   if (lenis) {
     lenis.scrollTo(ceiling, { immediate: true, force: true })
@@ -259,5 +284,5 @@ function clampToCeiling(): void {
   window.setTimeout(() => {
     clamping = false
   }, 0)
-  onBump?.(bumps)
+  if (isNewPush) onBump?.(bumps)
 }

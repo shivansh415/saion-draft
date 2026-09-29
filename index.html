@@ -19,19 +19,18 @@
 
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23090c10'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='19' fill='%23f6f4f1' text-anchor='middle'%3ER%3C/text%3E%3C/svg%3E" />
 
-    <!-- The first impression: in flight before the bundle has parsed. -->
+    <!-- The first impression: in flight before the bundle has parsed.
+         Only the FIRST frame. The second used to be preloaded beside it, and
+         a phone now takes the film at a stride of three or five (see
+         data/opening → filmBudget), which skips frame two entirely: a wasted
+         request, competing for the connection at the one moment it is most
+         contended. Chrome said so itself — "preloaded but not used". -->
     <link
       rel="preload"
       as="image"
       type="image/webp"
       href="/assets/opening/sequence-01/webp/frame-0001.webp"
       fetchpriority="high"
-    />
-    <link
-      rel="preload"
-      as="image"
-      type="image/webp"
-      href="/assets/opening/sequence-01/webp/frame-0002.webp"
     />
     <link rel="preload" as="image" href="/assets/opening/branding/saion-logo.png" />
 

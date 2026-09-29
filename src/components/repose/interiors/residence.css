@@ -444,7 +444,12 @@
     border-color 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-.ri-cinema__back span {
+/* `:not(.attn)` throughout. The attention ring is a `span` inside this
+   control, and a bare `.ri-cinema__back span` is (0,1,1) against the ring's
+   own (0,1,0) — so every rule meant for the arrow was landing on the ring as
+   well, and the nudge rule below replaced the ring's own animation outright.
+   The ring simply stopped existing on the one control it was added for. */
+.ri-cinema__back span:not(.attn) {
   transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
@@ -461,7 +466,7 @@
   animation: ri-back-nudge 2.9s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
 
-.ri-cinema__back[data-nudge] span {
+.ri-cinema__back[data-nudge] span:not(.attn) {
   animation: ri-back-lean 2.9s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
 
@@ -488,14 +493,14 @@
 /* Hovering it IS finding it; the asking stops. */
 @media (hover: hover) {
   .ri-cinema__back.ri-cinema__back[data-nudge]:hover,
-  .ri-cinema__back[data-nudge]:hover span {
+  .ri-cinema__back[data-nudge]:hover span:not(.attn) {
     animation: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .ri-cinema__back.ri-cinema__back[data-nudge],
-  .ri-cinema__back[data-nudge] span {
+  .ri-cinema__back[data-nudge] span:not(.attn) {
     animation: none;
   }
 }
@@ -506,7 +511,7 @@
     border-color: rgb(244 241 232 / 48%);
   }
 
-  .ri-cinema__back:hover span {
+  .ri-cinema__back:hover span:not(.attn) {
     transform: translateX(-5px);
   }
 }
