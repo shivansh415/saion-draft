@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 import { EXPLORER_CUE } from './floorExplorerCopy'
 import { ROOF_Y, LEVEL_IDS } from './levelCalibration'
@@ -9,12 +9,17 @@ import type { CoverRect } from './useCoverRect'
 interface Props {
   /** The building's painted rectangle — everything below is drawn in its pixels. */
   rect: CoverRect
-  /** Play it. Going false retires it; it is never played twice. */
+  /** Play it. */
   shown: boolean
+  /**
+   * The visitor is on the building. The cue holds where it is rather than
+   * carrying on talking over them — see the note on `engaged` below.
+   */
+  paused: boolean
   coarse: boolean
   reducedMotion: boolean
-  /** The cue has said its piece and should be stood down. */
-  onDone: () => void
+  /** One pass is over. The explorer rests it a beat and plays it again. */
+  onCycleEnd: () => void
 }
 
 /** The storey the pointer comes to rest on — mid-tower, so it reads at any crop. */
@@ -82,38 +87,50 @@ const GRACE_MS = 900
  * and the storeys are simply shown, drawn at rest — the information survives,
  * the movement does not.
  */
-export function ExplorerCue({ rect, shown, coarse, reducedMotion, onDone }: Props) {
-  // Stood down on its own once it has played, so the explorer never has to
-  // time it — and sooner if the visitor shows they would rather get on with
-  // it. What counts as showing that is the careful part: see MOVE_TO_DISMISS.
+export function ExplorerCue({ rect, shown, paused, coarse, reducedMotion, onCycleEnd }: Props) {
+  /**
+   * Has the visitor actually reached for the building, or is the pointer
+   * simply parked on it?
+   *
+   * This is the difference between a cue that pauses when someone engages with
+   * it — which is what it is for — and one that is paused before its first
+   * frame, for ever, because the completed building stands in the middle of
+   * the screen and that is where a cursor is usually already resting. The
+   * explorer reveals itself on a bare `pointerenter`, and a stationary pointer
+   * is enough to fire one. A deliberate move of it is not.
+   */
+  const [engaged, setEngaged] = useState(false)
+
   useEffect(() => {
-    if (!shown) return
-    const timer = window.setTimeout(onDone, reducedMotion ? LIFE_REDUCED_MS : LIFE_MS)
-
+    if (!shown || engaged) return
     const started = performance.now()
-    const settled = () => performance.now() - started > GRACE_MS
-
     let from: { x: number; y: number } | null = null
     const onMove = (event: PointerEvent) => {
       if (!from) {
         from = { x: event.clientX, y: event.clientY }
         return
       }
-      if (settled() && Math.hypot(event.clientX - from.x, event.clientY - from.y) >= MOVE_TO_DISMISS) onDone()
-    }
-    // A press is always a decision, however small the movement before it.
-    const onPress = () => {
-      if (settled()) onDone()
+      if (
+        performance.now() - started > GRACE_MS &&
+        Math.hypot(event.clientX - from.x, event.clientY - from.y) >= MOVE_TO_DISMISS
+      ) {
+        setEngaged(true)
+      }
     }
     window.addEventListener('pointermove', onMove, { passive: true })
-    window.addEventListener('pointerdown', onPress, { passive: true })
+    return () => window.removeEventListener('pointermove', onMove)
+  }, [shown, engaged])
 
-    return () => {
-      window.clearTimeout(timer)
-      window.removeEventListener('pointermove', onMove)
-      window.removeEventListener('pointerdown', onPress)
-    }
-  }, [shown, reducedMotion, onDone])
+  // One pass done. The explorer rests it a beat and plays it again, until the
+  // visitor presses the building — a cue for something this easy to miss is
+  // worth repeating, and a loop the eye can ignore is better than one shot the
+  // eye can miss.
+  const holding = paused && engaged
+  useEffect(() => {
+    if (!shown || holding) return
+    const timer = window.setTimeout(onCycleEnd, reducedMotion ? LIFE_REDUCED_MS : LIFE_MS)
+    return () => window.clearTimeout(timer)
+  }, [shown, holding, reducedMotion, onCycleEnd])
 
   // Before the still has been measured there is nothing to draw on.
   if (!shown || rect.width === 0) return null
@@ -142,7 +159,7 @@ export function ExplorerCue({ rect, shown, coarse, reducedMotion, onDone }: Prop
   const at = (y: number) => Math.min(1, Math.max(0, (y - roofY) / travel))
 
   return (
-    <div className="fx-cue" data-fx-cue data-coarse={coarse || undefined}>
+    <div className="fx-cue" data-fx-cue data-coarse={coarse || undefined} data-paused={holding || undefined}>
       <svg
         className="fx-cue__art"
         width={rect.containerWidth}

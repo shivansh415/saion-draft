@@ -281,6 +281,25 @@
   align-items: center;
   gap: 1rem;
   opacity: 0;
+  /* It goes on asking until it is answered. The cue retires on the scrubbed
+     timeline the moment the page moves (`[data-opening-hint]`, which is the
+     element OUTSIDE this one), so "until the visitor scrolls" needs no state
+     of its own — this simply refuses to sit still while it waits.
+
+     The bob is on the inner element because the outer one is the scrubbed
+     exit's, and two owners on one transform is how a cue ends up fighting
+     its own retirement. */
+  animation: op-hint-bob 2.6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@keyframes op-hint-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(7px);
+  }
 }
 
 /* The one instruction the whole site gives, so it is given properly.
@@ -932,7 +951,8 @@
     top: 20%;
   }
 
-  .op-hint__label {
+  .op-hint__label,
+  .op-hint__inner {
     animation: none;
   }
 

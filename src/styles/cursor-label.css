@@ -1,0 +1,73 @@
+/* ---------------------------------------------------------------------
+   Reposé Residence — the pointer's label (see components/CursorLabel.tsx)
+
+   One element, mounted once, travelling with the pointer and carrying the
+   word of whatever it is over. Never takes a pointer event itself — it is
+   drawn ON the cursor, so anything it could intercept is the very thing the
+   visitor is reaching for.
+   --------------------------------------------------------------------- */
+
+.cursor-label {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9500;
+  pointer-events: none;
+  /* The transform is the pointer's position, written every frame by the
+     component; the offset that lifts the pill off the cursor's own point is
+     margin, so the two never have to be composed. */
+  margin: 14px 0 0 16px;
+  opacity: 0;
+  transform: translate3d(-100px, -100px, 0);
+  transition:
+    opacity 180ms ease,
+    scale 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  scale: 0.82;
+  will-change: transform;
+}
+
+.cursor-label[data-shown] {
+  opacity: 1;
+  scale: 1;
+}
+
+.cursor-label__text {
+  display: block;
+  padding: 0.5rem 0.85rem;
+  border-radius: 999px;
+  background: rgb(246 244 241 / 96%);
+  color: #090c10;
+  font-family: var(--font-sans);
+  font-weight: 400;
+  font-size: 0.58rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  padding-inline-end: calc(0.85rem - 0.24em); /* pull the trailing letter-space back */
+  box-shadow:
+    0 2px 10px rgb(9 12 16 / 28%),
+    0 10px 30px rgb(9 12 16 / 22%);
+}
+
+/* The system cursor stands down wherever the label speaks for it — but only
+   on a device that has one to stand down. */
+@media (hover: hover) and (pointer: fine) {
+  /* The attribute is doubled to raise specificity to (0,2,0). Every target
+     this is put on already declares a `cursor` of its own — `.fx-hit`,
+     `.fx-unit` and `.ri-card__button` all say `pointer` — and at equal
+     specificity the winner is whichever stylesheet the bundler happened to
+     emit last. Measured before this: the label appeared and the arrow stayed,
+     which is two cursors. */
+  [data-cursor][data-cursor] {
+    cursor: none;
+  }
+}
+
+/* A label that cannot move with the pointer is worse than none: it would sit
+   wherever it was last painted. */
+@media (prefers-reduced-motion: reduce) {
+  .cursor-label {
+    transition: none;
+    scale: 1;
+  }
+}

@@ -96,6 +96,8 @@ export type InteriorId = Interior['id']
 
 /** The chapter's own words, in one place. */
 export const RESIDENCE_COPY = {
+  /** Carried on the pointer over a room's card, and under its film's glyph. */
+  play: 'Play',
   eyebrow: 'The residence',
   title: ['Step inside', 'the everyday.'],
   lead: 'Four rooms, and the life they are drawn around.',

@@ -1,0 +1,95 @@
+/* ---------------------------------------------------------------------
+   Reposé Residence — the attention ring (see components/Attention.tsx)
+
+   One mark, three shapes, used everywhere the interface needs to say "this
+   one". Two rings are drawn, the second half a cycle behind the first, so the
+   effect reads as a slow sonar rather than a blink.
+
+   It inherits `currentcolor`, so it takes the colour of whatever control it
+   is placed in and never has to be told about a theme.
+   --------------------------------------------------------------------- */
+
+.attn {
+  position: absolute;
+  z-index: 0;
+  border: 1px solid currentcolor;
+  opacity: 0;
+  pointer-events: none;
+  animation: attn-ring 2.9s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+/* The second ring sets out when the first is halfway. */
+.attn--late {
+  animation-delay: 1.45s;
+}
+
+.attn[data-shape='pill'] {
+  inset: 0;
+  border-radius: 999px;
+}
+
+.attn[data-shape='frame'] {
+  inset: 0;
+  border-radius: 3px;
+}
+
+/* No control to hug — a ring around a point, for a bare line of type. */
+.attn[data-shape='dot'] {
+  top: 50%;
+  left: 50%;
+  width: 2.6rem;
+  height: 2.6rem;
+  margin: -1.3rem 0 0 -1.3rem;
+  border-radius: 50%;
+}
+
+@keyframes attn-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* A `frame` traces something large — a drawing, a card — and it collapses
+   INWARD rather than swelling out. Two reasons, and the first is not
+   aesthetic: the drawing's own sheet clips its overflow (it is the box the
+   zoom viewer works within), so a ring that grew would simply be cut off at
+   the paper's edge. Inward it stays whole. It also reads better for what it
+   is saying, which is "here", not "look out". */
+.attn[data-shape='frame'] {
+  animation-name: attn-frame;
+}
+
+@keyframes attn-frame {
+  0% {
+    transform: scale(1.045);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The ring is the motion. With none to give, a steady outline says the same
+     thing and says it without moving. */
+  .attn {
+    animation: none;
+    opacity: 0.42;
+  }
+
+  .attn--late {
+    display: none;
+  }
+}

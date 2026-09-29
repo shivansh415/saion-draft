@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 import { ContactFloat } from './components/ContactFloat'
+import { CursorLabel } from './components/CursorLabel'
 import { OpeningExperience } from './components/opening/OpeningExperience'
 import { getLifestyle, loadLifestyle, prefetchLifestyle } from './components/repose/lazy'
 import { getTerrace, loadTerrace } from './components/terrace/lazy'
@@ -270,6 +271,9 @@ function App() {
       {terraceUp && Terrace && <Terrace onReturn={returnFromTerrace} />}
       {/* Fixed, above every chapter and below the films and the preloader. */}
       <ContactFloat shown={contactUp} />
+      {/* Travels with the pointer and says what the thing under it will do.
+          One listener for the whole journey — see components/CursorLabel. */}
+      <CursorLabel />
     </main>
   )
 }

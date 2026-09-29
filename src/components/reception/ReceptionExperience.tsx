@@ -642,6 +642,17 @@ export function ReceptionExperience({ active, onJourney, onExplore, preload }: P
         {RECEPTION_COPY.welcome}
       </p>
 
+      {/* The lobby has arrived and the page has gone quiet. This is the one
+          band of the frame with nothing in it — the dark above and below the
+          render — and the journey carries on by scrolling, which is the one
+          thing a screen this still does not say. */}
+      <p className="rc__onward" data-rc-onward aria-hidden={phase !== 'inside'}>
+        {RECEPTION_COPY.onward}
+        <span className="rc__onward-arrow" aria-hidden="true">
+          ↓
+        </span>
+      </p>
+
       <button
         type="button"
         className="rc__explore"

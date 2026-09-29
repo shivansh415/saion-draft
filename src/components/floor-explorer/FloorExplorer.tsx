@@ -3,12 +3,12 @@ import type { PointerEvent as ReactPointerEvent } from 'react'
 import gsap from 'gsap'
 
 import { FINAL_FRAME_STILL, FOCAL_X, FOCAL_Y } from '../../data/opening'
-import { lockScroll, unlockScroll } from '../../lib/scrollLock'
+import { lockScroll, setScrollCeiling, unlockScroll } from '../../lib/scrollLock'
 import { BuildingLevelSelector } from './BuildingLevelSelector'
 import { FloorplateView } from './FloorplateView'
 import { ResidencePlanView } from './ResidencePlanView'
 import { ExplorerCue } from './ExplorerCue'
-import { EXPLORER_COPY } from './floorExplorerCopy'
+import { EXPLORER_COPY, GATE_COPY } from './floorExplorerCopy'
 import { floorplateImage, logUnverifiedResidences, unitPlanImage, useFloorExplorerData } from './floorExplorerData'
 import type { Level, UnitHotspot } from './floorExplorerData'
 import type { LevelId } from './levelCalibration'
@@ -28,6 +28,9 @@ import '../../styles/floor-explorer.css'
  * a corner never flickers it; short enough that leaving reads as deliberate.
  */
 const HIDE_DELAY = 400
+
+/** The beat between two passes of the invitation — a sonar rests. */
+const CUE_REST_MS = 1400
 
 /**
  * building  → selector
@@ -86,6 +89,18 @@ interface Props {
    * is active and stays up.
    */
   presented?: boolean
+  /**
+   * Where the page may not scroll past until the building has been explored,
+   * as a document position — or null for an explorer that does not gate the
+   * journey at all.
+   *
+   * The geometry is the CHAPTER's, not this component's: the opening's gate
+   * sits at the start of the walk to the door, the arrival's at the top of the
+   * closing screen, and neither is anything the explorer could work out for
+   * itself. It is a function rather than a number so it can be re-read when
+   * the viewport changes under it.
+   */
+  gateCeiling?: () => number | null
 }
 
 const useMediaQuery = (query: string): boolean => {
@@ -137,7 +152,7 @@ const DRAWING_WAIT = 2200
 /** The terrace is off in production, so nothing warms its bundle. */
 const NO_PREFETCH = () => {}
 
-export function FloorExplorer({ active, onTerrace, suspended = false, presented = false }: Props) {
+export function FloorExplorer({ active, onTerrace, suspended = false, presented = false, gateCeiling }: Props) {
   const rootRef = useRef<HTMLDivElement | null>(null)
   const backRef = useRef<HTMLButtonElement | null>(null)
   /** What to put focus back on when a LEVEL closes (a tower hit area or a rail row). */
@@ -209,11 +224,10 @@ export function FloorExplorer({ active, onTerrace, suspended = false, presented 
    * Only dropping to the ground plane, or leaving the window, starts the
    * clock, and even then it is `HIDE_DELAY` before anything moves.
    * --------------------------------------------------------------- */
-  // Presented, it comes up as soon as the invitation has finished — see the
-  // effect below. Starting it revealed would stand the explorer's own copy
-  // panel up in the very place the invitation's words take, one on top of the
-  // other; letting the invitation play first makes the two a hand-over.
-  const [revealed, setRevealed] = useState(false)
+  // Presented, it is up from the first frame it is active for. The invitation
+  // plays over it regardless and simply drops its own words while the
+  // explorer's copy panel has them (see `.fx[data-revealed] .fx-cue__copy`).
+  const [revealed, setRevealed] = useState(() => presented && active && !suspended)
   const revealedRef = useRef(false)
   const hideTimer = useRef<number | null>(null)
 
@@ -239,12 +253,60 @@ export function FloorExplorer({ active, onTerrace, suspended = false, presented 
    * journey and once at the end of it — which is what was asked for.
    */
   const [cueSpent, setCueSpent] = useState(false)
-  const spendCue = useCallback(() => setCueSpent(true), [])
+  /**
+   * The building has been looked INSIDE — a residence plan has been opened at
+   * least once. Until then the journey does not carry on past it.
+   *
+   * The client's note was that a visitor scrolls straight past the floor
+   * explorer without ever discovering that the storeys open, which is most of
+   * what this chapter is for. So the page declines to go further down until
+   * one has been opened. It is a ceiling and not a lock (`setScrollCeiling`):
+   * scrolling back up through everything already seen still works, so the page
+   * is plainly alive and plainly waiting, rather than plainly broken.
+   */
+  const [explored, setExplored] = useState(false)
+  /** How many times the visitor has pushed at the ceiling. */
+  const [gatePush, setGatePush] = useState(0)
+  /**
+   * Which pass of the invitation is on screen.
+   *
+   * It plays on a loop rather than once. Once was missable — and it was
+   * missed: a single pass ends while a visitor is still arriving, and there is
+   * then nothing left on the building to say it can be opened. Re-keying the
+   * component is what restarts it, so every pass is the same pass rather than
+   * a set of animations that have to be rewound.
+   */
+  const [cuePass, setCuePass] = useState(0)
+  const cueRest = useRef<number | null>(null)
+  const restCue = useCallback(() => {
+    if (cueRest.current !== null) return
+    cueRest.current = window.setTimeout(() => {
+      cueRest.current = null
+      setCuePass((pass) => pass + 1)
+    }, CUE_REST_MS)
+  }, [])
+  useEffect(
+    () => () => {
+      if (cueRest.current !== null) window.clearTimeout(cueRest.current)
+    },
+    [],
+  )
 
+  /**
+   * Reaching for the building reveals the explorer, as it always has — but it
+   * no longer SPENDS the invitation. A pointer resting on the middle of the
+   * screen is not a decision, and treating it as one is what stopped the cue
+   * being seen at all. Only a press does that (see `takeCue` below).
+   */
   const reveal = useCallback(() => {
     cancelHide()
     setRevealed(true)
-    // The visitor has done the thing the cue was asking for.
+  }, [cancelHide])
+
+  /** A press on the building: the invitation has been taken, for good. */
+  const takeCue = useCallback(() => {
+    cancelHide()
+    setRevealed(true)
     setCueSpent(true)
   }, [cancelHide])
 
@@ -289,22 +351,9 @@ export function FloorExplorer({ active, onTerrace, suspended = false, presented 
       setHovered(null)
       setTerraceHovered(false)
       setRevealed(false)
-    } else if (presented && !suspended && cueSpent) {
+    } else if (presented && !suspended) {
       setRevealed(true)
     }
-  }
-
-  // A presented explorer — the arrival — is not hovered into life: it simply
-  // arrives, once the invitation has finished saying its piece. Reaching for
-  // the building early spends the invitation too, so an impatient visitor
-  // brings the explorer up early rather than fighting the cue.
-  //
-  // Synced in render rather than in an effect, the way every other state this
-  // component mirrors is: an effect would paint the frame in between.
-  const [wasCueSpent, setWasCueSpent] = useState(cueSpent)
-  if (wasCueSpent !== cueSpent) {
-    setWasCueSpent(cueSpent)
-    if (cueSpent && presented && active && !suspended) setRevealed(true)
   }
 
   // Standing down for another chapter is the same: back to clean, at once.
@@ -329,6 +378,49 @@ export function FloorExplorer({ active, onTerrace, suspended = false, presented 
    * explorer the instant it became hoverable and the cue was spent unseen.
    */
   const cueUp = active && !suspended && !cueSpent && mode === 'selector'
+
+  /**
+   * The journey is held on the building.
+   *
+   * Armed by having REACHED the building, not by being on it this instant.
+   * Tied to `active` it disarmed the moment the visitor scrolled back up into
+   * the film — and re-arming is a React render behind the scroll, so a firm
+   * flick up and straight back down went clean through the ceiling. Measured:
+   * it landed at y=13258 against a ceiling of 6758. Once reached, the gate
+   * stays until the building has been looked inside.
+   *
+   * `suspended` still cuts it out, which is the case that matters: a chapter
+   * covered by the next one must never be holding the page.
+   */
+  const [reached, setReached] = useState(false)
+  const [wasActiveForGate, setWasActiveForGate] = useState(active)
+  if (wasActiveForGate !== active) {
+    setWasActiveForGate(active)
+    if (active) setReached(true)
+  }
+  const gateClosed = Boolean(gateCeiling) && reached && !suspended && !explored
+
+  useEffect(() => {
+    // Only an instance that is actually holding the page ever touches the
+    // ceiling. It is one value for the whole document and there are two
+    // explorers in it — the opening's and the arrival's — so an instance that
+    // is not gating must not clear it: the arrival sits in the document from
+    // long before it is reached, and a `setScrollCeiling(null)` from it would
+    // quietly open the opening chapter's gate.
+    if (!gateClosed || !gateCeiling) return
+    // Re-read on resize: the ceiling is a document position derived from the
+    // viewport's height, and on a phone the toolbar sliding away changes it.
+    const apply = () => {
+      const y = gateCeiling()
+      if (y !== null) setScrollCeiling(y, setGatePush)
+    }
+    apply()
+    window.addEventListener('resize', apply)
+    return () => {
+      window.removeEventListener('resize', apply)
+      setScrollCeiling(null)
+    }
+  }, [gateClosed, gateCeiling])
 
   const frozen = mode !== 'selector'
   // Hover and selection each resolve to at most one destination — entering a
@@ -790,6 +882,10 @@ export function FloorExplorer({ active, onTerrace, suspended = false, presented 
       const plan = unitPlanImage(hotspot)
       if (!root || modeRef.current !== 'floorplate' || !plan) return
 
+      // Inside a residence: the building has been explored, and the journey is
+      // free to carry on whenever the visitor is.
+      setExplored(true)
+
       lastUnitTriggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
       changeMode('openingResidence')
       setOpenResidence(hotspot)
@@ -1114,7 +1210,7 @@ export function FloorExplorer({ active, onTerrace, suspended = false, presented 
           clipPath: TOWER_CLIP_PATH,
         }}
         onPointerEnter={reveal}
-        onClick={reveal}
+        onClick={takeCue}
       />
 
       {/* Touch has no hover to offer, so it is offered a control instead. */}
@@ -1127,7 +1223,7 @@ export function FloorExplorer({ active, onTerrace, suspended = false, presented 
             left: rect.x + (rect.width * INVITE_X) / 100,
             top: rect.y + (rect.height * INVITE_Y) / 100,
           }}
-          onClick={reveal}
+          onClick={takeCue}
         >
           <span className="fx__invite-label">{EXPLORER_COPY.invite}</span>
           <span className="fx__invite-arrow" aria-hidden="true">
@@ -1139,12 +1235,34 @@ export function FloorExplorer({ active, onTerrace, suspended = false, presented 
       {/* The invitation. Above the building and below everything that opens
           over it, and pointer-transparent throughout — see ExplorerCue. */}
       <ExplorerCue
+        key={cuePass}
         rect={rect}
         shown={cueUp}
+        paused={revealed}
         coarse={coarse}
         reducedMotion={reducedMotion}
-        onDone={spendCue}
+        onCycleEnd={restCue}
       />
+
+      {/* What the page is waiting for, said plainly — and, once the visitor
+          has pushed at the ceiling a few times, the way past it. Nobody is
+          ever trapped here: a gate with no way through is the same thing as a
+          broken page, which is the one outcome this whole chapter cannot
+          afford. */}
+      {gateClosed && (
+        <div className="fx-gate" data-fx-gate>
+          <span className="fx-gate__rule" aria-hidden="true" />
+          <p className="fx-gate__text">{GATE_COPY.wait}</p>
+          {gatePush >= 3 && (
+            <button type="button" className="fx-gate__skip" onClick={() => setExplored(true)}>
+              {GATE_COPY.skip}
+              <span className="fx-gate__skip-arrow" aria-hidden="true">
+                ↓
+              </span>
+            </button>
+          )}
+        </div>
+      )}
 
       <BuildingLevelSelector
         model={data.model}

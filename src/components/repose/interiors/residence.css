@@ -614,3 +614,62 @@
   font-size: 1.15rem;
   color: var(--ri-olive);
 }
+
+
+/* ---------------------------------------------------------------------
+   The play watermark on a room's card
+
+   These cards open films, and nothing about a still photograph says so. The
+   mark is the one every player uses, held low enough to read as a watermark
+   on the image rather than as a control laid over it — and it steps forward
+   under the pointer, which is the moment it has to be unambiguous.
+   --------------------------------------------------------------------- */
+
+.ri-card__play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  display: block;
+  width: clamp(44px, 22%, 68px);
+  aspect-ratio: 1;
+  margin: 0;
+  translate: -50% -50%;
+  color: #fff;
+  opacity: 0.62;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 14px rgb(9 12 16 / 45%));
+  transition:
+    opacity 420ms ease,
+    scale 520ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ri-card__play svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ri-card__play circle {
+  fill: rgb(9 12 16 / 26%);
+  stroke: currentcolor;
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.ri-card__play path {
+  fill: currentcolor;
+}
+
+@media (hover: hover) {
+  .ri-card__button:hover .ri-card__play {
+    opacity: 1;
+    scale: 1.08;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ri-card__play {
+    transition: none;
+  }
+}

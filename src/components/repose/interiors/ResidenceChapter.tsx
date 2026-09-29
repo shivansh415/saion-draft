@@ -106,6 +106,7 @@ export function ResidenceChapter() {
               <button
                 type="button"
                 className="ri-card__button"
+                data-cursor={RESIDENCE_COPY.play}
                 onClick={() => enter(room)}
                 onPointerEnter={() => cinema.current?.warm(room.id)}
                 onFocus={() => cinema.current?.warm(room.id)}
@@ -124,6 +125,16 @@ export function ResidenceChapter() {
                   <span className="ri-card__reveal">
                     <img src={room.card} alt={room.alt} loading="lazy" decoding="async" />
                     <span className="ri-card__wash" aria-hidden="true" />
+                    {/* These cards open FILMS, and nothing about a still says
+                        so. The mark is the one every player uses, held at a
+                        low opacity so it reads as a watermark on the
+                        photograph rather than a control laid over it. */}
+                    <span className="ri-card__play" aria-hidden="true">
+                      <svg viewBox="0 0 48 48" focusable="false">
+                        <circle cx="24" cy="24" r="23" />
+                        <path d="M19 15.5v17L34 24z" />
+                      </svg>
+                    </span>
                   </span>
                 </span>
                 <span className="ri-card__foot">

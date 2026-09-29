@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react'
+import { useCallback, useLayoutEffect, useRef } from 'react'
 
 import { OPENING_COPY } from '../../data/opening'
 import { FloorExplorer } from '../floor-explorer/FloorExplorer'
@@ -58,6 +58,22 @@ interface Props {
  */
 export function Arrival({ active }: Props) {
   const root = useRef<HTMLDivElement | null>(null)
+  const stage = useRef<HTMLElement | null>(null)
+
+  /**
+   * How far the page may come down while this building is still unexplored:
+   * the closing screen's own first pixel.
+   *
+   * The same gate the opening chapter puts on the same explorer — the client
+   * asked for it at both ends — but the geometry here is simply this screen's
+   * own height, since the arrival is exactly one viewport and the closing call
+   * is what follows it.
+   */
+  const closingGate = useCallback((): number | null => {
+    const el = stage.current
+    if (!el) return null
+    return el.getBoundingClientRect().top + window.scrollY
+  }, [])
 
   useLayoutEffect(() => {
     const el = root.current
@@ -74,13 +90,19 @@ export function Arrival({ active }: Props) {
 
   return (
     <div data-arrival-root ref={root}>
-      <section className="arrival" aria-label="Reposé Residence — explore the floors again">
+      <section className="arrival" ref={stage} aria-label="Reposé Residence — explore the floors again">
         {/* The floor explorer, exactly as met at the top of the journey — its
             own picture is the arch's still at the arch's own cover fit, so the
             hand-over stays the pixel-exact exchange it always was. It measures
             itself; this screen gives it the box and says when the arch has
             arrived, and it presents its selector the moment it has. */}
-        <FloorExplorer active={active} suspended={false} presented onTerrace={NO_TERRACE} />
+        <FloorExplorer
+          active={active}
+          suspended={false}
+          presented
+          onTerrace={NO_TERRACE}
+          gateCeiling={closingGate}
+        />
 
         {/* The journey's closing marks, in the places they have always had:
             the residence on the left, the developer on the right, on the two

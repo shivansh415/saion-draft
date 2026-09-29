@@ -255,6 +255,75 @@
 }
 
 /* ---------------------------------------------------------------------
+   The onward cue — the lobby has arrived, and the way on is to scroll
+
+   Low and centred, in the dark band under the render. It is only ever up
+   while the visitor is INSIDE: on the way in and on the way out the frame is
+   moving and needs nothing said over it.
+   --------------------------------------------------------------------- */
+
+.rc__onward {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--gutter-block) * 0.55 + var(--fold));
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7em;
+  margin: 0;
+  transform: translateX(-50%);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: clamp(0.55rem, 0.7vw, 0.66rem);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: rgb(255 255 255 / 76%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 700ms ease 400ms;
+}
+
+.rc[data-phase='inside'] .rc__onward {
+  opacity: 1;
+  animation: rc-onward-breathe 2.9s ease-in-out infinite;
+}
+
+.rc__onward-arrow {
+  display: inline-block;
+  font-size: 1.15em;
+  letter-spacing: 0;
+  animation: rc-onward-bob 2.9s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@keyframes rc-onward-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.52;
+  }
+}
+
+@keyframes rc-onward-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rc[data-phase='inside'] .rc__onward,
+  .rc__onward-arrow {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------------
    On — into the lifestyle chapter
    Same language as the way back, mirrored to the far corner: low and to
    the right, over the marble, away from the wall that carries the name.

@@ -99,13 +99,13 @@
   pointer-events: none;
 }
 
-/* `:not([data-cue])` is load-bearing. The tower becomes hoverable at the same
-   instant the invitation starts, and the cursor is very often already resting
-   on it — the building is the middle of the screen — so the browser fired
-   `pointerenter` straight away, the explorer revealed itself, and the cue was
-   spent before any of it had been seen. It stays deaf until the cue is done
-   or the visitor has shown some intent (see ExplorerCue). */
-.fx[data-active][data-mode='selector']:not([data-revealed]):not([data-cue]) .fx__tower {
+/* The tower answers throughout, invitation or not. It used to be held deaf
+   while the cue played, because a hover SPENT the cue and a cursor already
+   resting on the building — which is the middle of the screen — spent it
+   before a frame of it had been seen. The cue now survives a hover (it only
+   pauses, and only once the pointer has actually moved) and is taken by a
+   press, so there is nothing left to defend against. */
+.fx[data-active][data-mode='selector']:not([data-revealed]) .fx__tower {
   pointer-events: auto;
   cursor: pointer;
 }
@@ -139,7 +139,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.fx[data-active][data-mode='selector']:not([data-revealed]):not([data-cue]) .fx__invite {
+.fx[data-active][data-mode='selector']:not([data-revealed]) .fx__invite {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
@@ -182,6 +182,13 @@
 
 .fx-cue * {
   pointer-events: none;
+}
+
+/* The visitor has reached for the building: the cue stops talking over them
+   and holds exactly where it is, rather than restarting when they look away. */
+.fx-cue[data-paused],
+.fx-cue[data-paused] * {
+  animation-play-state: paused;
 }
 
 .fx-cue__art {
@@ -367,6 +374,16 @@
 /* The words, in the place the explorer's own copy panel takes when it
    arrives — so this reads as that panel showing up early and handing over,
    rather than as a second thing on the screen. */
+/* The explorer's own copy panel takes this exact position when it arrives, so
+   the invitation gives its words up the moment that happens — on the arrival
+   the two are up together from the first frame. The art on the building
+   carries on regardless; it is the words that would have been printed one on
+   top of the other. */
+.fx[data-revealed] .fx-cue__copy {
+  opacity: 0;
+  transition: opacity 420ms ease;
+}
+
 .fx-cue__copy {
   position: absolute;
   left: var(--gutter);
@@ -500,6 +517,130 @@
   .fx-cue__rule {
     animation: none;
     transform: none;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   The gate — the journey waits on the building
+
+   Sits low and centred, between the marks the arrival keeps at its two
+   bottom corners and clear of the contact cue in the right one. It is the
+   only thing on screen that explains why the page has stopped going down,
+   so it is stated rather than implied.
+   --------------------------------------------------------------------- */
+
+.fx-gate {
+  position: absolute;
+  left: 50%;
+  bottom: calc(clamp(2rem, 5vh, 3.4rem) + var(--fold));
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+  animation: fx-gate-in 900ms cubic-bezier(0.22, 1, 0.36, 1) 700ms both;
+}
+
+@keyframes fx-gate-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.fx-gate__rule {
+  display: block;
+  width: 1px;
+  height: clamp(20px, 3.4vh, 34px);
+  background: linear-gradient(to bottom, rgb(255 255 255 / 0%), rgb(255 255 255 / 55%));
+}
+
+.fx-gate__text {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: clamp(0.58rem, 0.74vw, 0.7rem);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 78%);
+  text-shadow: 0 1px 14px rgb(9 12 16 / 70%);
+  animation: fx-gate-breathe 3s ease-in-out infinite;
+}
+
+@keyframes fx-gate-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Offered only after the visitor has pushed at the ceiling a few times — so
+   it is an answer to something they did, not a way out advertised before
+   they have tried the way in. */
+.fx-gate__skip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  margin: 0.2rem 0 0;
+  padding: 0.55rem 1.1rem;
+  border: 1px solid rgb(255 255 255 / 34%);
+  border-radius: 999px;
+  background: rgb(9 12 16 / 46%);
+  backdrop-filter: blur(6px);
+  color: rgb(255 255 255 / 86%);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-size: clamp(0.52rem, 0.66vw, 0.62rem);
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    border-color 400ms ease,
+    color 400ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+  .fx-gate__skip:hover {
+    border-color: rgb(255 255 255 / 70%);
+    color: var(--paper);
+  }
+}
+
+.fx-gate__skip:focus-visible {
+  outline: 1px solid rgb(255 255 255 / 60%);
+  outline-offset: 4px;
+}
+
+.fx-gate__skip-arrow {
+  font-size: 1.1em;
+  letter-spacing: 0;
+}
+
+@media (pointer: coarse) {
+  .fx-gate__skip {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-gate {
+    animation: none;
+  }
+
+  .fx-gate__text {
+    animation: none;
   }
 }
 
@@ -1027,7 +1168,15 @@
   pointer-events: none;
 }
 
+/* The way back carries an attention ring while a plan is standing up in 3D
+   (see ResidencePlanView), so it needs to be something a ring can sit in —
+   and the ring needs room, because the control's own box is the type's. */
+.fx-plate__back .attn {
+  inset: -0.35rem -1rem;
+}
+
 .fx-plate__back {
+  position: relative;
   margin-bottom: clamp(0.6rem, 1.6vh, 1.2rem);
 }
 

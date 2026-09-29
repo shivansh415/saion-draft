@@ -110,6 +110,10 @@ export function UnitHotspotLayer({ hotspots, sold, shown, focus, coarse, interac
               data-unit={id}
               data-open={opens(hotspot) ? 'true' : 'false'}
               data-sold={isSold || undefined}
+              /* What a press here does, carried on the pointer. A sold
+                 residence does not open, so it says so rather than promising
+                 a plan the press will refuse. */
+              data-cursor={opens(hotspot) ? 'Open residence' : isSold ? AVAILABILITY_COPY.sold : undefined}
               vectorEffect="non-scaling-stroke"
               role="button"
               tabIndex={interactive ? 0 : -1}

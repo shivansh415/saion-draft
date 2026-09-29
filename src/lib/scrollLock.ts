@@ -182,3 +182,82 @@ function release(): void {
   if (window.scrollY !== heldAt) window.scrollTo(0, heldAt)
   lenis?.start()
 }
+
+/* ------------------------------------------------------------------ *
+ * The ceiling — a floor the page may not scroll PAST, in one direction
+ * ------------------------------------------------------------------ */
+
+let ceiling: number | null = null
+let ceilingBound = false
+/** True while the clamp is itself moving the page, so it cannot answer itself. */
+let clamping = false
+/** Counts the times the visitor has pushed against it, for whoever wants to know. */
+let bumps = 0
+let onBump: ((count: number) => void) | null = null
+
+/**
+ * A ceiling is not a lock, and the difference is the whole point of it.
+ *
+ * `lockScroll` holds the page completely still, which is right for a plan
+ * open over the film. It is wrong for asking a visitor to look at the
+ * building before they carry on: a page that answers nothing in either
+ * direction is a page that reads as broken, which is the single most
+ * expensive thing this site can do to a buyer. A ceiling lets them scroll
+ * back up through everything they have seen, and only declines to go further
+ * down — so the page is plainly alive and plainly waiting for something.
+ *
+ * Implemented as a clamp rather than as cancelled input on purpose. Lenis
+ * drives the scroll itself and cancels the browser's own handling to do it,
+ * so preventing a wheel event does not stop Lenis; whereas whatever moves the
+ * page past the ceiling — a wheel, a flick's momentum, a keypress, a
+ * scroll-into-view — is undone by the very next scroll event, whoever caused
+ * it. Nothing has to be enumerated, so nothing can be forgotten.
+ */
+export function setScrollCeiling(y: number | null, onPush?: (count: number) => void): void {
+  ceiling = y === null ? null : Math.max(0, y)
+  onBump = onPush ?? null
+  if (ceiling === null) {
+    bumps = 0
+    if (ceilingBound) {
+      ceilingBound = false
+      window.removeEventListener('scroll', clampToCeiling)
+      lenis?.off('scroll', clampToCeiling)
+    }
+    return
+  }
+  if (!ceilingBound) {
+    ceilingBound = true
+    // Both, and deliberately: Lenis emits its own scroll for the smoothed
+    // path, and the window's fires for the reduced-motion path that runs
+    // without it. Whichever arrives, the clamp is the same idempotent call.
+    window.addEventListener('scroll', clampToCeiling, { passive: true })
+    lenis?.on('scroll', clampToCeiling)
+  }
+  clampToCeiling()
+}
+
+/** How many times the visitor has pushed at the ceiling since it was set. */
+export function ceilingBumps(): number {
+  return bumps
+}
+
+function clampToCeiling(): void {
+  if (ceiling === null || clamping) return
+  // A hair of tolerance: a smoothed scroll settles asymptotically and would
+  // otherwise report a few hundredths past the line for ever.
+  if (window.scrollY <= ceiling + 1) return
+
+  bumps += 1
+  clamping = true
+  if (lenis) {
+    lenis.scrollTo(ceiling, { immediate: true, force: true })
+  } else {
+    window.scrollTo(0, ceiling)
+  }
+  // Released on the next task, not synchronously: `scrollTo` emits the very
+  // scroll event this function is answering.
+  window.setTimeout(() => {
+    clamping = false
+  }, 0)
+  onBump?.(bumps)
+}

@@ -15,6 +15,7 @@ import {
   HERO_EXIT_START,
   HINT_EXIT_END,
   LIFESTYLE_MOUNT_AT,
+  RECEPTION_BAND,
   resolveFrame,
   unitFraction,
 } from '../../data/opening'
@@ -217,6 +218,24 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onBuild
       window.clearTimeout(timer)
     }
   }, [fontsReady])
+
+  /**
+   * How far the page may come down while the building is still unexplored:
+   * the first pixel of the walk to the door.
+   *
+   * Read from the section rather than remembered, because the whole geometry
+   * is `CHAPTER_HEIGHT_VH` of viewport heights and the viewport changes. The
+   * TRACK is the section less the sticky viewport that stays on screen
+   * through it — the same measurement the reception's own controls use — or
+   * every destination in this chapter would be a viewport too far down.
+   */
+  const buildingGate = useCallback((): number | null => {
+    const section = sectionRef.current
+    if (!section) return null
+    const track = section.offsetHeight - window.innerHeight
+    if (track <= 0) return null
+    return section.getBoundingClientRect().top + window.scrollY + track * unitFraction(RECEPTION_BAND.start)
+  }, [])
 
   const onReveal = useCallback(() => setRevealed(true), [])
   const onLoaderDone = useCallback(() => setLoaderUp(false), [])
@@ -849,7 +868,12 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onBuild
         </div>
 
         {/* Chapter 02 rests over the held final frame; the hand-off above scrubs it in. */}
-        <FloorExplorer active={explorerActive} onTerrace={onTerrace} suspended={entering || covered} />
+        <FloorExplorer
+          active={explorerActive}
+          onTerrace={onTerrace}
+          suspended={entering || covered}
+          gateCeiling={buildingGate}
+        />
 
         {/* Chapter 03 rests over the same frame, above the explorer: the walk
             into the reception, scrubbed by the scroll. From inside, the way on

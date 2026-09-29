@@ -322,6 +322,11 @@ export function BuildingLevelSelector({
                 tabIndex={-1}
                 aria-hidden="true"
                 data-level={level.id}
+                /* The pointer carries the word instead of an arrow — see
+                   components/CursorLabel. The level is in it, so the visitor
+                   reads which storey they are about to open, not just that
+                   they can open one. */
+                data-cursor={`Open level ${level.id}`}
                 style={{
                   top: band.topY,
                   height: band.lineY - band.topY,

@@ -24,6 +24,16 @@ export const EXPLORER_CUE = {
   actionCoarse: 'Tap the building · choose a level',
 } as const
 
+/**
+ * The gate that holds the journey on the building until it has been looked
+ * inside. Two lines: what is being waited for, and — once the visitor has
+ * pushed at it a few times — the way past it regardless.
+ */
+export const GATE_COPY = {
+  wait: 'Open a residence to carry on',
+  skip: 'Continue without exploring',
+} as const
+
 export const PLATE_COPY = {
   back: 'Back to building',
   shared: 'Floorplate shared with',

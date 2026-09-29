@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useRef, useState } from 'react'
 
+import { Attention } from '../Attention'
 import { PlanMorph } from './PlanMorph'
 import { AVAILABILITY_COPY, RESIDENCE_COPY, VIEWER_COPY } from './floorExplorerCopy'
 import { PLAN_PRESENTATION, formatLevelList, planFallback, unitPlanImage } from './floorExplorerData'
@@ -147,6 +148,9 @@ export const ResidencePlanView = forwardRef<HTMLButtonElement, Props>(function R
     >
       <div className="fx-res__head" data-fx-res-head>
         <button type="button" className="fx-plate__back" onClick={onBack} ref={backRef}>
+          {/* Once the plan is standing up in 3D, the way back out is the next
+              thing the visitor needs and the last thing they are looking at. */}
+          <Attention shown={solid && interactive} />
           <span className="fx-plate__back-rule" />
           {RESIDENCE_COPY.back}
         </button>
@@ -187,6 +191,10 @@ export const ResidencePlanView = forwardRef<HTMLButtonElement, Props>(function R
         <div className="fx-res__guides" aria-hidden="true" />
         {/* The sheet: the fixed white paper the drawing is zoomed within. */}
         <figure className="fx-res__figure fx-viewport" data-fx-res-figure data-fx-viewport ref={figureRef}>
+          {/* Around the paper until the visitor turns it. The drawing is the
+              control now — there is no button left to catch the eye — so the
+              only thing saying "press this" is the drawing breathing. */}
+          <Attention shown={Boolean(view3d) && interactive && !solid && !waiting} shape="frame" />
           {/* The drawing is the control. `role`/`tabIndex`/`aria-pressed` are
               set only where there is something to press, so a residence with
               no render is not announced as a button that does nothing — and a
@@ -197,6 +205,7 @@ export const ResidencePlanView = forwardRef<HTMLButtonElement, Props>(function R
             data-fx-zoom
             data-toggles={view3d ? '' : undefined}
             data-busy={waiting || undefined}
+            data-cursor={view3d ? (solid ? RESIDENCE_COPY.view2d : RESIDENCE_COPY.view3d) : undefined}
             ref={contentRef}
             role={view3d ? 'button' : undefined}
             tabIndex={view3d && interactive ? 0 : undefined}

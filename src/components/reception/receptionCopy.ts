@@ -11,6 +11,8 @@ export const RECEPTION_COPY = {
   welcome: 'Welcome to Reposé',
   /** From the lobby, on into the lifestyle chapter. Rendered in tracked capitals. */
   explore: 'Explore Reposé',
+  /** In the dark band under the lobby, once it has settled. */
+  onward: 'Scroll to continue',
   receptionAlt: 'Reposé Residence reception — SAION Properties',
   buildingAlt: 'Reposé Residence, the entrance',
 } as const

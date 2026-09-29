@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { Attention } from '../Attention'
 import { WHATSAPP_HREF, WHATSAPP_LABEL } from '../../data/contact'
 import { jumpTo } from '../../lib/pageScroll'
 import { Walkthrough } from './walkthrough/Walkthrough'
@@ -109,6 +110,10 @@ export function ClosingCall() {
 
         <div className="closing__actions">
           <button type="button" className="closing__watch" onClick={openFilms} ref={cueRef}>
+            {/* It asks until it is taken. The films are the one thing on this
+                screen a visitor would regret missing, and on a page this quiet
+                a filled pill is still only a filled pill. */}
+            <Attention shown={sitting === 0} />
             <span className="closing__watch-halo" aria-hidden="true" />
             <span className="closing__watch-glyph" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">

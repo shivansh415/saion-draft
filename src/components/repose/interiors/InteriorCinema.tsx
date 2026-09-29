@@ -5,10 +5,12 @@ import {
   useImperativeHandle,
   useLayoutEffect,
   useRef,
+  useState,
 } from 'react'
 
 import { lockScroll, unlockScroll } from '../../../lib/scrollLock'
 import { gsap, ScrollTrigger } from '../motion/gsap'
+import { Attention } from '../../Attention'
 import { INTERIORS, RESIDENCE_COPY, type Interior, type InteriorId } from './interiorsData'
 
 /**
@@ -77,6 +79,15 @@ function restoreHost(element: HTMLElement | null): void {
   gsap.set(element, { scale: 1, clearProps: 'opacity,filter' })
   ScrollTrigger.update()
 }
+
+/**
+ * How long a film runs before the way out starts asking to be noticed.
+ *
+ * Long enough that it is never competing with the film for the first look —
+ * the rooms are short, and this lands around the point where a visitor has
+ * seen what they came for and starts wondering how to get back.
+ */
+const BACK_NUDGE_MS = 9000
 
 type Level = 'none' | 'metadata' | 'auto'
 const RANK: Record<Level, number> = { none: 0, metadata: 1, auto: 2 }
@@ -369,6 +380,28 @@ export const InteriorCinema = forwardRef<CinemaHandle, Props>(function InteriorC
 
   const room = open?.room ?? null
 
+  /**
+   * The way out, asking after a while.
+   *
+   * The film fills the frame and its chrome is deliberately faint, so the
+   * control that ends it is the hardest thing on the screen to find — which
+   * is exactly the complaint. It says nothing while the film is new, and
+   * starts breathing once the visitor has had it a while.
+   */
+  const [nudgeBack, setNudgeBack] = useState(false)
+  // Reset in render rather than in an effect: an effect would paint one frame
+  // of the previous room's nudge over the next room's opening.
+  const [nudgedFor, setNudgedFor] = useState(room)
+  if (nudgedFor !== room) {
+    setNudgedFor(room)
+    setNudgeBack(false)
+  }
+  useEffect(() => {
+    if (!room) return
+    const timer = window.setTimeout(() => setNudgeBack(true), BACK_NUDGE_MS)
+    return () => window.clearTimeout(timer)
+  }, [room])
+
   return (
     <div
       className="ri-cinema"
@@ -426,6 +459,7 @@ export const InteriorCinema = forwardRef<CinemaHandle, Props>(function InteriorC
       </span>
 
       <button type="button" className="ri-cinema__back ri-cinema__chrome t-ui" ref={back} onClick={onClose}>
+        <Attention shown={nudgeBack} />
         <span aria-hidden="true">←</span>
         {RESIDENCE_COPY.back}
       </button>
