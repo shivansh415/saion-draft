@@ -99,7 +99,13 @@
   pointer-events: none;
 }
 
-.fx[data-active][data-mode='selector']:not([data-revealed]) .fx__tower {
+/* `:not([data-cue])` is load-bearing. The tower becomes hoverable at the same
+   instant the invitation starts, and the cursor is very often already resting
+   on it — the building is the middle of the screen — so the browser fired
+   `pointerenter` straight away, the explorer revealed itself, and the cue was
+   spent before any of it had been seen. It stays deaf until the cue is done
+   or the visitor has shown some intent (see ExplorerCue). */
+.fx[data-active][data-mode='selector']:not([data-revealed]):not([data-cue]) .fx__tower {
   pointer-events: auto;
   cursor: pointer;
 }
@@ -133,7 +139,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.fx[data-active][data-mode='selector']:not([data-revealed]) .fx__invite {
+.fx[data-active][data-mode='selector']:not([data-revealed]):not([data-cue]) .fx__invite {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;

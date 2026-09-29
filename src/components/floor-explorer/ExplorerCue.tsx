@@ -20,9 +20,33 @@ interface Props {
 /** The storey the pointer comes to rest on — mid-tower, so it reads at any crop. */
 const DEMO_LEVEL = '08'
 
-/** How long the whole cue is on screen, in ms. Must match `fx-cue-out` in the stylesheet. */
+/** How long the whole cue is on screen, in ms. Must match `fx-cue-life` in the stylesheet. */
 const LIFE_MS = 6400
 const LIFE_REDUCED_MS = 5000
+
+/**
+ * How far the pointer must travel before the cue treats it as a decision.
+ *
+ * It cannot be zero, and this is the whole reason the cue was invisible on a
+ * desktop: the completed building stands in the middle of the screen, which is
+ * where a cursor is usually already resting when the film ends. The instant
+ * the tower becomes hoverable the browser fires `pointerenter` on it — a
+ * stationary cursor is enough, Chrome re-hit-tests when an element appears
+ * under one — the explorer revealed itself, and the cue was spent before a
+ * single frame of it had been seen. Presence is not intent. A deliberate move
+ * of the pointer is.
+ */
+const MOVE_TO_DISMISS = 48
+
+/**
+ * How long the cue is deaf to dismissal after it starts.
+ *
+ * Insurance, and cheap. The cue begins in the same handful of frames as the
+ * hand-off that puts the explorer on the building, and that is exactly when a
+ * stray boundary or move event is most likely; losing the whole thing to one
+ * of them is what this is here to prevent a second time.
+ */
+const GRACE_MS = 900
 
 /**
  * The one-time invitation, played over the completed building.
@@ -60,11 +84,35 @@ const LIFE_REDUCED_MS = 5000
  */
 export function ExplorerCue({ rect, shown, coarse, reducedMotion, onDone }: Props) {
   // Stood down on its own once it has played, so the explorer never has to
-  // time it. An interaction retires it sooner, through the same `onDone`.
+  // time it — and sooner if the visitor shows they would rather get on with
+  // it. What counts as showing that is the careful part: see MOVE_TO_DISMISS.
   useEffect(() => {
     if (!shown) return
     const timer = window.setTimeout(onDone, reducedMotion ? LIFE_REDUCED_MS : LIFE_MS)
-    return () => window.clearTimeout(timer)
+
+    const started = performance.now()
+    const settled = () => performance.now() - started > GRACE_MS
+
+    let from: { x: number; y: number } | null = null
+    const onMove = (event: PointerEvent) => {
+      if (!from) {
+        from = { x: event.clientX, y: event.clientY }
+        return
+      }
+      if (settled() && Math.hypot(event.clientX - from.x, event.clientY - from.y) >= MOVE_TO_DISMISS) onDone()
+    }
+    // A press is always a decision, however small the movement before it.
+    const onPress = () => {
+      if (settled()) onDone()
+    }
+    window.addEventListener('pointermove', onMove, { passive: true })
+    window.addEventListener('pointerdown', onPress, { passive: true })
+
+    return () => {
+      window.clearTimeout(timer)
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerdown', onPress)
+    }
   }, [shown, reducedMotion, onDone])
 
   // Before the still has been measured there is nothing to draw on.

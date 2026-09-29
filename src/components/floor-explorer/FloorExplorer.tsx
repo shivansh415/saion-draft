@@ -320,6 +320,16 @@ export function FloorExplorer({ active, onTerrace, suspended = false, presented 
     }
   }
 
+  /**
+   * The invitation holds the frame.
+   *
+   * The root carries it so the stylesheet can hold the tower's
+   * hover-to-reveal off for exactly as long — without that, a cursor already
+   * resting on the building (which is the middle of the screen) revealed the
+   * explorer the instant it became hoverable and the cue was spent unseen.
+   */
+  const cueUp = active && !suspended && !cueSpent && mode === 'selector'
+
   const frozen = mode !== 'selector'
   // Hover and selection each resolve to at most one destination — entering a
   // level clears the terrace and the other way about — so folding them is a
@@ -1051,6 +1061,7 @@ export function FloorExplorer({ active, onTerrace, suspended = false, presented 
       data-mode={mode}
       data-revealed={revealed || undefined}
       data-suspended={suspended || undefined}
+      data-cue={cueUp || undefined}
       /* Inert while the film still has the frame as well as while another
          chapter does: the layer is painted at opacity 0 under the film, and
          `aria-hidden` alone left its fifteen level buttons in the Tab order —
@@ -1129,7 +1140,7 @@ export function FloorExplorer({ active, onTerrace, suspended = false, presented 
           over it, and pointer-transparent throughout — see ExplorerCue. */}
       <ExplorerCue
         rect={rect}
-        shown={active && !suspended && !cueSpent && mode === 'selector'}
+        shown={cueUp}
         coarse={coarse}
         reducedMotion={reducedMotion}
         onDone={spendCue}
