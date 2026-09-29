@@ -33,6 +33,23 @@ import '../../styles/opening.css'
 
 gsap.registerPlugin(ScrollTrigger)
 
+/** A rendered frame longer than this is a device that is struggling (≈18fps). */
+const SLOW_FRAME_MS = 55
+/**
+ * A gap longer than this is not a slow device.
+ *
+ * A hidden or backgrounded tab has its animation frames throttled to about
+ * one a second, and a garbage collection or a tab switch can cost a similar
+ * pause. Measured in a browser pane that had gone to the background: a
+ * median frame of 16.7ms with a worst of 1017ms, and 27 of 89 frames over the
+ * slow threshold. Counting those would have stood the film down on a machine
+ * that was rendering perfectly — so anything this long is discarded as not
+ * being a measurement of render rate at all.
+ */
+const STALL_CEILING_MS = 400
+/** How much sustained slowness it takes before the film is stood down. */
+const STRAIN_LIMIT = 40
+
 /**
  * Chapter 01 — "The Approach".
  *
@@ -140,6 +157,24 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onBuild
   const dormantRef = useRef(false)
   /** Mirrors `revealed` for the rAF loop, which must not re-subscribe to read it. */
   const revealedRef = useRef(false)
+  /**
+   * The device is not keeping up, and the film has been stood down for good.
+   *
+   * The safety net under the per-device budget in `filmBudget`. That budget is
+   * a guess made from what the device SAYS about itself — memory, cores, the
+   * line — and phones are not honest about any of it. This is the measurement
+   * that cannot be wrong: if the render loop itself is running at a crawl for
+   * a sustained stretch, whatever we guessed was too generous.
+   *
+   * What it costs to be wrong in each direction is very lopsided, which is why
+   * it gives up rather than backing off a little. Standing the film down
+   * leaves a chapter whose picture steps a little coarsely — `getNearest`
+   * covers a gap of fourteen frames, so there is always something to draw —
+   * on a device that was never going to play it smoothly. Not standing it down
+   * leaves a screen that does not change at all while the page scrolls, which
+   * is what a visitor reports as the site being broken.
+   */
+  const starvedRef = useRef(false)
 
   const onProgress = useCallback((fraction: number) => {
     const meter = meterRef.current
@@ -233,6 +268,9 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onBuild
     syncHero(trigger.progress)
 
     let frameId = 0
+    /** Sustained-slowness score; slow frames add, healthy ones pay back. */
+    let strain = 0
+    let lastTickAt = 0
 
     const tick = () => {
       frameId = requestAnimationFrame(tick)
@@ -241,6 +279,35 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onBuild
       const controller = controllerRef.current
       const canvas = canvasRef.current
       if (!controller || !canvas) return
+
+      /* ------------------------------------------------------------- *
+       * Is this device keeping up?
+       *
+       * Scored rather than tripped on a single frame: one long frame is a
+       * garbage collection or a decode landing awkwardly, and standing the
+       * film down for that would be absurd. A run of them is the device
+       * telling us it cannot do this. Only watched once the film is actually
+       * being travelled through — the preloader's own work is not the
+       * visitor's problem and must not count against them.
+       * ------------------------------------------------------------- */
+      const now = performance.now()
+      const visible = document.visibilityState === 'visible'
+      // A gap measured across a spell of being hidden says nothing about this
+      // device, so the clock restarts rather than carrying that gap in.
+      const delta = lastTickAt === 0 || !visible ? 0 : now - lastTickAt
+      lastTickAt = visible ? now : 0
+      if (revealedRef.current && !starvedRef.current && delta > 0 && delta < STALL_CEILING_MS) {
+        strain = delta > SLOW_FRAME_MS ? strain + 1 : Math.max(0, strain - 1)
+        if (strain >= STRAIN_LIMIT) {
+          starvedRef.current = true
+          controller.setSuspended(true)
+          // Said once, and worth saying: this is the one thing that explains a
+          // device-specific report of "it just does not scroll".
+          console.warn(
+            'Reposé: this device cannot keep up with the approach film; the rest of it has been stood down so the page stays responsive.',
+          )
+        }
+      }
 
       // Section progress → film units; past 1 the film simply holds its last frame.
       const { a, b, mix } = resolveFrame(targetRef.current * CHAPTER_UNITS)
@@ -311,7 +378,9 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onBuild
     // taken the screen. Suspending keeps every frame already loaded and lets
     // in-flight requests finish; coming back resumes the queue from wherever
     // the playhead now is.
-    controllerRef.current?.setSuspended(covered)
+    // `|| starvedRef` so coming back to the film cannot restart a queue the
+    // watchdog above has already given up on.
+    controllerRef.current?.setSuspended(covered || starvedRef.current)
     if (!covered) {
       lastKeyRef.current = ''
       approximateRef.current = true

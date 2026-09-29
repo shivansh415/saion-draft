@@ -580,21 +580,43 @@ export function filmBudget(): FilmBudget {
     connection?.effectiveType === 'slow-2g' ||
     connection?.effectiveType === '3g'
 
-  // A touch device is paced more gently whatever else is true: the same film,
-  // fetched and decoded a few at a time rather than in a burst, which is what
-  // keeps the main thread free enough to answer a finger.
   const touch = window.matchMedia('(pointer: coarse)').matches
   if (!touch && !slowLine) return FULL_BUDGET
 
   // Short of memory, short of cores, or on a line that has asked us to be
-  // careful: take the film at half rate as well.
+  // careful.
   const constrained = (memory !== null && memory <= 4) || (cores !== null && cores <= 4) || slowLine === true
 
+  /*
+   * A phone takes a THIRD of the film, and a constrained one a fifth.
+   *
+   * This was stride 2 / concurrency 4 for a constrained phone and the full
+   * film at concurrency 6 for everything else with a touch screen, and that
+   * second case is what was reported as "loads, then frozen at the start" on
+   * mid-range Realme and Samsung handsets while an iPhone 17 Pro was fine.
+   *
+   * The reason those two look so different is not the download. It is the
+   * DECODE. Every frame is 1600x900, which is 5.8MB of bitmap once decoded,
+   * and the queue kept `concurrency` of them arriving continuously from the
+   * moment the preloader lifted — exactly the moment the visitor first tries
+   * to scroll. A phone that cannot decode them as fast as they arrive spends
+   * every frame of its main thread on them, the canvas stops being repainted,
+   * and because the chapter is one sticky viewport the screen then does not
+   * change at all as the page scrolls under it. The scroll is working. It
+   * simply has nothing to show, which is indistinguishable from frozen.
+   *
+   * So the honest lever is how many frames a phone is asked to decode at all.
+   * A third of 440 is 147, and the renderer already covers a gap of up to 14
+   * frames from what it has in hand (`NEAREST_RADIUS`), so at a stride of 3 —
+   * or even 5 — there is always an exact or near-exact frame to draw. The film
+   * loses some of its smoothness on the phones that could never play it
+   * smoothly in the first place, and gains a page that scrolls.
+   */
   return {
-    stride: constrained ? 2 : 1,
-    concurrency: constrained ? 4 : 6,
-    warmAhead: constrained ? 8 : 12,
-    warmBudget: constrained ? 2 : 3,
+    stride: constrained ? 5 : 3,
+    concurrency: constrained ? 2 : 3,
+    warmAhead: constrained ? 4 : 6,
+    warmBudget: 1,
   }
 }
 
