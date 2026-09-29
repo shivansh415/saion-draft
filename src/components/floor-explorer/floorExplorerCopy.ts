@@ -10,6 +10,20 @@ export const EXPLORER_COPY = {
   invite: 'Explore residences',
 } as const
 
+/**
+ * The one-time cue that plays when the completed building first becomes
+ * explorable — and again on the arrival, where the same building is offered a
+ * second time. It says the one thing the render cannot: that the tower is
+ * fifteen selectable storeys rather than a picture.
+ */
+export const EXPLORER_CUE = {
+  eyebrow: 'The residences',
+  headline: ['Fifteen floors.', 'Every plan.'],
+  /** A pointer can hover; a finger cannot, so it is told to tap instead. */
+  action: 'Hover the building · choose a level',
+  actionCoarse: 'Tap the building · choose a level',
+} as const
+
 export const PLATE_COPY = {
   back: 'Back to building',
   shared: 'Floorplate shared with',

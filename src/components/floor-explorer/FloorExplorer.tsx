@@ -7,6 +7,7 @@ import { lockScroll, unlockScroll } from '../../lib/scrollLock'
 import { BuildingLevelSelector } from './BuildingLevelSelector'
 import { FloorplateView } from './FloorplateView'
 import { ResidencePlanView } from './ResidencePlanView'
+import { ExplorerCue } from './ExplorerCue'
 import { EXPLORER_COPY } from './floorExplorerCopy'
 import { floorplateImage, logUnverifiedResidences, unitPlanImage, useFloorExplorerData } from './floorExplorerData'
 import type { Level, UnitHotspot } from './floorExplorerData'
@@ -208,8 +209,11 @@ export function FloorExplorer({ active, onTerrace, suspended = false, presented 
    * Only dropping to the ground plane, or leaving the window, starts the
    * clock, and even then it is `HIDE_DELAY` before anything moves.
    * --------------------------------------------------------------- */
-  // Presented, it is up from the first frame it is active for.
-  const [revealed, setRevealed] = useState(() => presented && active && !suspended)
+  // Presented, it comes up as soon as the invitation has finished — see the
+  // effect below. Starting it revealed would stand the explorer's own copy
+  // panel up in the very place the invitation's words take, one on top of the
+  // other; letting the invitation play first makes the two a hand-over.
+  const [revealed, setRevealed] = useState(false)
   const revealedRef = useRef(false)
   const hideTimer = useRef<number | null>(null)
 
@@ -224,10 +228,31 @@ export function FloorExplorer({ active, onTerrace, suspended = false, presented 
     }
   }, [])
 
+  /**
+   * The one-time invitation over the clean building (see `ExplorerCue`).
+   *
+   * It is played once per instance and never again, which is why the flag is
+   * one-way: `active` goes false and true again every time the visitor scrolls
+   * back into the film and out of it, and a cue that replayed on each of those
+   * would stop being an invitation and start being a nag. The arrival mounts
+   * its own explorer, so the building is introduced once at the top of the
+   * journey and once at the end of it — which is what was asked for.
+   */
+  const [cueSpent, setCueSpent] = useState(false)
+  const spendCue = useCallback(() => setCueSpent(true), [])
+
   const reveal = useCallback(() => {
     cancelHide()
     setRevealed(true)
+    // The visitor has done the thing the cue was asking for.
+    setCueSpent(true)
   }, [cancelHide])
+
+  /** A level indicated: the cue has been understood, whatever else happens. */
+  const markLevel = useCallback((level: LevelId | null) => {
+    setHovered(level)
+    if (level) setCueSpent(true)
+  }, [])
 
   const scheduleHide = useCallback(() => {
     // A touch pointer has no "away": it stops existing the moment the finger
@@ -264,9 +289,22 @@ export function FloorExplorer({ active, onTerrace, suspended = false, presented 
       setHovered(null)
       setTerraceHovered(false)
       setRevealed(false)
-    } else if (presented && !suspended) {
+    } else if (presented && !suspended && cueSpent) {
       setRevealed(true)
     }
+  }
+
+  // A presented explorer — the arrival — is not hovered into life: it simply
+  // arrives, once the invitation has finished saying its piece. Reaching for
+  // the building early spends the invitation too, so an impatient visitor
+  // brings the explorer up early rather than fighting the cue.
+  //
+  // Synced in render rather than in an effect, the way every other state this
+  // component mirrors is: an effect would paint the frame in between.
+  const [wasCueSpent, setWasCueSpent] = useState(cueSpent)
+  if (wasCueSpent !== cueSpent) {
+    setWasCueSpent(cueSpent)
+    if (cueSpent && presented && active && !suspended) setRevealed(true)
   }
 
   // Standing down for another chapter is the same: back to clean, at once.
@@ -955,6 +993,8 @@ export function FloorExplorer({ active, onTerrace, suspended = false, presented 
   const choose = useCallback(
     (level: Level) => {
       if (!active) return
+      // Whatever follows, the invitation has been taken.
+      setCueSpent(true)
       // A floorplate is already open: the rail turns it, in one press.
       if (PLATE_MODES.includes(modeRef.current)) {
         switchLevel(level)
@@ -1085,6 +1125,16 @@ export function FloorExplorer({ active, onTerrace, suspended = false, presented 
         </button>
       )}
 
+      {/* The invitation. Above the building and below everything that opens
+          over it, and pointer-transparent throughout — see ExplorerCue. */}
+      <ExplorerCue
+        rect={rect}
+        shown={active && !suspended && !cueSpent && mode === 'selector'}
+        coarse={coarse}
+        reducedMotion={reducedMotion}
+        onDone={spendCue}
+      />
+
       <BuildingLevelSelector
         model={data.model}
         rect={rect}
@@ -1095,7 +1145,7 @@ export function FloorExplorer({ active, onTerrace, suspended = false, presented 
         revealed={revealed}
         coarse={coarse}
         reducedMotion={reducedMotion}
-        onHover={setHovered}
+        onHover={markLevel}
         onChoose={choose}
         onPrefetch={prefetch}
         onTerraceHover={hoverTerrace}
