@@ -343,7 +343,9 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onBuild
       // it is well ahead of any thumb.
       if (revealedRef.current) controller.warm(indexA)
 
-      const key = `${indexA}:${indexB}:${mix.toFixed(3)}`
+      // Quantised to a hundredth: the mix is now continuous, so an unrounded
+      // key would repaint for a change of scroll nobody can see.
+      const key = `${indexA}:${indexB}:${mix.toFixed(2)}`
       if (key === lastKeyRef.current && !approximateRef.current) return
       lastKeyRef.current = key
 
@@ -356,15 +358,15 @@ export function OpeningExperience({ terraceActive, onExplore, onTerrace, onBuild
         return
       }
 
+      // The frame after this one, for the tween — and ONLY if it is genuinely
+      // in hand. A substitute fetched from somewhere else in the film is not
+      // a tween, it is a double exposure: two different moments of the camera
+      // laid over each other. Without one, the frame is simply drawn on its
+      // own, which is what the film did everywhere until now.
       let imageB: HTMLImageElement | null = null
-      let exactB = true
-      if (mix > 0.001 && indexB !== indexA) {
-        const found = controller.get(indexB)
-        imageB = found ?? controller.getNearest(indexB)
-        exactB = found !== null
-      }
+      if (mix > 0.001 && indexB !== indexA) imageB = controller.get(indexB)
 
-      approximateRef.current = exactA === null || !exactB
+      approximateRef.current = exactA === null
       canvas.draw(imageA, imageB, mix)
     }
 

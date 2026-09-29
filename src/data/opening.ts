@@ -335,6 +335,29 @@ export interface FrameState {
 }
 
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t
+
+/**
+ * A fractional position in the film, as the two frames either side of it and
+ * how far between them it is.
+ *
+ * This is what makes the film move rather than tick. It used to return the
+ * fractional index as BOTH `a` and `b` with a mix of zero, which — once both
+ * were rounded — meant one frame, drawn hard, and no interpolation anywhere
+ * except the chapter break. The film is 440 frames across 620vh, so at a
+ * viewport of 900px one frame is about 13px of scroll: reading the page
+ * slowly, at say 100px a second, that is eight distinct images a second, each
+ * held for an eighth of a second and then replaced outright. Which is exactly
+ * what it looked like — reported as the images changing in steps.
+ *
+ * The renderer was always built for this: `CanvasSequence.draw` takes two
+ * images and a mix and has done since the beginning, and the chapter break
+ * has been using it to exchange its two clips. Nothing here is new machinery;
+ * the rest of the film simply never asked for it.
+ */
+const between = (index: number, last: number): FrameState => {
+  const floor = Math.floor(index)
+  return { a: floor, b: Math.min(last, floor + 1), mix: index - floor }
+}
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v)
 
 /** Smoothstep. Flat at both ends so the exchange begins and ends without an edge. */
@@ -361,8 +384,7 @@ export function resolveFrame(progress: number): FrameState {
   const p = clamp01(progress)
 
   if (p <= CHAPTER_BREAK.start) {
-    const index = lerp(0, SEQ_01_LAST, p / CHAPTER_BREAK.start)
-    return { a: index, b: index, mix: 0 }
+    return between(lerp(0, SEQ_01_LAST, p / CHAPTER_BREAK.start), SEQ_01_LAST)
   }
 
   if (p < CHAPTER_BREAK.end) {
@@ -383,8 +405,7 @@ export function resolveFrame(progress: number): FrameState {
   }
 
   const t = (p - CHAPTER_BREAK.end) / (FILM_END - CHAPTER_BREAK.end)
-  const index = lerp(SEQ_02_FIRST, LAST_FRAME, t)
-  return { a: index, b: index, mix: 0 }
+  return between(lerp(SEQ_02_FIRST, LAST_FRAME, t), LAST_FRAME)
 }
 
 /* ------------------------------------------------------------------ *
