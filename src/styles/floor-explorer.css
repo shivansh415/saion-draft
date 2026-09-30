@@ -811,12 +811,16 @@
   margin: clamp(1rem, 1.9vh, 1.5rem) 0 0;
   font-family: var(--font-sans);
   font-weight: 300;
-  font-size: clamp(0.58rem, 0.74vw, 0.76rem);
-  letter-spacing: 0.3em;
+  /* Up from 0.58–0.76rem. Every line of small type in this chapter was set
+     at the scale of a caption and read like one — the client could not make
+     it out at all. The tracking comes in as the size goes up, or a line this
+     long simply gets wider instead of clearer. */
+  font-size: clamp(0.76rem, 0.95vw, 0.98rem);
+  letter-spacing: 0.22em;
   line-height: 1.7;
   text-transform: uppercase;
   /* 9.28px of tracked capitals at 70% measured ~2.87:1 over the left scrim. */
-  color: rgb(255 255 255 / 88%);
+  color: rgb(255 255 255 / 94%);
 }
 
 .fx__readout {
@@ -833,8 +837,8 @@
 .fx__readout-level {
   font-family: var(--font-display);
   font-weight: 300;
-  font-size: clamp(1.15rem, 1.6vw, 1.75rem);
-  letter-spacing: 0.08em;
+  font-size: clamp(1.35rem, 1.9vw, 2.1rem);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   line-height: 1;
 }
@@ -842,11 +846,11 @@
 .fx__readout-types {
   font-family: var(--font-sans);
   font-weight: 300;
-  font-size: clamp(0.56rem, 0.7vw, 0.72rem);
-  letter-spacing: 0.24em;
+  font-size: clamp(0.74rem, 0.92vw, 0.94rem);
+  letter-spacing: 0.18em;
   line-height: 1.75;
   text-transform: uppercase;
-  color: rgb(255 255 255 / 78%);
+  color: rgb(255 255 255 / 90%);
 }
 
 .fx__open,
@@ -1194,8 +1198,8 @@
   margin: 0.15rem 0 0;
   font-family: var(--font-sans);
   font-weight: 300;
-  font-size: clamp(0.56rem, 0.7vw, 0.72rem);
-  letter-spacing: 0.26em;
+  font-size: clamp(0.74rem, 0.92vw, 0.94rem);
+  letter-spacing: 0.18em;
   line-height: 1.75;
   text-transform: uppercase;
   color: rgb(255 255 255 / 82%);
@@ -1205,10 +1209,10 @@
   margin: 0;
   font-family: var(--font-sans);
   font-weight: 300;
-  font-size: 0.55rem;
-  letter-spacing: 0.24em;
+  font-size: clamp(0.68rem, 0.82vw, 0.82rem);
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgb(255 255 255 / 66%);
+  color: rgb(255 255 255 / 82%);
 }
 
 /* Readout of the indicated residence — the level on the left, the residence
@@ -1763,17 +1767,19 @@
 }
 
 .fx-res__meta dt {
-  font-size: 0.55rem;
-  letter-spacing: 0.28em;
-  color: rgb(255 255 255 / 46%);
+  font-size: clamp(0.66rem, 0.8vw, 0.8rem);
+  letter-spacing: 0.2em;
+  /* 46% was the faintest type anywhere on the site, and it was the label
+     saying which floorplate the visitor is looking at. */
+  color: rgb(255 255 255 / 68%);
 }
 
 .fx-res__meta dd {
   margin: 0;
-  font-size: 0.58rem;
-  letter-spacing: 0.24em;
+  font-size: clamp(0.72rem, 0.88vw, 0.9rem);
+  letter-spacing: 0.18em;
   text-align: right;
-  color: rgb(255 255 255 / 84%);
+  color: rgb(255 255 255 / 94%);
 }
 
 /* The drawing is the control now (see ResidencePlanView), so what stood here
