@@ -5,18 +5,19 @@
  * placeholder for any film whose `src` is still null and switches to the real
  * player the moment one is given.
  *
- * Both films are now in. They are the supplied unit walkthroughs — the
- * one-bedroom and the two-bedroom layouts, each opening on the floorplate and
- * moving through the finished rooms, with the narration and the burnt-in
- * captions the client delivered.
+ * All three films are now in. They are the supplied unit walkthroughs — the
+ * one-bedroom, two-bedroom and three-bedroom layouts, each opening on the
+ * floorplate and moving through the finished rooms, with the narration and
+ * the burnt-in captions the client delivered.
  *
  * `src` is a path under `public/`, so the films are served from the same
  * origin as the site and nothing depends on a third party staying up. The
- * 4K HEVC masters the client supplied are 198MB and 275MB and play in almost
- * no browser; they are kept out of the deployment in `media-src/` (gitignored,
- * beside the interiors and amenity masters) and what ships here is the 1080p
- * H.264 encode of each — `-crf 25 -preset slow`, `+faststart` so playback can
- * begin on the first range request rather than after the whole file.
+ * masters the client supplied run to 173MB–275MB and, in the case of the two
+ * 4K HEVC ones, play in almost no browser; they are kept out of the
+ * deployment in `media-src/` (gitignored, beside the interiors and amenity
+ * masters) and what ships here is the 1080p H.264 encode of each — `-crf 25
+ * -preset slow`, `+faststart` so playback can begin on the first range
+ * request rather than after the whole file.
  *
  * `poster` is a still from the film itself, so the frame is composed before a
  * byte of video is asked for: the stage's player is `preload="metadata"`, so
@@ -25,7 +26,7 @@
 
 export interface WalkthroughFilm {
   readonly id: string
-  /** The number on the stage: "01", "02". */
+  /** The number on the stage: "01", "02", "03". */
   readonly index: string
   /** Display serif, one short line. */
   readonly title: string
@@ -57,6 +58,15 @@ export const WALKTHROUGH_FILMS: readonly WalkthroughFilm[] = [
     duration: '1:24',
     src: '/assets/walkthrough/two-bedroom-walkthrough.mp4',
     poster: '/assets/walkthrough/two-bedroom-walkthrough-poster.webp',
+  },
+  {
+    id: 'three-bedroom',
+    index: '03',
+    title: 'The Three-Bedroom',
+    subtitle: 'The plan, the living and dining, the dressing room',
+    duration: '1:20',
+    src: '/assets/walkthrough/three-bedroom-walkthrough.mp4',
+    poster: '/assets/walkthrough/three-bedroom-walkthrough-poster.webp',
   },
 ]
 
