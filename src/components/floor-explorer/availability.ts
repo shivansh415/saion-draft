@@ -9,16 +9,16 @@ import type { LevelId } from './levelCalibration'
  * list says SOLD against it. The three penthouses on Level 15 carry neither a
  * price nor a mark in the list, so they are shown as they always were.
  *
- * Since that list the client has closed two more units, 704 and 1301, and
- * they are marked below against the date they were given. Each later sale is
- * recorded the same way — one line, one comment — rather than silently
- * folded into the June rows, so which came from the list and which came
- * afterwards stays readable.
+ * Since that list the client has closed three more units — 704, 1301 and
+ * 1201 — and they are marked below against the date each was given. Every
+ * later sale is recorded the same way — one line, one comment — rather than
+ * silently folded into the June rows, so which came from the list and which
+ * came afterwards stays readable.
  *
  * To update from a newer list: replace `SOLD_UNITS` with the new list's SOLD
  * unit numbers and the date. Nothing else changes.
  */
-export const AVAILABILITY_AS_OF = '9 November 2026'
+export const AVAILABILITY_AS_OF = '24 November 2026'
 
 const SOLD_UNITS: readonly string[] = [
   // 3rd and 5th
@@ -37,7 +37,7 @@ const SOLD_UNITS: readonly string[] = [
   // 11th — every residence
   '1101', '1102', '1103', '1104', '1105', '1106',
   // 12th – 14th
-  '1202', '1203',
+  '1201', '1202', '1203', // 1201 closed 24 Nov 2026 — 12 is now sold out
   '1301', '1303', // 1301 closed 9 Nov 2026
   '1401', '1403',
 ]
